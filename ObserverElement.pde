@@ -20,7 +20,7 @@ class ObserverElement{
         this.active = startActive;
         this.faded = !this.active;
 
-        UI.CurrentGUIElements.add(this);
+        UI.currentGUIElements.add(this);
     }
 
     public ObserverElement(float x, float y, float w, float h, color Colour, boolean startActive, ObserverElement parent){
@@ -32,7 +32,7 @@ class ObserverElement{
         this.active = startActive;
         this.faded = !this.active;
 
-        UI.CurrentGUIElements.add(this);
+        UI.currentGUIElements.add(this);
     }
 
     // Through overloaded matches, this UI element will have dimensions based off percentages of its parent allowing for dynamic UI design
@@ -47,9 +47,9 @@ class ObserverElement{
         this.active = startActive;
         this.faded = !this.active;
 
-        UI.CurrentGUIElements.add(this);
+        UI.currentGUIElements.add(this);
     }
-    
+
     public ObserverElement(float x, float y, float w, float h, color Colour, boolean startActive, boolean screenElement){
         this.screenElement = screenElement;
 
@@ -58,8 +58,8 @@ class ObserverElement{
         this.active = startActive;
         this.faded = !this.active;
 
-        UI.CurrentScreenElements.add(this);
-        UI.CurrentGUIElements.add(this);
+        UI.currentScreenElements.add(this);
+        UI.currentGUIElements.add(this);
     }
 
     void toggleActive(){
@@ -78,7 +78,7 @@ class ObserverElement{
         isFading = true;
         fadeStartMillis = millis();
         fadeDuration = milli;
-        
+
         if(children.size() > 0){
             for(int i = 0; i < children.size(); i++){
                 children.get(i).fadeToggleActive(milli);
@@ -92,34 +92,34 @@ class ObserverElement{
 
 class Button extends ObserverElement{
     Event event;
-    
+
     Button(float x, float y, float w, float h, color Colour, boolean startActive, Event event){
         super(x, y, w, h, Colour, startActive);
-        UI.CurrentButtonElements.add(this);
+        UI.currentButtonElements.add(this);
         this.event = event;
     }
-    
+
     Button(float x, float y, float w, float h, color Colour, boolean startActive, Event event, ObserverElement parent){
         super(x, y, w, h, Colour, startActive, parent);
-        UI.CurrentButtonElements.add(this);
-        
+        UI.currentButtonElements.add(this);
+
         if (parent.screenElement) {
             screenElement = true;
-            UI.CurrentScreenElements.add(this);
+            UI.currentScreenElements.add(this);
         }
-        
+
         this.event = event;
     }
- 
+
     Button(int x, int y, int w, int h, color Colour, boolean startActive, Event event, ObserverElement parent){
         super(x, y, w, h, Colour, startActive, parent);
-        UI.CurrentButtonElements.add(this);
-        
+        UI.currentButtonElements.add(this);
+
         if (parent.screenElement) {
             screenElement = true;
-            UI.CurrentScreenElements.add(this);
+            UI.currentScreenElements.add(this);
         }
-        
+
         this.event = event;
     }
 
@@ -131,6 +131,6 @@ class Button extends ObserverElement{
 class SpatialSphere extends ObserverElement {
     SpatialSphere(float x, float y, float r, color Colour, boolean startActive) {
         super(x, y, r, r, Colour, startActive);
-        UI.CurrentAtoms.add(this);
+        UI.currentAtoms.add(this);
     }
 }

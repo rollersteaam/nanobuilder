@@ -3,23 +3,23 @@ interface Event {
 }
 
 class ObserverEvents {
-    class printMessage implements Event {
+    class PrintMessage implements Event {
         String expStr;
-        
-        public printMessage(String expStr) {
-            this.expStr = expStr;   
+
+        PrintMessage(String expStr) {
+            this.expStr = expStr;
         }
-        
+
         void Perform()
         {
             println("You clicked on me, " + expStr);
         }
     }
-    
-    class rotateCameraY implements Event {
+
+    class RotateCameraY implements Event {
         void Perform() {
             Camera.rotY += radians(10);
             println("Rotating");
         }
-    }        
+    }
 }

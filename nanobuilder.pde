@@ -2,6 +2,7 @@ import java.util.ArrayList;
 
 // Invoking Master UI class //
 MasterObserver UI = new MasterObserver();
+
 // Globalizing specific UI elements //
 ObserverElement taskMenu;
 Observer Camera;
@@ -47,35 +48,22 @@ Position ScreenToWorldSpace(float x, float y) {
 
 void setup() {
     size(1280, 720, P3D);
-    smooth();
 
-    float screenW = width; // instantiate as floats so we can use maths on them
+    float screenW = width;
     float screenH = height;
 
-    /* Syntax for most ObserverElements
-     Button testButt1 = new Button(
-     10, = X
-     2, = Y
-     80, = W
-     5, = H
-     color(100), = COLOUR
-     sideMenu, = PARENT
-     1 = DYNAMIC, DON'T INCLUDE IF STATIC
-     );
-     */
-
     Camera = new Observer();
-    taskMenu = new ObserverElement(0f, 0f, screenW*0.2, screenH, color(165, 165, 235), true, true);
+    taskMenu = new ObserverElement(0, 0, screenW*0.2, screenH, color(165, 165, 235), true, true);
 
-    ObserverEvents.printMessage[] aLangLib = new ObserverEvents.printMessage[2];
-    aLangLib[0] = UI.Events.new printMessage("Welcome to Nanobuilder.");
-    aLangLib[1] = UI.Events.new printMessage("This message is in an array!");
+    ObserverEvents events = new ObserverEvents();
 
-    Event[] eventLib = new Event[1];
-    eventLib[0] = UI.Events.new printMessage("" + taskMenu.Colour);
+    Event[] eventLib = new Event[3];
+    eventLib[0] = events.new PrintMessage("" + taskMenu.Colour);
+    eventLib[1] = events.new PrintMessage("Welcome to Nanobuilder.");
+    eventLib[2] = events.new PrintMessage("This message is in an array!");
 
-    Button taskMenuButton1 = new Button(10, 12, 80, 5, color(200, 150, 150), true, UI.Events.new rotateCameraY(), taskMenu);
-    Button taskMenuButton2 = new Button(10, 19, 80, 5, color(150, 200, 150), true, aLangLib[1], taskMenu);
+    Button taskMenuButton1 = new Button(10, 12, 80, 5, color(200, 150, 150), true, events.new RotateCameraY(), taskMenu);
+    Button taskMenuButton2 = new Button(10, 19, 80, 5, color(150, 200, 150), true, eventLib[1], taskMenu);
     Button taskMenuButton3 = new Button(10, 26, 80, 5, color(150, 150, 200), true, eventLib[0], taskMenu);
 
     SpatialSphere myNewSphere = new SpatialSphere(500, 500, 50, color(135, 135, 135), true);
@@ -88,7 +76,7 @@ void draw() {
     lights();
 
     UI.ParseKeyTriggers();
-    //UI.ParseMouseTriggers();
+    UI.ParseMouseTriggers();
 
     UI.DrawActiveScreenElements();
 
@@ -103,8 +91,8 @@ void mouseClicked() {
 
     boolean eventCompleted = false;
 
-    for (int i = 0; i < UI.CurrentButtonElements.size(); i++) { // buttons don't use standardised instance coordinates, because they are 2D elements they only need to check screen relative coordinates
-        Button target = UI.CurrentButtonElements.get(i);
+    for (int i = 0; i < UI.currentButtonElements.size(); i++) { // buttons don't use standardised instance coordinates, because they are 2D elements they only need to check screen relative coordinates
+        Button target = UI.currentButtonElements.get(i);
 
         if (!target.active) continue;
 
@@ -118,8 +106,8 @@ void mouseClicked() {
 
     Position closestAtom = new Position(0, 0);
 
-    for (int i = 0; i < UI.CurrentAtoms.size(); i++) {
-        SpatialSphere target = UI.CurrentAtoms.get(i);
+    for (int i = 0; i < UI.currentAtoms.size(); i++) {
+        SpatialSphere target = UI.currentAtoms.get(i);
 
         if (closestAtom.x == 0) {
             closestAtom.x = target.x;
@@ -131,7 +119,7 @@ void mouseClicked() {
             closestAtom.y = target.y;
         }
 
-        if (i == UI.CurrentAtoms.size() - 1) {
+        if (i == UI.currentAtoms.size() - 1) {
             println(instance.x + " compared to " + closestAtom.x + " and ");
             println(instance.y + " compared to " + closestAtom.y + " done ");
         }

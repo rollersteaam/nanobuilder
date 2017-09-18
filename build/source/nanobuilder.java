@@ -20,6 +20,7 @@ public class nanobuilder extends PApplet {
 
 // Invoking Master UI class //
 MasterObserver UI = new MasterObserver();
+
 // Globalizing specific UI elements //
 ObserverElement taskMenu;
 Observer Camera;
@@ -65,35 +66,22 @@ public Position ScreenToWorldSpace(float x, float y) {
 
 public void setup() {
     
-    
 
-    float screenW = width; // instantiate as floats so we can use maths on them
+    float screenW = width;
     float screenH = height;
 
-    /* Syntax for most ObserverElements
-     Button testButt1 = new Button(
-     10, = X
-     2, = Y
-     80, = W
-     5, = H
-     color(100), = COLOUR
-     sideMenu, = PARENT
-     1 = DYNAMIC, DON'T INCLUDE IF STATIC
-     );
-     */
-
     Camera = new Observer();
-    taskMenu = new ObserverElement(0f, 0f, screenW*0.2f, screenH, color(165, 165, 235), true, true);
+    taskMenu = new ObserverElement(0, 0, screenW*0.2f, screenH, color(165, 165, 235), true, true);
 
-    ObserverEvents.printMessage[] aLangLib = new ObserverEvents.printMessage[2];
-    aLangLib[0] = UI.Events.new printMessage("Welcome to Nanobuilder.");
-    aLangLib[1] = UI.Events.new printMessage("This message is in an array!");
+    ObserverEvents events = new ObserverEvents();
 
-    Event[] eventLib = new Event[1];
-    eventLib[0] = UI.Events.new printMessage("" + taskMenu.Colour);
+    Event[] eventLib = new Event[3];
+    eventLib[0] = events.new PrintMessage("" + taskMenu.Colour);
+    eventLib[1] = events.new PrintMessage("Welcome to Nanobuilder.");
+    eventLib[2] = events.new PrintMessage("This message is in an array!");
 
-    Button taskMenuButton1 = new Button(10, 12, 80, 5, color(200, 150, 150), true, UI.Events.new rotateCameraY(), taskMenu);
-    Button taskMenuButton2 = new Button(10, 19, 80, 5, color(150, 200, 150), true, aLangLib[1], taskMenu);
+    Button taskMenuButton1 = new Button(10, 12, 80, 5, color(200, 150, 150), true, events.new RotateCameraY(), taskMenu);
+    Button taskMenuButton2 = new Button(10, 19, 80, 5, color(150, 200, 150), true, eventLib[1], taskMenu);
     Button taskMenuButton3 = new Button(10, 26, 80, 5, color(150, 150, 200), true, eventLib[0], taskMenu);
 
     SpatialSphere myNewSphere = new SpatialSphere(500, 500, 50, color(135, 135, 135), true);
@@ -106,7 +94,7 @@ public void draw() {
     lights();
 
     UI.ParseKeyTriggers();
-    //UI.ParseMouseTriggers();
+    UI.ParseMouseTriggers();
 
     UI.DrawActiveScreenElements();
 
@@ -121,8 +109,8 @@ public void mouseClicked() {
 
     boolean eventCompleted = false;
 
-    for (int i = 0; i < UI.CurrentButtonElements.size(); i++) { // buttons don't use standardised instance coordinates, because they are 2D elements they only need to check screen relative coordinates
-        Button target = UI.CurrentButtonElements.get(i);
+    for (int i = 0; i < UI.currentButtonElements.size(); i++) { // buttons don't use standardised instance coordinates, because they are 2D elements they only need to check screen relative coordinates
+        Button target = UI.currentButtonElements.get(i);
 
         if (!target.active) continue;
 
@@ -136,8 +124,8 @@ public void mouseClicked() {
 
     Position closestAtom = new Position(0, 0);
 
-    for (int i = 0; i < UI.CurrentAtoms.size(); i++) {
-        SpatialSphere target = UI.CurrentAtoms.get(i);
+    for (int i = 0; i < UI.currentAtoms.size(); i++) {
+        SpatialSphere target = UI.currentAtoms.get(i);
 
         if (closestAtom.x == 0) {
             closestAtom.x = target.x;
@@ -149,7 +137,7 @@ public void mouseClicked() {
             closestAtom.y = target.y;
         }
 
-        if (i == UI.CurrentAtoms.size() - 1) {
+        if (i == UI.currentAtoms.size() - 1) {
             println(instance.x + " compared to " + closestAtom.x + " and ");
             println(instance.y + " compared to " + closestAtom.y + " done ");
         }
@@ -192,56 +180,53 @@ public void mouseWheel(MouseEvent event) {
     }
 }
 class MasterObserver {
-    public ArrayList<ObserverElement> CurrentGUIElements = new ArrayList<ObserverElement>();
-    
-    public ArrayList<ObserverElement> CurrentScreenElements = new ArrayList<ObserverElement>();
-    public ArrayList<Button> CurrentButtonElements = new ArrayList<Button>();
-    public ArrayList<SpatialSphere> CurrentAtoms = new ArrayList<SpatialSphere>();
+    public ArrayList<ObserverElement> currentGUIElements = new ArrayList<ObserverElement>();
 
-    ObserverEvents Events = new ObserverEvents();
-
-    int lastMouseX;
-    int lastMouseY;
+    public ArrayList<ObserverElement> currentScreenElements = new ArrayList<ObserverElement>();
+    public ArrayList<Button> currentButtonElements = new ArrayList<Button>();
+    public ArrayList<SpatialSphere> currentAtoms = new ArrayList<SpatialSphere>();
 
     public void DrawActiveScreenElements() {
-        for(int i = 0; i<CurrentScreenElements.size(); i++) {
-            ObserverElement target = CurrentGUIElements.get(i);
-            if (!target.enabled || !target.active) continue;
-            
+        for(int i = 0; i<currentScreenElements.size(); i++) {
+            ObserverElement target = currentScreenElements.get(i);
+
             if (target.isFading) {
                 DrawFadeElement(target);
                 continue;
             }
-            
+
+            if (!target.enabled || !target.active) continue;
+
             if (target instanceof Button){
                 stroke(30);
             } else { // Generic template
                 noStroke();
             }
-            
+
             fill(target.Colour);
             rect(target.x, target.y, target.w, target.h);
         }
     }
 
     public void DrawActiveElements(){
-        for(int i=0; i<CurrentGUIElements.size(); i++){
-            ObserverElement target = CurrentGUIElements.get(i);
-            if (!target.enabled || !target.active || target.screenElement) continue;
+        for(int i=0; i<currentGUIElements.size(); i++){
+            ObserverElement target = currentGUIElements.get(i);
 
             if (target.isFading) { // Handle fade elements elsewhere, bypasses the need for running a second list iteration
                 DrawFadeElement(target);
                 continue;
             }
 
+            if (!target.enabled || !target.active || target.screenElement) continue;
+
             if (target instanceof Button){
                 stroke(30);
             } else { // Generic template
                 noStroke();
             }
-            
+
             fill(target.Colour);
-            
+
             pushMatrix();
             if (target instanceof SpatialSphere) {
                 if (target.beingMoved) {
@@ -249,10 +234,10 @@ class MasterObserver {
                     target.x = newPos.x;
                     target.y = newPos.y;
                 }
-                
+
                 translate(target.x, target.y);
                 sphere(target.w);
-            } else if (target instanceof Button) { 
+            } else if (target instanceof Button) {
                 translate(0, 0, 0.1f);
                 rect(target.x, target.y, target.w, target.h);
             } else { // Generic template
@@ -272,51 +257,54 @@ class MasterObserver {
 
         float timeElapsed = millis() - target.fadeStartMillis;
         println("The time is " + timeElapsed/target.fadeDuration);
-        
+
         if (target.faded) { // fading IN
-            
+
             if (timeElapsed < target.fadeDuration) { // we don't use while here otherwise the fading process would halt the Draw method as we don't make a seperate thread
                 println(timeElapsed / target.fadeDuration);
                 fill(target.Colour, lerp(0, 255, timeElapsed/target.fadeDuration));
             } else { // we're finished#
                 fill(target.Colour, 255); // second 'correction' needed to complete the 'journey' so transition is smooth
                 println("We're done");
-                
-                target.active = !target.active;
+
+                target.active = true;
                 target.isFading = false;
                 target.faded = false;
             }
-            
+
         } else { // fading OUT
-            
-            if (timeElapsed < target.fadeDuration) { // we don't use while here otherwise the fading process would halt the Draw method as we don't make a seperate thread    
+
+            if (timeElapsed < target.fadeDuration) { // we don't use while here otherwise the fading process would halt the Draw method as we don't make a seperate thread
                 println(timeElapsed / target.fadeDuration);
                 fill(target.Colour, lerp(255, 0, timeElapsed/target.fadeDuration));
             } else { // we're finished
                 fill(target.Colour, 0); // second 'correction' needed to complete the 'journey' so transition is smooth
                 println("We're done fading out");
-                
-                target.active = !target.active;
+
+                target.active = false;
                 target.isFading = false;
                 target.faded = true;
-            }          
-            
-        }    
+            }
+
+        }
 
         rect(target.x, target.y, target.w, target.h);
         popMatrix();
     }
-    
+
+    int lastMouseX;
+    int lastMouseY;
+
     public void ParseKeyTriggers() {
         if (keyPressed) {
             if (key == ' ' && Camera.isPanning) { // If key held
                 Camera.x += mouseX - lastMouseX;
                 Camera.y += mouseY - lastMouseY;
-                
+
                 lastMouseX = mouseX;
                 lastMouseY = mouseY;
             }
-            
+
             if (keyCode == SHIFT && Camera.isRotating) {
                 Camera.rotX += radians(mouseY - lastMouseY);
                 Camera.rotY += radians(mouseX - lastMouseX);
@@ -329,18 +317,18 @@ class MasterObserver {
             if (Camera.isRotating) Camera.isRotating = false;
         }
     }
-    
+
     public void ParseMouseTriggers() {
-        if (mouseX <= taskMenu.w){ 
-            if(taskMenu.enabled && !taskMenu.active && !taskMenu.isFading) taskMenu.fadeToggleActive(400);
-            if(!taskMenu.enabled) println("I received the trigger but the task menu is disabled.");
-            if(taskMenu.active) println("I received the trigger but the menu's already active.");
-            if(taskMenu.isFading) println("I received the trigger but the task menu is currently fading.");
+        if (mouseX <= taskMenu.w){
+            if(taskMenu.enabled && !taskMenu.isFading && !taskMenu.active) taskMenu.fadeToggleActive(400);
+            // if(!taskMenu.enabled) println("I received the trigger but the task menu is disabled.");
+            // if(taskMenu.active) println("I received the trigger but the menu's already active.");
+            // if(taskMenu.isFading) println("I received the trigger but the task menu is currently fading.");
         } else {
-            if(taskMenu.enabled && taskMenu.active && !taskMenu.isFading) taskMenu.fadeToggleActive(400);
-            if(!taskMenu.enabled) println("I received the trigger but the task menu is disabled.");
-            if(!taskMenu.active) println("I received the trigger but the menu's already inactive.");
-            if(taskMenu.isFading) println("I received the trigger but the task menu is currently fading.");
+            if(taskMenu.enabled && !taskMenu.isFading && taskMenu.active) taskMenu.fadeToggleActive(400);
+            // if(!taskMenu.enabled) println("I received the trigger but the task menu is disabled.");
+            // if(!taskMenu.active) println("I received the trigger but the menu's already inactive.");
+            // if(taskMenu.isFading) println("I received the trigger but the task menu is currently fading.");
         }
     }
 }
@@ -366,7 +354,7 @@ class ObserverElement{
         this.active = startActive;
         this.faded = !this.active;
 
-        UI.CurrentGUIElements.add(this);
+        UI.currentGUIElements.add(this);
     }
 
     public ObserverElement(float x, float y, float w, float h, int Colour, boolean startActive, ObserverElement parent){
@@ -378,7 +366,7 @@ class ObserverElement{
         this.active = startActive;
         this.faded = !this.active;
 
-        UI.CurrentGUIElements.add(this);
+        UI.currentGUIElements.add(this);
     }
 
     // Through overloaded matches, this UI element will have dimensions based off percentages of its parent allowing for dynamic UI design
@@ -393,9 +381,9 @@ class ObserverElement{
         this.active = startActive;
         this.faded = !this.active;
 
-        UI.CurrentGUIElements.add(this);
+        UI.currentGUIElements.add(this);
     }
-    
+
     public ObserverElement(float x, float y, float w, float h, int Colour, boolean startActive, boolean screenElement){
         this.screenElement = screenElement;
 
@@ -404,8 +392,8 @@ class ObserverElement{
         this.active = startActive;
         this.faded = !this.active;
 
-        UI.CurrentScreenElements.add(this);
-        UI.CurrentGUIElements.add(this);
+        UI.currentScreenElements.add(this);
+        UI.currentGUIElements.add(this);
     }
 
     public void toggleActive(){
@@ -424,7 +412,7 @@ class ObserverElement{
         isFading = true;
         fadeStartMillis = millis();
         fadeDuration = milli;
-        
+
         if(children.size() > 0){
             for(int i = 0; i < children.size(); i++){
                 children.get(i).fadeToggleActive(milli);
@@ -438,34 +426,34 @@ class ObserverElement{
 
 class Button extends ObserverElement{
     Event event;
-    
+
     Button(float x, float y, float w, float h, int Colour, boolean startActive, Event event){
         super(x, y, w, h, Colour, startActive);
-        UI.CurrentButtonElements.add(this);
+        UI.currentButtonElements.add(this);
         this.event = event;
     }
-    
+
     Button(float x, float y, float w, float h, int Colour, boolean startActive, Event event, ObserverElement parent){
         super(x, y, w, h, Colour, startActive, parent);
-        UI.CurrentButtonElements.add(this);
-        
+        UI.currentButtonElements.add(this);
+
         if (parent.screenElement) {
             screenElement = true;
-            UI.CurrentScreenElements.add(this);
+            UI.currentScreenElements.add(this);
         }
-        
+
         this.event = event;
     }
- 
+
     Button(int x, int y, int w, int h, int Colour, boolean startActive, Event event, ObserverElement parent){
         super(x, y, w, h, Colour, startActive, parent);
-        UI.CurrentButtonElements.add(this);
-        
+        UI.currentButtonElements.add(this);
+
         if (parent.screenElement) {
             screenElement = true;
-            UI.CurrentScreenElements.add(this);
+            UI.currentScreenElements.add(this);
         }
-        
+
         this.event = event;
     }
 
@@ -477,7 +465,7 @@ class Button extends ObserverElement{
 class SpatialSphere extends ObserverElement {
     SpatialSphere(float x, float y, float r, int Colour, boolean startActive) {
         super(x, y, r, r, Colour, startActive);
-        UI.CurrentAtoms.add(this);
+        UI.currentAtoms.add(this);
     }
 }
 interface Event {
@@ -485,27 +473,27 @@ interface Event {
 }
 
 class ObserverEvents {
-    class printMessage implements Event {
+    class PrintMessage implements Event {
         String expStr;
-        
-        public printMessage(String expStr) {
-            this.expStr = expStr;   
+
+        PrintMessage(String expStr) {
+            this.expStr = expStr;
         }
-        
+
         public void Perform()
         {
             println("You clicked on me, " + expStr);
         }
     }
-    
-    class rotateCameraY implements Event {
+
+    class RotateCameraY implements Event {
         public void Perform() {
             Camera.rotY += radians(10);
             println("Rotating");
         }
-    }        
+    }
 }
-    public void settings() {  size(1280, 720, P3D);  smooth(); }
+    public void settings() {  size(1280, 720, P3D); }
     static public void main(String[] passedArgs) {
         String[] appletArgs = new String[] { "nanobuilder" };
         if (passedArgs != null) {

@@ -22,7 +22,7 @@ class MasterObserver {
                 noStroke();
             }
 
-            fill(target.Colour);
+            fill(target.Colour, target.alpha);
             rect(target.x, target.y, target.w, target.h);
         }
     }
@@ -138,16 +138,24 @@ class MasterObserver {
     }
 
     void ParseMouseTriggers() {
-        if (mouseX <= taskMenu.w){
-            if(taskMenu.enabled && !taskMenu.isFading && !taskMenu.active) taskMenu.fadeToggleActive(400);
-            // if(!taskMenu.enabled) println("I received the trigger but the task menu is disabled.");
-            // if(taskMenu.active) println("I received the trigger but the menu's already active.");
-            // if(taskMenu.isFading) println("I received the trigger but the task menu is currently fading.");
-        } else {
-            if(taskMenu.enabled && !taskMenu.isFading && taskMenu.active) taskMenu.fadeToggleActive(400);
-            // if(!taskMenu.enabled) println("I received the trigger but the task menu is disabled.");
-            // if(!taskMenu.active) println("I received the trigger but the menu's already inactive.");
-            // if(taskMenu.isFading) println("I received the trigger but the task menu is currently fading.");
+//        if (mouseX <= taskMenu.w){
+////            if(taskMenu.enabled && !taskMenu.isFading && !taskMenu.active) taskMenu.fadeToggleActive(400);
+//
+//        } else {
+////            if(taskMenu.enabled && !taskMenu.isFading && taskMenu.active) taskMenu.fadeToggleActive(400);
+//        }
+        
+        float threshold = taskMenu.w + 200;
+
+        // TODO: Change into a combined if statement
+        if (mouseX < threshold) {
+          taskMenu.setAlpha( int( 255 - abs(taskMenu.w - mouseX) ) );
+          if (!taskMenu.active) taskMenu.toggleActive();
+        }
+        if (mouseX <= taskMenu.w) taskMenu.setAlpha(255);
+        if (mouseX > threshold) {
+          taskMenu.setAlpha(0);
+          if (taskMenu.active) taskMenu.toggleActive();
         }
     }
 }

@@ -73,12 +73,13 @@ void setup() {
 
 void draw() {
     background(215, 215, 255);
-    lights();
-
+    
     UI.ParseKeyTriggers();
     UI.ParseMouseTriggers();
 
     UI.DrawActiveScreenElements();
+
+    lights();
 
     Camera.Observe();
     UI.DrawActiveElements();

@@ -17,7 +17,7 @@ class MasterObserver {
             if (!target.enabled || !target.active) continue;
 
             if (target instanceof Button){
-                stroke(30);
+                stroke(target.strokeColour, target.alpha);
             } else { // Generic template
                 noStroke();
             }
@@ -68,11 +68,6 @@ class MasterObserver {
 
     void DrawFadeElement(ObserverElement target) {
         pushMatrix();
-        if (target instanceof Button){
-            stroke(30);
-        } else { // Generic template
-            noStroke();
-        }
 
         float timeElapsed = millis() - target.fadeStartMillis;
         println("The time is " + timeElapsed/target.fadeDuration);
@@ -80,11 +75,25 @@ class MasterObserver {
         if (target.faded) { // fading IN
 
             if (timeElapsed < target.fadeDuration) { // we don't use while here otherwise the fading process would halt the Draw method as we don't make a seperate thread
+                float progress = lerp(0, 255, timeElapsed/target.fadeDuration);
+                
+                if (target instanceof Button){
+                    stroke(30, progress);
+                } else { // Generic template
+                    noStroke();
+                }
+
                 println(timeElapsed / target.fadeDuration);
-                fill(target.Colour, lerp(0, 255, timeElapsed/target.fadeDuration));
+                fill(target.Colour, progress);
             } else { // we're finished#
+            
+                if (target instanceof Button){
+                    stroke(30, 255);
+                } else { // Generic template
+                    noStroke();
+                }
+
                 fill(target.Colour, 255); // second 'correction' needed to complete the 'journey' so transition is smooth
-                println("We're done");
 
                 target.active = true;
                 target.isFading = false;
@@ -94,11 +103,24 @@ class MasterObserver {
         } else { // fading OUT
 
             if (timeElapsed < target.fadeDuration) { // we don't use while here otherwise the fading process would halt the Draw method as we don't make a seperate thread
+                float progress = lerp(255, 0, timeElapsed/target.fadeDuration);
+                
+                if (target instanceof Button){
+                    stroke(30, progress);
+                } else { // Generic template
+                    noStroke();
+                }
+
                 println(timeElapsed / target.fadeDuration);
-                fill(target.Colour, lerp(255, 0, timeElapsed/target.fadeDuration));
+                fill(target.Colour, progress);
             } else { // we're finished
+                if (target instanceof Button){
+                    stroke(30, 0);
+                } else { // Generic template
+                    noStroke();
+                }
+            
                 fill(target.Colour, 0); // second 'correction' needed to complete the 'journey' so transition is smooth
-                println("We're done fading out");
 
                 target.active = false;
                 target.isFading = false;
@@ -137,14 +159,7 @@ class MasterObserver {
         }
     }
 
-    void ParseMouseTriggers() {
-//        if (mouseX <= taskMenu.w){
-////            if(taskMenu.enabled && !taskMenu.isFading && !taskMenu.active) taskMenu.fadeToggleActive(400);
-//
-//        } else {
-////            if(taskMenu.enabled && !taskMenu.isFading && taskMenu.active) taskMenu.fadeToggleActive(400);
-//        }
-        
+    void ParseMouseTriggers() {       
         float threshold = taskMenu.w + 200;
 
         // TODO: Change into a combined if statement
@@ -152,7 +167,9 @@ class MasterObserver {
           taskMenu.setAlpha( int( 255 - abs(taskMenu.w - mouseX) ) );
           if (!taskMenu.active) taskMenu.toggleActive();
         }
+        
         if (mouseX <= taskMenu.w) taskMenu.setAlpha(255);
+        
         if (mouseX > threshold) {
           taskMenu.setAlpha(0);
           if (taskMenu.active) taskMenu.toggleActive();

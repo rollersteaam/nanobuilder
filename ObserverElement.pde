@@ -1,6 +1,7 @@
 class ObserverElement{
     protected float x, y, w, h;
     protected color Colour = color(35);
+    protected color strokeColour = color(30);
     protected int alpha = 255;
     protected ObserverElement parent;
     protected ArrayList<ObserverElement> children = new ArrayList<ObserverElement>();
@@ -65,7 +66,7 @@ class ObserverElement{
 
     void setAlpha(int val) {
        alpha = val;
-       
+
        if(children.size() > 0){
             for(int i = 0; i < children.size(); i++){
                 children.get(i).setAlpha(val);

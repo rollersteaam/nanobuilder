@@ -22,47 +22,8 @@ public class nanobuilder extends PApplet {
 MasterObserver UI = new MasterObserver();
 
 // Globalizing specific UI elements //
-ObserverElement taskMenu;
+ObserverElement2D taskMenu;
 Observer Camera;
-
-class Observer {
-    int x;
-    int y;
-    int z;
-
-    float rotX;
-    float rotY;
-    float rotZ;
-
-    boolean isPanning = false;
-    boolean isRotating = false;
-
-    public void Observe() {
-        translate(x, y, z);
-        rotateX(rotX);
-        rotateY(rotY);
-        rotateZ(rotZ);
-    }
-}
-
-class Position { // created mainly for the screen to world conversion
-    float x;
-    float y;
-
-    public Position(float x, float y) {
-        this.x = x;
-        this.y = y;
-    }
-}
-
-public Position ScreenToWorldSpace(float x, float y) {
-    float cameraScale = 1 + (Camera.z*-1/50 / 100); // Times the translation by *-1 to flip its sign.
-
-    float newX = (x - Camera.x) * cameraScale; // this is inverted because the camera represents its translation, not its current position...
-    float newY = (y - Camera.y) * cameraScale;
-
-    return new Position(newX, newY);
-}
 
 public void setup() {
     
@@ -71,12 +32,12 @@ public void setup() {
     float screenH = height;
 
     Camera = new Observer();
-    taskMenu = new ObserverElement(0, 0, screenW*0.2f, screenH, color(165, 165, 235), true, true);
+    taskMenu = new Menu(0, 0, screenW*0.2f, screenH, color(165, 165, 235), true);
 
     ObserverEvents events = new ObserverEvents();
 
     Event[] eventLib = new Event[3];
-    eventLib[0] = events.new PrintMessage("" + taskMenu.Colour);
+    eventLib[0] = events.new PrintMessage("" + taskMenu.colour);
     eventLib[1] = events.new PrintMessage("Welcome to Nanobuilder.");
     eventLib[2] = events.new PrintMessage("This message is in an array!");
 
@@ -84,57 +45,56 @@ public void setup() {
     Button taskMenuButton2 = new Button(10, 19, 80, 5, color(150, 200, 150), true, eventLib[1], taskMenu);
     Button taskMenuButton3 = new Button(10, 26, 80, 5, color(150, 150, 200), true, eventLib[0], taskMenu);
 
-    SpatialSphere myNewSphere = new SpatialSphere(500, 500, 50, color(135, 135, 135), true);
-    SpatialSphere myNewSphere2 = new SpatialSphere(700, 500, 50, color(185, 135, 135), true);
-    SpatialSphere myNewSphere3 = new SpatialSphere(900, 500, 50, color(135, 135, 185), true);
+    SpatialSphere myNewSphere = new SpatialSphere(500, 500, 300, 50, color(135, 135, 135), true);
+    SpatialSphere myNewSphere2 = new SpatialSphere(700, 500, 300, 50, color(185, 135, 135), true);
+    SpatialSphere myNewSphere3 = new SpatialSphere(900, 500, 300, 50, color(135, 135, 185), true);
 }
 
 public void draw() {
     background(215, 215, 255);
-    lights();
 
     UI.ParseKeyTriggers();
     UI.ParseMouseTriggers();
 
-    UI.DrawActiveScreenElements();
+    UI.Draw2DElements();
+
+    lights();
 
     Camera.Observe();
-    UI.DrawActiveElements();
+    //UI.Draw3DElements();
 }
 
 public void mouseClicked() {
-    Position instance = ScreenToWorldSpace(mouseX, mouseY); // record an initial instance because mouse position could vary over the time it takes to iterate through current buttons, progressively slower the more buttons exist too.
     int instanceScrX = mouseX;
     int instanceScrY = mouseY;
 
-    boolean eventCompleted = false;
+    Vector2 instance = new Vector2(instanceScrX, instanceScrY);
 
     for (int i = 0; i < UI.currentButtonElements.size(); i++) { // buttons don't use standardised instance coordinates, because they are 2D elements they only need to check screen relative coordinates
         Button target = UI.currentButtonElements.get(i);
 
         if (!target.active) continue;
 
-        if (instanceScrX >= target.x && instanceScrX <= (target.x + target.w) && instanceScrY >= target.y && instanceScrY <= (target.y + target.h)) { // simple boundary check
+        if (instanceScrX >= target.pos.x && instanceScrX <= (target.pos.x + target.w) &&
+        instanceScrY >= target.pos.y && instanceScrY <= (target.pos.y + target.h)) {
             target.onMouseClicked();
-            eventCompleted = true;
+            return;
         }
     }
 
-    if (eventCompleted) return;
-
-    Position closestAtom = new Position(0, 0);
+    Vector2 closestAtom = new Vector2(0, 0);
 
     for (int i = 0; i < UI.currentAtoms.size(); i++) {
         SpatialSphere target = UI.currentAtoms.get(i);
 
         if (closestAtom.x == 0) {
-            closestAtom.x = target.x;
-            closestAtom.y = target.y;
+            closestAtom.x = target.pos.x;
+            closestAtom.y = target.pos.y;
         }
 
-        if (dist(instance.x, instance.y, target.x, target.y)  < dist(instance.x, instance.y, closestAtom.x, closestAtom.y)) {
-            closestAtom.x = target.x;
-            closestAtom.y = target.y;
+        if (dist(instance.x, instance.y, target.pos.x, target.pos.y)  < dist(instance.x, instance.y, closestAtom.x, closestAtom.y)) {
+            closestAtom.x = target.pos.x;
+            closestAtom.y = target.pos.y;
         }
 
         if (i == UI.currentAtoms.size() - 1) {
@@ -144,15 +104,16 @@ public void mouseClicked() {
 
         // State 1 - Move object to mouse position on click
         if (target.beingMoved) {
-            println("Placing object.");
-            target.x = instance.x;
-            target.y = instance.y;
+            target.pos.x = instance.x;
+            target.pos.y = instance.y;
             target.beingMoved = false;
+            println("Placing object.");
             return;
         }
 
         // State 2 - Select object for movement on click
-        if (instance.x >= target.x - target.w && instance.x <= (target.x + target.w) && instance.y >= target.y - target.h && instance.y <= (target.y + target.h)) {
+        if (instance.x >= target.pos.x - target.w && instance.x <= (target.pos.x + target.w) &&
+        instance.y >= target.pos.y - target.h && instance.y <= (target.pos.y + target.h)) {
             if (target.active) {
                 target.beingMoved = true;
                 println("Move is registered");
@@ -160,8 +121,6 @@ public void mouseClicked() {
             }
         }
     }
-
-    println("I'm clicking");
 }
 
 public void keyPressed() {
@@ -179,16 +138,37 @@ public void mouseWheel(MouseEvent event) {
         Camera.z -= 50;
     }
 }
+class Observer {
+    int x;
+    int y;
+    int z;
+
+    float rotX;
+    float rotY;
+    float rotZ;
+
+    boolean isPanning = false;
+    boolean isRotating = false;
+
+    public void Observe() {
+        translate(x, y, z);
+        rotateX(rotX + (2 * PI / 10));
+        rotateY(rotY);
+        rotateZ(rotZ);
+    }
+}
+
 class MasterObserver {
     public ArrayList<ObserverElement> currentGUIElements = new ArrayList<ObserverElement>();
+    public ArrayList<ObserverElement2D> current2DElements = new ArrayList<ObserverElement2D>();
+    public ArrayList<ObserverElement3D> current3DElements = new ArrayList<ObserverElement3D>();
 
-    public ArrayList<ObserverElement> currentScreenElements = new ArrayList<ObserverElement>();
     public ArrayList<Button> currentButtonElements = new ArrayList<Button>();
     public ArrayList<SpatialSphere> currentAtoms = new ArrayList<SpatialSphere>();
 
-    public void DrawActiveScreenElements() {
-        for(int i = 0; i<currentScreenElements.size(); i++) {
-            ObserverElement target = currentScreenElements.get(i);
+    public void Draw2DElements() {
+        for(int i = 0; i<current2DElements.size(); i++) {
+            ObserverElement2D target = current2DElements.get(i);
 
             if (target.isFading) {
                 DrawFadeElement(target);
@@ -197,63 +177,41 @@ class MasterObserver {
 
             if (!target.enabled || !target.active) continue;
 
-            if (target instanceof Button){
-                stroke(30);
-            } else { // Generic template
-                noStroke();
+            if (target.hovered) {
+                fill(red(target.colour) * 0.75f, green(target.colour) * 0.75f, blue(target.colour) * 0.75f, target.alpha);
+            } else {
+                fill(target.colour, target.alpha);
             }
 
-            fill(target.Colour);
-            rect(target.x, target.y, target.w, target.h);
+            stroke(target.strokeColour, target.alpha);
+            rect(target.pos.x, target.pos.y, target.w, target.h);
         }
     }
 
-    public void DrawActiveElements(){
-        for(int i=0; i<currentGUIElements.size(); i++){
-            ObserverElement target = currentGUIElements.get(i);
+    public void Draw3DElements(){
+        for(int i=0; i<current3DElements.size(); i++){
+            ObserverElement3D target = current3DElements.get(i);
 
-            if (target.isFading) { // Handle fade elements elsewhere, bypasses the need for running a second list iteration
-                DrawFadeElement(target);
-                continue;
-            }
+            if (!target.enabled || !target.active) continue;
 
-            if (!target.enabled || !target.active || target.screenElement) continue;
-
-            if (target instanceof Button){
-                stroke(30);
-            } else { // Generic template
-                noStroke();
-            }
-
-            fill(target.Colour);
+            fill(target.colour);
 
             pushMatrix();
-            if (target instanceof SpatialSphere) {
-                if (target.beingMoved) {
-                    Position newPos = ScreenToWorldSpace(mouseX, mouseY);
-                    target.x = newPos.x;
-                    target.y = newPos.y;
-                }
 
-                translate(target.x, target.y);
-                sphere(target.w);
-            } else if (target instanceof Button) {
-                translate(0, 0, 0.1f);
-                rect(target.x, target.y, target.w, target.h);
-            } else { // Generic template
-                rect(target.x, target.y, target.w, target.h);
-            }
+            // if (target.beingMoved) {
+            //     target.pos.x = newPos.x;
+            //     target.pos.y = newPos.y;
+            // }
+
+            translate(target.pos.x, target.pos.y, target.pos.z);
+            sphere(target.w);
+
             popMatrix();
         }
     }
 
-    public void DrawFadeElement(ObserverElement target) {
+    public void DrawFadeElement(ObserverElement2D target) {
         pushMatrix();
-        if (target instanceof Button){
-            stroke(30);
-        } else { // Generic template
-            noStroke();
-        }
 
         float timeElapsed = millis() - target.fadeStartMillis;
         println("The time is " + timeElapsed/target.fadeDuration);
@@ -261,11 +219,25 @@ class MasterObserver {
         if (target.faded) { // fading IN
 
             if (timeElapsed < target.fadeDuration) { // we don't use while here otherwise the fading process would halt the Draw method as we don't make a seperate thread
+                float progress = lerp(0, 255, timeElapsed/target.fadeDuration);
+
+                if (target instanceof Button){
+                    stroke(30, progress);
+                } else { // Generic template
+                    noStroke();
+                }
+
                 println(timeElapsed / target.fadeDuration);
-                fill(target.Colour, lerp(0, 255, timeElapsed/target.fadeDuration));
+                fill(target.colour, progress);
             } else { // we're finished#
-                fill(target.Colour, 255); // second 'correction' needed to complete the 'journey' so transition is smooth
-                println("We're done");
+
+                if (target instanceof Button){
+                    stroke(30, 255);
+                } else { // Generic template
+                    noStroke();
+                }
+
+                fill(target.colour, 255); // second 'correction' needed to complete the 'journey' so transition is smooth
 
                 target.active = true;
                 target.isFading = false;
@@ -275,11 +247,24 @@ class MasterObserver {
         } else { // fading OUT
 
             if (timeElapsed < target.fadeDuration) { // we don't use while here otherwise the fading process would halt the Draw method as we don't make a seperate thread
+                float progress = lerp(255, 0, timeElapsed/target.fadeDuration);
+
+                if (target instanceof Button){
+                    stroke(30, progress);
+                } else { // Generic template
+                    noStroke();
+                }
+
                 println(timeElapsed / target.fadeDuration);
-                fill(target.Colour, lerp(255, 0, timeElapsed/target.fadeDuration));
+                fill(target.colour, progress);
             } else { // we're finished
-                fill(target.Colour, 0); // second 'correction' needed to complete the 'journey' so transition is smooth
-                println("We're done fading out");
+                if (target instanceof Button){
+                    stroke(30, 0);
+                } else { // Generic template
+                    noStroke();
+                }
+
+                fill(target.colour, 0); // second 'correction' needed to complete the 'journey' so transition is smooth
 
                 target.active = false;
                 target.isFading = false;
@@ -288,7 +273,7 @@ class MasterObserver {
 
         }
 
-        rect(target.x, target.y, target.w, target.h);
+        rect(target.pos.x, target.pos.y, target.w, target.h);
         popMatrix();
     }
 
@@ -319,81 +304,97 @@ class MasterObserver {
     }
 
     public void ParseMouseTriggers() {
-        if (mouseX <= taskMenu.w){
-            if(taskMenu.enabled && !taskMenu.isFading && !taskMenu.active) taskMenu.fadeToggleActive(400);
-            // if(!taskMenu.enabled) println("I received the trigger but the task menu is disabled.");
-            // if(taskMenu.active) println("I received the trigger but the menu's already active.");
-            // if(taskMenu.isFading) println("I received the trigger but the task menu is currently fading.");
-        } else {
-            if(taskMenu.enabled && !taskMenu.isFading && taskMenu.active) taskMenu.fadeToggleActive(400);
-            // if(!taskMenu.enabled) println("I received the trigger but the task menu is disabled.");
-            // if(!taskMenu.active) println("I received the trigger but the menu's already inactive.");
-            // if(taskMenu.isFading) println("I received the trigger but the task menu is currently fading.");
+        float threshold = taskMenu.w + 200;
+
+        for (int i = 0; i < UI.currentButtonElements.size(); i++) {
+            Button target = UI.currentButtonElements.get(i);
+
+            if (mouseX > target.pos.x && mouseX < target.pos.x + target.w && mouseY > target.pos.y && mouseY < target.pos.y + target.h) {
+                target.onMouseHover();
+            } else if (target.hovered) {
+                target.hovered = false;
+            }
+        }
+
+        // TODO: Change into a combined if statement
+        if (mouseX < threshold) {
+          taskMenu.setAlpha( PApplet.parseInt( 255 - abs(taskMenu.w - mouseX) ) );
+          if (!taskMenu.active) taskMenu.toggleActive();
+        }
+
+        if (mouseX <= taskMenu.w) taskMenu.setAlpha(255);
+
+        if (mouseX > threshold) {
+          taskMenu.setAlpha(0);
+          if (taskMenu.active) taskMenu.toggleActive();
         }
     }
 }
+class Vector2 { // TODO: Make all objects utilise Vector2 and Vector3 positional types.
+    public float x;
+    public float y;
+
+    public Vector2(float x, float y) {
+        this.x = x;
+        this.y = y;
+    }
+}
+
+class Vector3 {
+    public float x;
+    public float y;
+    public float z;
+
+    public Vector3(float x, float y, float z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    public Vector2 WorldToScreenSpace() {
+        float tempX = screenX(x, y, z);
+        float tempY = screenY(x, y, z);
+        return new Vector2(tempX, tempY);
+    }
+}
+
 class ObserverElement{
-    protected float x, y, w, h;
-    protected int Colour = color(35);
+    protected float w, h;
+    protected int colour = color(35);
+    protected int strokeColour = color(30);
+    protected int alpha = 255;
+
     protected ObserverElement parent;
     protected ArrayList<ObserverElement> children = new ArrayList<ObserverElement>();
 
     protected boolean enabled = true;
     protected boolean active = true;
+
     protected boolean screenElement = false;
     protected boolean beingMoved = false;
+    protected boolean hovered = false;
 
     protected boolean faded = false;
     protected boolean isFading = false;
     protected int fadeStartMillis;
     protected int fadeDuration = 1000;
 
-    public ObserverElement(float x, float y, float w, float h, int Colour, boolean startActive){
-        this.Colour = Colour;
-        this.x = x; this.y = y; this.w = w; this.h = h;
+    ObserverElement(float w, float h, int colour, boolean startActive) {
+        this.colour = colour;
         this.active = startActive;
         this.faded = !this.active;
 
         UI.currentGUIElements.add(this);
     }
 
-    public ObserverElement(float x, float y, float w, float h, int Colour, boolean startActive, ObserverElement parent){
-        parent.children.add(this);
-        this.parent = parent;
+    public void setAlpha(int val) {
+       alpha = val;
 
-        this.Colour = Colour;
-        this.x = parent.x + x; this.y = parent.y + y; this.w = w; this.h = h;
-        this.active = startActive;
-        this.faded = !this.active;
-
-        UI.currentGUIElements.add(this);
-    }
-
-    // Through overloaded matches, this UI element will have dimensions based off percentages of its parent allowing for dynamic UI design
-    // This is why ObserverElements should NOT be constructed with normal integer values unless intended to, because it will create it with a percentage relevance to its parent
-    public ObserverElement(int x, int y, int w, int h, int Colour, boolean startActive, ObserverElement parent){
-        parent.children.add(this);
-        this.parent = parent;
-        this.screenElement = parent.screenElement;
-
-        this.Colour = Colour;
-        this.x = parent.x + (parent.w * x/100); this.y = parent.y + (parent.h * y/100); this.w = (parent.w * w/100); this.h = (parent.h * h/100);
-        this.active = startActive;
-        this.faded = !this.active;
-
-        UI.currentGUIElements.add(this);
-    }
-
-    public ObserverElement(float x, float y, float w, float h, int Colour, boolean startActive, boolean screenElement){
-        this.screenElement = screenElement;
-
-        this.Colour = Colour;
-        this.x = x; this.y = y; this.w = w; this.h = h;
-        this.active = startActive;
-        this.faded = !this.active;
-
-        UI.currentScreenElements.add(this);
-        UI.currentGUIElements.add(this);
+       if(children.size() > 0){
+            for(int i = 0; i < children.size(); i++){
+                children.get(i).setAlpha(val);
+            }
+        }
     }
 
     public void toggleActive(){
@@ -421,50 +422,126 @@ class ObserverElement{
     }
 }
 
+class ObserverElement2D extends ObserverElement {
+    protected Vector2 pos;
+
+    // There is no dynamic positioning function for things relative to the screen, I want it hard coded.
+    // Use: A container element with static positioning relative to the screen.
+    public ObserverElement2D(float x, float y, float w, float h, int colour, boolean startActive){
+        super(w, h, colour, startActive);
+        pos = new Vector2(x, y);
+
+        UI.current2DElements.add(this);
+    }
+
+    // Use: A child element with STATIC relative positioning in a container.
+    public ObserverElement2D(float x, float y, float w, float h, int colour, boolean startActive, ObserverElement2D parent){
+        this(x, y, w, h, colour, startActive);
+        this.parent = parent;
+        parent.children.add(this);
+
+        this.pos.x += parent.pos.x;
+        this.pos.y += parent.pos.y;
+    }
+
+    // Use: A child element with DYNAMIC relative positioning in a container.
+    public ObserverElement2D(int x, int y, int w, int h, int colour, boolean startActive, ObserverElement2D parent){
+        this(x, y, w, h, colour, startActive);
+        this.parent = parent;
+        parent.children.add(this);
+
+        this.pos.x = parent.pos.x + (parent.w * x/100);
+        this.pos.y = parent.pos.y + (parent.h * y/100);
+        this.w = (parent.w * w/100);
+        this.h = (parent.h * h/100);
+    }
+}
+
+class ObserverElement3D extends ObserverElement {
+    protected Vector3 pos;
+
+    // Use: An initial parent element that governs a chain. Its children are not positioned relatively but are BOUND.
+    public ObserverElement3D(float x, float y, float z, float w, float h, int colour, boolean startActive){
+        super(w, h, colour, startActive);
+        pos = new Vector3(x, y, z);
+
+        UI.current3DElements.add(this);
+    }
+
+    // Use: A child element that is not positioned relatively. Its movement is BOUND to its parent.
+    public ObserverElement3D(float x, float y, float z, float w, float h, int colour, boolean startActive, ObserverElement3D parent){
+        this(x, y, z, w, h, colour, startActive);
+        this.parent = parent;
+        parent.children.add(this);
+    }
+}
+
 // Extensions of ObserverElement
 // UI elements that can be placed. Spatial elements mean they are 3D.
 
-class Button extends ObserverElement{
-    Event event;
-
-    Button(float x, float y, float w, float h, int Colour, boolean startActive, Event event){
-        super(x, y, w, h, Colour, startActive);
-        UI.currentButtonElements.add(this);
-        this.event = event;
+// UI Element: Menu
+// CONTAINER
+// Exclusively a container element, it will overlap menus that were drawn before it, and overlap ALL other elements.
+class Menu extends ObserverElement2D {
+    Menu(float x, float y, float w, float h, int colour, boolean startActive){
+        super(x, y, w, h, colour, startActive);
     }
 
-    Button(float x, float y, float w, float h, int Colour, boolean startActive, Event event, ObserverElement parent){
-        super(x, y, w, h, Colour, startActive, parent);
-        UI.currentButtonElements.add(this);
-
-        if (parent.screenElement) {
-            screenElement = true;
-            UI.currentScreenElements.add(this);
-        }
-
-        this.event = event;
+    Menu(float x, float y, float w, float h, int colour, boolean startActive, ObserverElement2D parent){
+        super(x, y, w, h, colour, startActive, parent);
     }
 
-    Button(int x, int y, int w, int h, int Colour, boolean startActive, Event event, ObserverElement parent){
-        super(x, y, w, h, Colour, startActive, parent);
-        UI.currentButtonElements.add(this);
+    Menu(int x, int y, int w, int h, int colour, boolean startActive, ObserverElement2D parent){
+        super(x, y, w, h, colour, startActive, parent);
+    }
+}
 
-        if (parent.screenElement) {
-            screenElement = true;
-            UI.currentScreenElements.add(this);
-        }
+// UI Element: Button
+// ITEM - ACTIVATOR
+// Supports effector functions (onHover, onClick). Drawn as a 2D rectangle.
+// TODO: Implement image and styling functionality.
+class Button extends ObserverElement2D {
+    protected Event event;
 
+    Button(float x, float y, float w, float h, int colour, boolean startActive, Event event){
+        super(x, y, w, h, colour, startActive);
         this.event = event;
+        UI.currentButtonElements.add(this);
+    }
+
+    Button(float x, float y, float w, float h, int colour, boolean startActive, Event event, ObserverElement2D parent){
+        super(x, y, w, h, colour, startActive, parent);
+        this.event = event;
+        UI.currentButtonElements.add(this);
+    }
+
+    Button(int x, int y, int w, int h, int colour, boolean startActive, Event event, ObserverElement2D parent){
+        super(x, y, w, h, colour, startActive, parent);
+        this.event = event;
+        UI.currentButtonElements.add(this);
     }
 
     public void onMouseClicked(){
         event.Perform();
     }
+
+    public void onMouseHover() {
+        this.hovered = true;
+    }
 }
 
-class SpatialSphere extends ObserverElement {
-    SpatialSphere(float x, float y, float r, int Colour, boolean startActive) {
-        super(x, y, r, r, Colour, startActive);
+// OBJECT Element: Sphere
+// WORLD
+// Can be bonded to other 3D elements, BINDING its movement.
+// TODO: Add further properties.
+class SpatialSphere extends ObserverElement3D {
+    SpatialSphere(float x, float y, float z, float r, int colour, boolean startActive) {
+        super(x, y, z, r, r, colour, startActive);
+        UI.currentAtoms.add(this);
+    }
+
+    SpatialSphere(float x, float y, float z, float r, int colour, boolean startActive, ObserverElement3D parent) {
+        super(x, y, z, r, r, colour, startActive, parent);
         UI.currentAtoms.add(this);
     }
 }

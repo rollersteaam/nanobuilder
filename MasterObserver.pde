@@ -1,7 +1,5 @@
 class Observer {
-    int x;
-    int y;
-    int z;
+    Vector3 pos = new Vector3(0, 0, 0);
 
     float rotX;
     float rotY;
@@ -11,10 +9,20 @@ class Observer {
     boolean isRotating = false;
 
     void Observe() {
-        translate(x, y, z);
-        rotateX(rotX + (2 * PI / 10));
+        translate(pos.x, pos.y, pos.z);
+        rotateX(rotX);
         rotateY(rotY);
         rotateZ(rotZ);
+    }
+
+    Vector3 ScreenToWorldSpace(float x, float y) {
+        float cameraScale = 1 + (Camera.pos.z/-50 / 100); // -50 so negative Z values represent backwards zoom.
+
+        float newX = (x - Camera.pos.x) * cameraScale;
+        float newY = (y - Camera.pos.y) * cameraScale;
+        float newZ = Camera.pos.z; // TODO: This needs further implementation.
+
+        return new Vector3(newX, newY, newZ);
     }
 }
 
@@ -58,10 +66,17 @@ class MasterObserver {
 
             pushMatrix();
 
-            // if (target.beingMoved) {
-            //     target.pos.x = newPos.x;
-            //     target.pos.y = newPos.y;
-            // }
+            if (target.beingMoved) {
+                stroke(target.strokeColour, target.alpha);
+
+                target.pos.x += mouseX - lastMouseX;
+                target.pos.y += mouseY - lastMouseY;
+
+            } else if (target.hovered) {
+                stroke(target.strokeColour, target.alpha / 2);
+            } else {
+                noStroke();
+            }
 
             translate(target.pos.x, target.pos.y, target.pos.z);
             sphere(target.w);
@@ -143,19 +158,13 @@ class MasterObserver {
     void ParseKeyTriggers() {
         if (keyPressed) {
             if (key == ' ' && Camera.isPanning) { // If key held
-                Camera.x += mouseX - lastMouseX;
-                Camera.y += mouseY - lastMouseY;
-
-                lastMouseX = mouseX;
-                lastMouseY = mouseY;
+                Camera.pos.x += mouseX - lastMouseX;
+                Camera.pos.y += mouseY - lastMouseY;
             }
 
             if (keyCode == SHIFT && Camera.isRotating) {
                 Camera.rotX += radians(mouseY - lastMouseY);
                 Camera.rotY += radians(mouseX - lastMouseX);
-
-                lastMouseY = mouseY;
-                lastMouseX = mouseX;
             }
         } else {
             if (Camera.isPanning) Camera.isPanning = false;
@@ -164,6 +173,9 @@ class MasterObserver {
     }
 
     void ParseMouseTriggers() {
+        // Vector3 instance = Camera.ScreenToWorldSpace(mouseX, mouseY); // Shouldn't be used for 2D elements.
+        Vector2 instance = new Vector2(mouseX, mouseY);
+
         float threshold = taskMenu.w + 200;
 
         for (int i = 0; i < UI.currentButtonElements.size(); i++) {
@@ -172,6 +184,26 @@ class MasterObserver {
             if (mouseX > target.pos.x && mouseX < target.pos.x + target.w && mouseY > target.pos.y && mouseY < target.pos.y + target.h) {
                 target.onMouseHover();
             } else if (target.hovered) {
+                target.hovered = false;
+            }
+        }
+
+        for (int i = 0; i < UI.currentAtoms.size(); i++) {
+            SpatialSphere target = UI.currentAtoms.get(i);
+
+            if (!target.active) continue;
+
+            Vector2 boundaryStart = target.WorldStartToScreenSpace();
+            Vector2 boundaryEnd = target.WorldEndToScreenSpace();
+
+            // State 2 - Select object for movement on click
+            if (instance.x >= boundaryStart.x &&
+                instance.x <= boundaryEnd.x &&
+                instance.y >= boundaryStart.y &&
+                instance.y <= boundaryEnd.y)
+            {
+                target.onMouseHover();
+            } else {
                 target.hovered = false;
             }
         }

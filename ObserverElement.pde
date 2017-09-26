@@ -18,12 +18,6 @@ class Vector3 {
         this.y = y;
         this.z = z;
     }
-
-    Vector2 WorldToScreenSpace() {
-        float tempX = screenX(x, y, z);
-        float tempY = screenY(x, y, z);
-        return new Vector2(tempX, tempY);
-    }
 }
 
 class ObserverElement{
@@ -48,6 +42,9 @@ class ObserverElement{
     protected int fadeDuration = 1000;
 
     ObserverElement(float w, float h, color colour, boolean startActive) {
+        this.w = w;
+        this.h = h;
+
         this.colour = colour;
         this.active = startActive;
         this.faded = !this.active;
@@ -88,6 +85,10 @@ class ObserverElement{
             }
         }
     }
+
+    void onMouseHover() {
+        this.hovered = true;
+    }
 }
 
 class ObserverElement2D extends ObserverElement {
@@ -97,7 +98,7 @@ class ObserverElement2D extends ObserverElement {
     // Use: A container element with static positioning relative to the screen.
     public ObserverElement2D(float x, float y, float w, float h, color colour, boolean startActive){
         super(w, h, colour, startActive);
-        pos = new Vector2(x, y);
+        this.pos = new Vector2(x, y);
 
         UI.current2DElements.add(this);
     }
@@ -131,7 +132,7 @@ class ObserverElement3D extends ObserverElement {
     // Use: An initial parent element that governs a chain. Its children are not positioned relatively but are BOUND.
     public ObserverElement3D(float x, float y, float z, float w, float h, color colour, boolean startActive){
         super(w, h, colour, startActive);
-        pos = new Vector3(x, y, z);
+        this.pos = new Vector3(x, y, z);
 
         UI.current3DElements.add(this);
     }
@@ -141,6 +142,20 @@ class ObserverElement3D extends ObserverElement {
         this(x, y, z, w, h, colour, startActive);
         this.parent = parent;
         parent.children.add(this);
+    }
+
+    // Returns coordinates of the starting positions of an object boundary in CARTESIAN method.
+    Vector2 WorldStartToScreenSpace() {
+        float tempX = screenX(pos.x, pos.y, pos.z);
+        float tempY = screenY(pos.x, pos.y, pos.z);
+        return new Vector2(tempX, tempY);
+    }
+
+    // Returns coordinates of the ending positions of an object boundary in CARTESIAN method.
+    Vector2 WorldEndToScreenSpace() {
+        float tempX = screenX(pos.x + w, pos.y, pos.z);
+        float tempY = screenY(pos.x, pos.y + h, pos.z);
+        return new Vector2(tempX, tempY);
     }
 }
 
@@ -192,10 +207,6 @@ class Button extends ObserverElement2D {
     void onMouseClicked(){
         event.Perform();
     }
-
-    void onMouseHover() {
-        this.hovered = true;
-    }
 }
 
 // OBJECT Element: Sphere
@@ -211,5 +222,13 @@ class SpatialSphere extends ObserverElement3D {
     SpatialSphere(float x, float y, float z, float r, color colour, boolean startActive, ObserverElement3D parent) {
         super(x, y, z, r, r, colour, startActive, parent);
         UI.currentAtoms.add(this);
+    }
+
+    // Returns coordinates of the starting positions of an object boundary in CARTESIAN method.
+    @Override // Overriden because sphere's drawing method doesn't act in a "cartesian" way and spills "negatively".
+    Vector2 WorldStartToScreenSpace() {
+        float tempX = screenX(pos.x - w, pos.y, pos.z);
+        float tempY = screenY(pos.x, pos.y - h, pos.z);
+        return new Vector2(tempX, tempY);
     }
 }

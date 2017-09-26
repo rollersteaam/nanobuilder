@@ -27,6 +27,9 @@ Observer Camera;
 
 public void setup() {
     
+    // Experimental FOV settings.
+    // float cameraZ = (height / 2.0) / tan(PI/2.0/2.0);
+    // perspective(PI/2.0, 16f/9f, cameraZ/10.0, cameraZ*10.0);
 
     float screenW = width;
     float screenH = height;
@@ -45,9 +48,9 @@ public void setup() {
     Button taskMenuButton2 = new Button(10, 19, 80, 5, color(150, 200, 150), true, eventLib[1], taskMenu);
     Button taskMenuButton3 = new Button(10, 26, 80, 5, color(150, 150, 200), true, eventLib[0], taskMenu);
 
-    SpatialSphere myNewSphere = new SpatialSphere(500, 500, 300, 50, color(135, 135, 135), true);
-    SpatialSphere myNewSphere2 = new SpatialSphere(700, 500, 300, 50, color(185, 135, 135), true);
-    SpatialSphere myNewSphere3 = new SpatialSphere(900, 500, 300, 50, color(135, 135, 185), true);
+    SpatialSphere myNewSphere = new SpatialSphere(500, 500, -1000, 50, color(135, 135, 135), true);
+    SpatialSphere myNewSphere2 = new SpatialSphere(700, 500, -1000, 50, color(185, 135, 135), true);
+    SpatialSphere myNewSphere3 = new SpatialSphere(900, 500, -1000, 50, color(135, 135, 185), true);
 }
 
 public void draw() {
@@ -61,22 +64,30 @@ public void draw() {
     lights();
 
     Camera.Observe();
-    //UI.Draw3DElements();
+    UI.Draw3DElements(); // TODO: Change draw order to give 2D elements priority.
+
+    UI.lastMouseX = mouseX;
+    UI.lastMouseY = mouseY;
 }
 
 public void mouseClicked() {
     int instanceScrX = mouseX;
     int instanceScrY = mouseY;
 
-    Vector2 instance = new Vector2(instanceScrX, instanceScrY);
+    // Vector3 instance = Camera.ScreenToWorldSpace(instanceScrX, instanceScrY);
+    Vector2 instance = new Vector2(mouseX, mouseY);
 
     for (int i = 0; i < UI.currentButtonElements.size(); i++) { // buttons don't use standardised instance coordinates, because they are 2D elements they only need to check screen relative coordinates
         Button target = UI.currentButtonElements.get(i);
 
         if (!target.active) continue;
 
-        if (instanceScrX >= target.pos.x && instanceScrX <= (target.pos.x + target.w) &&
-        instanceScrY >= target.pos.y && instanceScrY <= (target.pos.y + target.h)) {
+        if (instanceScrX >= target.pos.x &&
+            instanceScrX <= target.pos.x + target.w &&
+            instanceScrY >= target.pos.y &&
+            instanceScrY <= target.pos.y + target.h
+        )
+        {
             target.onMouseClicked();
             return;
         }
@@ -86,6 +97,8 @@ public void mouseClicked() {
 
     for (int i = 0; i < UI.currentAtoms.size(); i++) {
         SpatialSphere target = UI.currentAtoms.get(i);
+
+        if (!target.active) continue;
 
         if (closestAtom.x == 0) {
             closestAtom.x = target.pos.x;
@@ -104,21 +117,33 @@ public void mouseClicked() {
 
         // State 1 - Move object to mouse position on click
         if (target.beingMoved) {
-            target.pos.x = instance.x;
-            target.pos.y = instance.y;
             target.beingMoved = false;
             println("Placing object.");
             return;
         }
 
-        // State 2 - Select object for movement on click
-        if (instance.x >= target.pos.x - target.w && instance.x <= (target.pos.x + target.w) &&
-        instance.y >= target.pos.y - target.h && instance.y <= (target.pos.y + target.h)) {
-            if (target.active) {
-                target.beingMoved = true;
-                println("Move is registered");
-                return; // remove this line to create a weird morphing glitch between two spheres
-            }
+        Vector2 boundaryStart = target.WorldStartToScreenSpace();
+        Vector2 boundaryEnd = target.WorldEndToScreenSpace();
+
+        // State 2 - Select object on click
+        if (instance.x >= boundaryStart.x &&
+            instance.x <= boundaryEnd.x &&
+            instance.y >= boundaryStart.y &&
+            instance.y <= boundaryEnd.y)
+        {
+            target.beingMoved = true;
+            println("Move is registered");
+            return;
+        }
+
+        if (instance.x >= boundaryStart.x * -1 &&
+            instance.x <= boundaryEnd.x * -1 &&
+            instance.y >= boundaryStart.y * -1 &&
+            instance.y <= boundaryEnd.y * -1)
+        {
+            target.beingMoved = true;
+            println("Move is registered");
+            return;
         }
     }
 }
@@ -133,15 +158,13 @@ public void keyPressed() {
 
 public void mouseWheel(MouseEvent event) {
     if (event.getCount() < 0) {
-        Camera.z += 50;
+        Camera.pos.z += 50;
     } else {
-        Camera.z -= 50;
+        Camera.pos.z -= 50;
     }
 }
 class Observer {
-    int x;
-    int y;
-    int z;
+    Vector3 pos = new Vector3(0, 0, 0);
 
     float rotX;
     float rotY;
@@ -151,10 +174,20 @@ class Observer {
     boolean isRotating = false;
 
     public void Observe() {
-        translate(x, y, z);
-        rotateX(rotX + (2 * PI / 10));
+        translate(pos.x, pos.y, pos.z);
+        rotateX(rotX);
         rotateY(rotY);
         rotateZ(rotZ);
+    }
+
+    public Vector3 ScreenToWorldSpace(float x, float y) {
+        float cameraScale = 1 + (Camera.pos.z/-50 / 100); // -50 so negative Z values represent backwards zoom.
+
+        float newX = (x - Camera.pos.x) * cameraScale;
+        float newY = (y - Camera.pos.y) * cameraScale;
+        float newZ = Camera.pos.z; // TODO: This needs further implementation.
+
+        return new Vector3(newX, newY, newZ);
     }
 }
 
@@ -198,10 +231,17 @@ class MasterObserver {
 
             pushMatrix();
 
-            // if (target.beingMoved) {
-            //     target.pos.x = newPos.x;
-            //     target.pos.y = newPos.y;
-            // }
+            if (target.beingMoved) {
+                stroke(target.strokeColour, target.alpha);
+
+                target.pos.x += mouseX - lastMouseX;
+                target.pos.y += mouseY - lastMouseY;
+
+            } else if (target.hovered) {
+                stroke(target.strokeColour, target.alpha / 2);
+            } else {
+                noStroke();
+            }
 
             translate(target.pos.x, target.pos.y, target.pos.z);
             sphere(target.w);
@@ -283,19 +323,13 @@ class MasterObserver {
     public void ParseKeyTriggers() {
         if (keyPressed) {
             if (key == ' ' && Camera.isPanning) { // If key held
-                Camera.x += mouseX - lastMouseX;
-                Camera.y += mouseY - lastMouseY;
-
-                lastMouseX = mouseX;
-                lastMouseY = mouseY;
+                Camera.pos.x += mouseX - lastMouseX;
+                Camera.pos.y += mouseY - lastMouseY;
             }
 
             if (keyCode == SHIFT && Camera.isRotating) {
                 Camera.rotX += radians(mouseY - lastMouseY);
                 Camera.rotY += radians(mouseX - lastMouseX);
-
-                lastMouseY = mouseY;
-                lastMouseX = mouseX;
             }
         } else {
             if (Camera.isPanning) Camera.isPanning = false;
@@ -304,6 +338,9 @@ class MasterObserver {
     }
 
     public void ParseMouseTriggers() {
+        // Vector3 instance = Camera.ScreenToWorldSpace(mouseX, mouseY); // Shouldn't be used for 2D elements.
+        Vector2 instance = new Vector2(mouseX, mouseY);
+
         float threshold = taskMenu.w + 200;
 
         for (int i = 0; i < UI.currentButtonElements.size(); i++) {
@@ -312,6 +349,26 @@ class MasterObserver {
             if (mouseX > target.pos.x && mouseX < target.pos.x + target.w && mouseY > target.pos.y && mouseY < target.pos.y + target.h) {
                 target.onMouseHover();
             } else if (target.hovered) {
+                target.hovered = false;
+            }
+        }
+
+        for (int i = 0; i < UI.currentAtoms.size(); i++) {
+            SpatialSphere target = UI.currentAtoms.get(i);
+
+            if (!target.active) continue;
+
+            Vector2 boundaryStart = target.WorldStartToScreenSpace();
+            Vector2 boundaryEnd = target.WorldEndToScreenSpace();
+
+            // State 2 - Select object for movement on click
+            if (instance.x >= boundaryStart.x &&
+                instance.x <= boundaryEnd.x &&
+                instance.y >= boundaryStart.y &&
+                instance.y <= boundaryEnd.y)
+            {
+                target.onMouseHover();
+            } else {
                 target.hovered = false;
             }
         }
@@ -350,12 +407,6 @@ class Vector3 {
         this.y = y;
         this.z = z;
     }
-
-    public Vector2 WorldToScreenSpace() {
-        float tempX = screenX(x, y, z);
-        float tempY = screenY(x, y, z);
-        return new Vector2(tempX, tempY);
-    }
 }
 
 class ObserverElement{
@@ -380,6 +431,9 @@ class ObserverElement{
     protected int fadeDuration = 1000;
 
     ObserverElement(float w, float h, int colour, boolean startActive) {
+        this.w = w;
+        this.h = h;
+
         this.colour = colour;
         this.active = startActive;
         this.faded = !this.active;
@@ -420,6 +474,10 @@ class ObserverElement{
             }
         }
     }
+
+    public void onMouseHover() {
+        this.hovered = true;
+    }
 }
 
 class ObserverElement2D extends ObserverElement {
@@ -429,7 +487,7 @@ class ObserverElement2D extends ObserverElement {
     // Use: A container element with static positioning relative to the screen.
     public ObserverElement2D(float x, float y, float w, float h, int colour, boolean startActive){
         super(w, h, colour, startActive);
-        pos = new Vector2(x, y);
+        this.pos = new Vector2(x, y);
 
         UI.current2DElements.add(this);
     }
@@ -463,7 +521,7 @@ class ObserverElement3D extends ObserverElement {
     // Use: An initial parent element that governs a chain. Its children are not positioned relatively but are BOUND.
     public ObserverElement3D(float x, float y, float z, float w, float h, int colour, boolean startActive){
         super(w, h, colour, startActive);
-        pos = new Vector3(x, y, z);
+        this.pos = new Vector3(x, y, z);
 
         UI.current3DElements.add(this);
     }
@@ -473,6 +531,20 @@ class ObserverElement3D extends ObserverElement {
         this(x, y, z, w, h, colour, startActive);
         this.parent = parent;
         parent.children.add(this);
+    }
+
+    // Returns coordinates of the starting positions of an object boundary in CARTESIAN method.
+    public Vector2 WorldStartToScreenSpace() {
+        float tempX = screenX(pos.x, pos.y, pos.z);
+        float tempY = screenY(pos.x, pos.y, pos.z);
+        return new Vector2(tempX, tempY);
+    }
+
+    // Returns coordinates of the ending positions of an object boundary in CARTESIAN method.
+    public Vector2 WorldEndToScreenSpace() {
+        float tempX = screenX(pos.x + w, pos.y, pos.z);
+        float tempY = screenY(pos.x, pos.y + h, pos.z);
+        return new Vector2(tempX, tempY);
     }
 }
 
@@ -524,10 +596,6 @@ class Button extends ObserverElement2D {
     public void onMouseClicked(){
         event.Perform();
     }
-
-    public void onMouseHover() {
-        this.hovered = true;
-    }
 }
 
 // OBJECT Element: Sphere
@@ -543,6 +611,14 @@ class SpatialSphere extends ObserverElement3D {
     SpatialSphere(float x, float y, float z, float r, int colour, boolean startActive, ObserverElement3D parent) {
         super(x, y, z, r, r, colour, startActive, parent);
         UI.currentAtoms.add(this);
+    }
+
+    // Returns coordinates of the starting positions of an object boundary in CARTESIAN method.
+    public @Override // Overriden because sphere's drawing method doesn't act in a "cartesian" way and spills "negatively".
+    Vector2 WorldStartToScreenSpace() {
+        float tempX = screenX(pos.x - w, pos.y, pos.z);
+        float tempY = screenY(pos.x, pos.y - h, pos.z);
+        return new Vector2(tempX, tempY);
     }
 }
 interface Event {

@@ -9,6 +9,9 @@ Observer Camera;
 
 void setup() {
     size(1280, 720, P3D);
+    // Experimental FOV settings.
+    // float cameraZ = (height / 2.0) / tan(PI/2.0/2.0);
+    // perspective(PI/2.0, 16f/9f, cameraZ/10.0, cameraZ*10.0);
 
     float screenW = width;
     float screenH = height;
@@ -27,9 +30,9 @@ void setup() {
     Button taskMenuButton2 = new Button(10, 19, 80, 5, color(150, 200, 150), true, eventLib[1], taskMenu);
     Button taskMenuButton3 = new Button(10, 26, 80, 5, color(150, 150, 200), true, eventLib[0], taskMenu);
 
-    SpatialSphere myNewSphere = new SpatialSphere(500, 500, 300, 50, color(135, 135, 135), true);
-    SpatialSphere myNewSphere2 = new SpatialSphere(700, 500, 300, 50, color(185, 135, 135), true);
-    SpatialSphere myNewSphere3 = new SpatialSphere(900, 500, 300, 50, color(135, 135, 185), true);
+    SpatialSphere myNewSphere = new SpatialSphere(500, 500, -1000, 50, color(135, 135, 135), true);
+    SpatialSphere myNewSphere2 = new SpatialSphere(700, 500, -1000, 50, color(185, 135, 135), true);
+    SpatialSphere myNewSphere3 = new SpatialSphere(900, 500, -1000, 50, color(135, 135, 185), true);
 }
 
 void draw() {
@@ -43,22 +46,30 @@ void draw() {
     lights();
 
     Camera.Observe();
-    UI.Draw3DElements();
+    UI.Draw3DElements(); // TODO: Change draw order to give 2D elements priority.
+
+    UI.lastMouseX = mouseX;
+    UI.lastMouseY = mouseY;
 }
 
 void mouseClicked() {
     int instanceScrX = mouseX;
     int instanceScrY = mouseY;
 
-    Vector2 instance = new Vector2(instanceScrX, instanceScrY);
+    // Vector3 instance = Camera.ScreenToWorldSpace(instanceScrX, instanceScrY);
+    Vector2 instance = new Vector2(mouseX, mouseY);
 
     for (int i = 0; i < UI.currentButtonElements.size(); i++) { // buttons don't use standardised instance coordinates, because they are 2D elements they only need to check screen relative coordinates
         Button target = UI.currentButtonElements.get(i);
 
         if (!target.active) continue;
 
-        if (instanceScrX >= target.pos.x && instanceScrX <= (target.pos.x + target.w) &&
-        instanceScrY >= target.pos.y && instanceScrY <= (target.pos.y + target.h)) {
+        if (instanceScrX >= target.pos.x &&
+            instanceScrX <= target.pos.x + target.w &&
+            instanceScrY >= target.pos.y &&
+            instanceScrY <= target.pos.y + target.h
+        )
+        {
             target.onMouseClicked();
             return;
         }
@@ -68,6 +79,8 @@ void mouseClicked() {
 
     for (int i = 0; i < UI.currentAtoms.size(); i++) {
         SpatialSphere target = UI.currentAtoms.get(i);
+
+        if (!target.active) continue;
 
         if (closestAtom.x == 0) {
             closestAtom.x = target.pos.x;
@@ -86,21 +99,33 @@ void mouseClicked() {
 
         // State 1 - Move object to mouse position on click
         if (target.beingMoved) {
-            target.pos.x = instance.x;
-            target.pos.y = instance.y;
             target.beingMoved = false;
             println("Placing object.");
             return;
         }
 
-        // State 2 - Select object for movement on click
-        if (instance.x >= target.pos.x - target.w && instance.x <= (target.pos.x + target.w) &&
-        instance.y >= target.pos.y - target.h && instance.y <= (target.pos.y + target.h)) {
-            if (target.active) {
-                target.beingMoved = true;
-                println("Move is registered");
-                return; // remove this line to create a weird morphing glitch between two spheres
-            }
+        Vector2 boundaryStart = target.WorldStartToScreenSpace();
+        Vector2 boundaryEnd = target.WorldEndToScreenSpace();
+
+        // State 2 - Select object on click
+        if (instance.x >= boundaryStart.x &&
+            instance.x <= boundaryEnd.x &&
+            instance.y >= boundaryStart.y &&
+            instance.y <= boundaryEnd.y)
+        {
+            target.beingMoved = true;
+            println("Move is registered");
+            return;
+        }
+
+        if (instance.x >= boundaryStart.x * -1 &&
+            instance.x <= boundaryEnd.x * -1 &&
+            instance.y >= boundaryStart.y * -1 &&
+            instance.y <= boundaryEnd.y * -1)
+        {
+            target.beingMoved = true;
+            println("Move is registered");
+            return;
         }
     }
 }
@@ -115,8 +140,8 @@ void keyPressed() {
 
 void mouseWheel(MouseEvent event) {
     if (event.getCount() < 0) {
-        Camera.z += 50;
+        Camera.pos.z += 50;
     } else {
-        Camera.z -= 50;
+        Camera.pos.z -= 50;
     }
 }

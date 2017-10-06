@@ -62,6 +62,8 @@ class MasterObserver {
 
             if (!target.enabled || !target.active) continue;
 
+            MouseListener.start(i);
+
             fill(target.colour);
 
             pushMatrix();
@@ -83,6 +85,8 @@ class MasterObserver {
 
             popMatrix();
         }
+        
+        MouseListener.stop();
     }
 
     void DrawFadeElement(ObserverElement2D target) {
@@ -175,6 +179,17 @@ class MasterObserver {
     void ParseMouseTriggers() {
         // Vector3 instance = Camera.ScreenToWorldSpace(mouseX, mouseY); // Shouldn't be used for 2D elements.
         Vector2 instance = new Vector2(mouseX, mouseY);
+
+        int id = MouseListener.get(mouseX, mouseY);
+        if (id >= 0) {
+          SpatialSphere target = UI.currentAtoms.get(id);
+          target.onMouseHover();
+        } else {
+           for (int i = 0; i < UI.currentAtoms.size(); i++) {
+              SpatialSphere target = UI.currentAtoms.get(i);
+              target.hovered = false;
+           } 
+        }
 
         float threshold = taskMenu.w + 200;
 

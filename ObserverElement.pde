@@ -1,4 +1,4 @@
-class Vector2 { // TODO: Make all objects utilise Vector2 and Vector3 positional types.
+class Vector2 {
     public float x;
     public float y;
 

@@ -1,11 +1,13 @@
 import java.util.ArrayList;
+import picking.*;
 
 // Invoking Master UI class //
 MasterObserver UI = new MasterObserver();
 
-// Globalizing specific UI elements //
-ObserverElement2D taskMenu;
+// "Globalizing" specific UI elements //
 Observer Camera;
+ObserverElement2D taskMenu;
+Picker MouseListener;
 
 void setup() {
     size(1280, 720, P3D);
@@ -15,9 +17,10 @@ void setup() {
 
     float screenW = width;
     float screenH = height;
-
+    
     Camera = new Observer();
     taskMenu = new Menu(0, 0, screenW*0.2, screenH, color(165, 165, 235), true);
+    MouseListener = new Picker(this);
 
     ObserverEvents events = new ObserverEvents();
 
@@ -58,6 +61,14 @@ void mouseClicked() {
 
     // Vector3 instance = Camera.ScreenToWorldSpace(instanceScrX, instanceScrY);
     Vector2 instance = new Vector2(mouseX, mouseY);
+
+    int id = MouseListener.get(mouseX, mouseY);
+    
+    if (id >= 0) {
+      SpatialSphere target = UI.currentAtoms.get(id);
+      
+      target.beingMoved = !target.beingMoved;
+    }
 
     for (int i = 0; i < UI.currentButtonElements.size(); i++) { // buttons don't use standardised instance coordinates, because they are 2D elements they only need to check screen relative coordinates
         Button target = UI.currentButtonElements.get(i);

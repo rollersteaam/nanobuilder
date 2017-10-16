@@ -1,3 +1,4 @@
+import java.util.Collections;
 import java.util.ArrayList;
 import picking.*;
 
@@ -24,7 +25,7 @@ void setup() {
 
     ObserverEvents events = new ObserverEvents();
 
-    Event[] eventLib = new Event[3];
+    Function[] eventLib = new Function[3];
     eventLib[0] = events.new PrintMessage("" + taskMenu.colour);
     eventLib[1] = events.new PrintMessage("Welcome to Nanobuilder.");
     eventLib[2] = events.new PrintMessage("This message is in an array!");

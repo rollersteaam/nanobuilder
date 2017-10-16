@@ -1,9 +1,9 @@
-interface Event {
-    void Perform();
+interface Function {
+    void Call();
 }
 
 class ObserverEvents {
-    class PrintMessage implements Event {
+    class PrintMessage implements Function {
         String expStr;
 
         PrintMessage(String expStr) {
@@ -16,7 +16,7 @@ class ObserverEvents {
         }
     }
 
-    class RotateCameraY implements Event {
+    class RotateCameraY implements Function {
         void Perform() {
             Camera.rotY += radians(10);
             println("Rotating");

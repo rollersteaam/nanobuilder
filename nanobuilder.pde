@@ -9,6 +9,8 @@ MasterObserver UI = new MasterObserver();
 Observer Camera;
 ObserverElement2D taskMenu;
 Picker MouseListener;
+MasterTimer masterTimer = new MasterTimer();
+Time Time = new Time();
 
 void setup() {
     size(1280, 720, P3D);
@@ -40,7 +42,10 @@ void setup() {
 }
 
 void draw() {
+    Time.CalculateDeltaTime();
+    
     background(215, 215, 255);
+    masterTimer.Tick();
 
     UI.ParseKeyTriggers();
     UI.ParseMouseTriggers();

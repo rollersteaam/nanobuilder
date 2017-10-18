@@ -10,14 +10,14 @@ class ObserverEvents {
             this.expStr = expStr;
         }
 
-        void Perform()
+        void Call()
         {
             println("You clicked on me, " + expStr);
         }
     }
 
     class RotateCameraY implements Function {
-        void Perform() {
+        void Call() {
             Camera.rotY += radians(10);
             println("Rotating");
         }

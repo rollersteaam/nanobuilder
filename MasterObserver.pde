@@ -1,31 +1,3 @@
-class Observer {
-    Vector3 pos = new Vector3(0, 0, 0);
-
-    float rotX;
-    float rotY;
-    float rotZ;
-
-    boolean isPanning = false;
-    boolean isRotating = false;
-
-    void Observe() {
-        translate(pos.x, pos.y, pos.z);
-        rotateX(rotX);
-        rotateY(rotY);
-        rotateZ(rotZ);
-    }
-
-    Vector3 ScreenPosToWorldPos(float x, float y) {
-        float cameraScale = 1 + (pos.z/-50 / 100 * 100); // -50 so negative Z values represent backwards zoom.
-
-        float newX = (x - pos.x) * cameraScale;
-        float newY = (y - pos.y) * cameraScale;
-        float newZ = pos.z; // TODO: This needs further implementation.
-
-        return new Vector3(newX, newY, newZ);
-    }
-}
-
 class MasterObserver {
     public ArrayList<ObserverElement> currentGUIElements = new ArrayList<ObserverElement>();
     public ArrayList<ObserverElement2D> current2DElements = new ArrayList<ObserverElement2D>();
@@ -165,18 +137,15 @@ class MasterObserver {
 
     void ParseKeyTriggers() {
         if (keyPressed) {
-            if (key == ' ' && camera.isPanning) { // If key held
+            if (key == ' ') { // If key held
                 camera.pos.x += mouseX - lastMouseX;
                 camera.pos.y += mouseY - lastMouseY;
             }
 
-            if (keyCode == SHIFT && camera.isRotating) {
-                camera.rotX += radians(mouseY - lastMouseY);
-                camera.rotY += radians(mouseX - lastMouseX);
+            if (keyCode == SHIFT) {
+                camera.rot.x += radians(mouseY - lastMouseY);
+                camera.rot.y += radians(mouseX - lastMouseX);
             }
-        } else {
-            if (camera.isPanning) camera.isPanning = false;
-            if (camera.isRotating) camera.isRotating = false;
         }
     }
 

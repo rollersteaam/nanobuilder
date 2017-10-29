@@ -1,0 +1,3 @@
+interface IFunction {
+    void Call();
+}

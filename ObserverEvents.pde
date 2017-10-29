@@ -1,9 +1,5 @@
-interface Function {
-    void Call();
-}
-
 class ObserverEvents {
-    class PrintMessage implements Function {
+    class PrintMessage implements IFunction {
         String expStr;
 
         PrintMessage(String expStr) {
@@ -16,9 +12,9 @@ class ObserverEvents {
         }
     }
 
-    class RotateCameraY implements Function {
+    class RotateCameraY implements IFunction {
         void Call() {
-            camera.rotY += radians(10);
+            camera.rot.y += radians(10);
             println("Rotating");
         }
     }

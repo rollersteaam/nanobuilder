@@ -17,7 +17,7 @@ class Timer {
      if (onIteration != null)
        onIteration.Call();
      
-     duration -= Time.DeltaTime();
+     duration -= time.DeltaTime();
      
      if (duration <= 0) {
         onEnd.Call();

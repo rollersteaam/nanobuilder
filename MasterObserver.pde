@@ -15,12 +15,12 @@ class Observer {
         rotateZ(rotZ);
     }
 
-    Vector3 ScreenToWorldSpace(float x, float y) {
-        float cameraScale = 1 + (Camera.pos.z/-50 / 100); // -50 so negative Z values represent backwards zoom.
+    Vector3 ScreenPosToWorldPos(float x, float y) {
+        float cameraScale = 1 + (pos.z/-50 / 100 * 100); // -50 so negative Z values represent backwards zoom.
 
-        float newX = (x - Camera.pos.x) * cameraScale;
-        float newY = (y - Camera.pos.y) * cameraScale;
-        float newZ = Camera.pos.z; // TODO: This needs further implementation.
+        float newX = (x - pos.x) * cameraScale;
+        float newY = (y - pos.y) * cameraScale;
+        float newZ = pos.z; // TODO: This needs further implementation.
 
         return new Vector3(newX, newY, newZ);
     }
@@ -62,7 +62,7 @@ class MasterObserver {
 
             if (!target.enabled || !target.active) continue;
 
-            MouseListener.start(i);
+            picker.start(i);
 
             fill(target.colour);
 
@@ -71,8 +71,12 @@ class MasterObserver {
             if (target.beingMoved) {
                 stroke(target.strokeColour, target.alpha);
 
-                target.pos.x += mouseX - lastMouseX;
-                target.pos.y += mouseY - lastMouseY;
+                Vector3 lastWorldMouse = camera.ScreenPosToWorldPos(lastMouseX, lastMouseY);
+                Vector3 worldMouse = camera.ScreenPosToWorldPos(mouseX, mouseY);
+                //target.pos.x += mouseX - lastMouseX;
+                target.pos.x += worldMouse.x - lastWorldMouse.x;
+                //target.pos.y += mouseY - lastMouseY;
+                target.pos.y += worldMouse.y - lastWorldMouse.y;
 
             } else if (target.hovered) {
                 stroke(target.strokeColour, target.alpha / 2);
@@ -86,7 +90,7 @@ class MasterObserver {
             popMatrix();
         }
         
-        MouseListener.stop();
+        picker.stop();
     }
 
     void DrawFadeElement(ObserverElement2D target) {
@@ -161,69 +165,51 @@ class MasterObserver {
 
     void ParseKeyTriggers() {
         if (keyPressed) {
-            if (key == ' ' && Camera.isPanning) { // If key held
-                Camera.pos.x += mouseX - lastMouseX;
-                Camera.pos.y += mouseY - lastMouseY;
+            if (key == ' ' && camera.isPanning) { // If key held
+                camera.pos.x += mouseX - lastMouseX;
+                camera.pos.y += mouseY - lastMouseY;
             }
 
-            if (keyCode == SHIFT && Camera.isRotating) {
-                Camera.rotX += radians(mouseY - lastMouseY);
-                Camera.rotY += radians(mouseX - lastMouseX);
+            if (keyCode == SHIFT && camera.isRotating) {
+                camera.rotX += radians(mouseY - lastMouseY);
+                camera.rotY += radians(mouseX - lastMouseX);
             }
         } else {
-            if (Camera.isPanning) Camera.isPanning = false;
-            if (Camera.isRotating) Camera.isRotating = false;
+            if (camera.isPanning) camera.isPanning = false;
+            if (camera.isRotating) camera.isRotating = false;
         }
     }
 
     void ParseMouseTriggers() {
-        // Vector3 instance = Camera.ScreenToWorldSpace(mouseX, mouseY); // Shouldn't be used for 2D elements.
         Vector2 instance = new Vector2(mouseX, mouseY);
-
-        int id = MouseListener.get(mouseX, mouseY);
-        if (id >= 0) {
-          SpatialSphere target = UI.currentAtoms.get(id);
-          target.onMouseHover();
-        } else {
-           for (int i = 0; i < UI.currentAtoms.size(); i++) {
-              SpatialSphere target = UI.currentAtoms.get(i);
-              target.hovered = false;
-           } 
-        }
-
         float threshold = taskMenu.w + 200;
 
-        for (int i = 0; i < UI.currentButtonElements.size(); i++) {
-            Button target = UI.currentButtonElements.get(i);
+        Button button = UI.getButtonAtPosition(instance);
+        
+        if (button != null)
+             button.hovered = true;
+             
+         //for (Button _button : UI.currentButtonElements) {
+         //    if (_button != button)
+         //        _button.hovered = false;
+         //}
+         for (int i = 0; i < UI.currentButtonElements.size(); i++) {
+              Button target = UI.currentButtonElements.get(i);
+              
+              if (target != button)
+                  target.hovered = false;
+         }
+        
+        SpatialSphere atom = UI.getAtomAtPosition(instance);
+        
+        if (atom != null)
+             atom.hovered = true;
+        
+         for (SpatialSphere _atom : UI.currentAtoms) {
+             if (_atom != atom)
+                 _atom.hovered = false;
+         }
 
-            if (mouseX > target.pos.x && mouseX < target.pos.x + target.w && mouseY > target.pos.y && mouseY < target.pos.y + target.h) {
-                target.onMouseHover();
-            } else if (target.hovered) {
-                target.hovered = false;
-            }
-        }
-
-        for (int i = 0; i < UI.currentAtoms.size(); i++) {
-            SpatialSphere target = UI.currentAtoms.get(i);
-
-            if (!target.active) continue;
-
-            Vector2 boundaryStart = target.WorldStartToScreenSpace();
-            Vector2 boundaryEnd = target.WorldEndToScreenSpace();
-
-            // State 2 - Select object for movement on click
-            if (instance.x >= boundaryStart.x &&
-                instance.x <= boundaryEnd.x &&
-                instance.y >= boundaryStart.y &&
-                instance.y <= boundaryEnd.y)
-            {
-                target.onMouseHover();
-            } else {
-                target.hovered = false;
-            }
-        }
-
-        // TODO: Change into a combined if statement
         if (mouseX < threshold) {
           taskMenu.setAlpha( int( 255 - abs(taskMenu.w - mouseX) ) );
           if (!taskMenu.active) taskMenu.toggleActive();
@@ -234,6 +220,82 @@ class MasterObserver {
         if (mouseX > threshold) {
           taskMenu.setAlpha(0);
           if (taskMenu.active) taskMenu.toggleActive();
+        }
+    }
+    
+    Button getButtonAtPosition(Vector2 target) {        
+        for (Button button : UI.currentButtonElements) {
+            if (!button.active) continue;
+    
+            if (target.x >= button.pos.x &&
+                target.x <= button.pos.x + button.w &&
+                target.y >= button.pos.y &&
+                target.y <= button.pos.y + button.h)
+            {
+                return button;
+            }
+        }
+        
+        return null;
+    }
+    
+    SpatialSphere getAtomAtPosition(Vector2 target) {
+        Vector2 closestAtom = new Vector2(0, 0);
+        
+        for (SpatialSphere atom : UI.currentAtoms) {
+            if (!atom.active) continue;
+    
+            if (closestAtom.x == 0 && closestAtom.y == 0) {
+                closestAtom.x = atom.pos.x;
+                closestAtom.y = atom.pos.y;
+            }
+    
+            if (dist(target.x, target.y, atom.pos.x, atom.pos.y) < dist(target.x, target.y, atom.pos.x, atom.pos.y)) {
+                closestAtom.x = atom.pos.x;
+                closestAtom.y = atom.pos.y;
+            }
+        }
+        
+        println(target.x + " compared to " + closestAtom.x + " and ");
+        println(target.y + " compared to " + closestAtom.y + " done ");
+        
+        int resolvedId = picker.get(round(target.x), round(target.y));
+        
+        if (resolvedId > UI.currentAtoms.size()) // Resolve ID can return higher than no of elements, this is a bug in the library.
+            resolvedId = -1;
+        
+        if (resolvedId == -1)
+            return null;
+            
+        return UI.currentAtoms.get(resolvedId);
+    }
+    
+    void checkForButtonClick(Vector2 target) {
+        Button clickedButton = UI.getButtonAtPosition(target); 
+
+        if (clickedButton != null) {
+             clickedButton.onMouseClicked();
+        }
+    }
+    
+    SpatialSphere currentlyMovingAtom;
+    
+    void checkForAtomClick(Vector2 target) {
+        SpatialSphere clickedAtom = UI.getAtomAtPosition(target);
+    
+        if (clickedAtom != null) {
+             if (currentlyMovingAtom == null)
+                 currentlyMovingAtom = clickedAtom;
+             
+             currentlyMovingAtom.beingMoved = false;
+             clickedAtom.beingMoved = true;
+             
+             currentlyMovingAtom = clickedAtom;
+        } else {
+            for (int i = 0; i < UI.currentAtoms.size(); i++) {
+                SpatialSphere atom = UI.currentAtoms.get(i);
+                atom.beingMoved = false;
+            }
         }
     }
 }

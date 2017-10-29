@@ -18,7 +18,7 @@ class ObserverEvents {
 
     class RotateCameraY implements Function {
         void Call() {
-            Camera.rotY += radians(10);
+            camera.rotY += radians(10);
             println("Rotating");
         }
     }

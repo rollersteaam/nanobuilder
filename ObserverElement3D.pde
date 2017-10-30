@@ -6,7 +6,7 @@ class ObserverElement3D extends ObserverElement {
         super(w, h, colour, startActive);
         this.pos = new Vector3(x, y, z);
 
-        UI.current3DElements.add(this);
+        ui.current3DElements.add(this);
     }
 
     // Use: A child element that is not positioned relatively. Its movement is BOUND to its parent.
@@ -28,5 +28,32 @@ class ObserverElement3D extends ObserverElement {
         float tempX = screenX(pos.x + w, pos.y, pos.z);
         float tempY = screenY(pos.x, pos.y + h, pos.z);
         return new Vector2(tempX, tempY);
+    }
+    
+    void tick() {
+        if (!enabled || !active) return;
+        
+        pushMatrix();
+
+        if (beingMoved) {
+            stroke(strokeColour, alpha);
+
+            Vector3 lastWorldMouse = camera.ScreenPosToWorldPos(ui.lastMouseX, ui.lastMouseY);
+            Vector3 worldMouse = camera.ScreenPosToWorldPos(mouseX, mouseY);
+            //target.pos.x += mouseX - lastMouseX;
+            pos.x += worldMouse.x - lastWorldMouse.x;
+            //target.pos.y += mouseY - lastMouseY;
+            pos.y += worldMouse.y - lastWorldMouse.y;
+
+        } else if (hovered) {
+            stroke(strokeColour, alpha / 2);
+        } else {
+            noStroke();
+        }
+
+        translate(pos.x, pos.y, pos.z);
+        sphere(w);
+
+        popMatrix();
     }
 }

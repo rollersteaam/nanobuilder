@@ -1,58 +1,47 @@
 class Timer {
-	MasterTimer masterTimer;
-	String id;
-	float duration; 
-	Function onEnd;
-	Function onIteration;
-	 
-	Timer(MasterTimer masterTimer, String id, float duration, Function onEnd, Function onIteration) {
-		this.masterTimer = masterTimer;
-		this.id = id;
-		this.duration = duration;
-		this.onEnd = onEnd;
-		this.onIteration = onIteration;
-	}
-	
-	void Tick() {
-		if (onIteration != null)
-			onIteration.apply(null);
-		
-		duration -= time.DeltaTime();
-		
-		if (duration <= 0) {
-			onEnd.apply(null);
-			masterTimer.Destroy(id);
-		}
-	}
+    String id;
+    float duration;
+    IFunction onEnd;
+    IFunction onIteration;
+     
+    Timer(String id, float duration, IFunction onEnd, IFunction onIteration) {
+        this.id = id;
+        this.duration = duration;
+        this.onEnd = onEnd;
+        this.onIteration = onIteration;
+        masterTimer.activeTimers.put(id, this);
+    }
+    
+    void tick() {
+        if (onIteration != null)
+            onIteration.call();
+        
+        duration -= time.DeltaTime();
+        
+        if (duration <= 0) {
+            onEnd.call();
+            masterTimer.activeTimers.remove(id);
+        }
+    }
+    
+    void destroy() {
+        masterTimer.activeTimers.remove(id);
+    }
+    
+    void destroy(boolean allowFinish) {
+        if (allowFinish)
+            onEnd.call();
+        destroy();
+    }
 }
 
 class MasterTimer {
 	HashMap<String, Timer> activeTimers = new HashMap();
 	
-	void Tick() {
+	void tick() {
 		 for (int i = 0; i < activeTimers.size(); i++) {
 		 	Timer timer = activeTimers.get(i);
-		 	timer.Tick();
+		 	timer.tick();
 		 }
-        //for (Timer timer : activeTimers) {
-        //    timer.Tick();
-        //}
-	}
-	
-	Timer Create(String id, float duration, Function onEnd, Function onIteration) {
-		Timer timer = new Timer(this, id, duration, onEnd, onIteration);
-		activeTimers.put(id, timer);
-		return timer;
-	}
-	
-	Timer Create(String id, float duration, Function onEnd) {
-		Timer timer = new Timer(this, id, duration, onEnd, null);
-		activeTimers.put(id, timer);
-		return timer;
-	}
-	
-	void Destroy(String id) {
-		Timer timer = activeTimers.get(id);
-		timer.onEnd.apply(null);
 	}
 }

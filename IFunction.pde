@@ -1,3 +1,3 @@
 interface IFunction {
-    void Call();
+    void call();
 }

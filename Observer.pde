@@ -2,7 +2,7 @@ class Observer {
     Vector3 pos = new Vector3(0, 0, 0);
     Vector3 rot = new Vector3(0, 0, 0);
 
-    void Observe() {
+    void observe() {
         translate(pos.x, pos.y, pos.z);
         rotateX(rot.x);
         rotateY(rot.y);

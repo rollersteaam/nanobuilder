@@ -7,7 +7,7 @@ class ObserverElement2D extends ObserverElement {
         super(w, h, colour, startActive);
         this.pos = new Vector2(x, y);
 
-        UI.current2DElements.add(this);
+        ui.current2DElements.add(this);
     }
 
     // Use: A child element with STATIC relative positioning in a container.
@@ -30,5 +30,18 @@ class ObserverElement2D extends ObserverElement {
         this.pos.y = parent.pos.y + (parent.h * y/100);
         this.w = (parent.w * w/100);
         this.h = (parent.h * h/100);
+    }
+    
+    void tick() {
+        if (!enabled || !active) return;
+
+        if (hovered) {
+            fill(red(colour) * 0.75, green(colour) * 0.75, blue(colour) * 0.75, alpha);
+        } else {
+            fill(colour, alpha);
+        }
+
+        stroke(strokeColour, alpha);
+        rect(pos.x, pos.y, w, h);
     }
 }

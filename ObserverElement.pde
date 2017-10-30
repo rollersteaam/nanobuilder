@@ -1,4 +1,4 @@
-class ObserverElement{
+abstract class ObserverElement { // Declared as abstract as an element is NEVER complete without a drawing definition.
     protected float w, h;
     protected color colour = color(35);
     protected color strokeColour = color(30);
@@ -27,7 +27,7 @@ class ObserverElement{
         this.active = startActive;
         this.faded = !this.active;
 
-        UI.currentGUIElements.add(this);
+        ui.currentGUIElements.add(this);
     }
 
     void setAlpha(int val) {
@@ -64,7 +64,12 @@ class ObserverElement{
         }
     }
 
-    void onMouseHover() {
+    // These functions are commonly "customly" implemented
+    abstract void tick();
+    
+    void hover() {
         this.hovered = true;
     }
+
+    void click() {}
 }

@@ -5,12 +5,12 @@
 class SpatialSphere extends ObserverElement3D {
     SpatialSphere(float x, float y, float z, float r, color colour, boolean startActive) {
         super(x, y, z, r, r, colour, startActive);
-        UI.currentAtoms.add(this);
+        ui.currentAtoms.add(this);
     }
 
     SpatialSphere(float x, float y, float z, float r, color colour, boolean startActive, ObserverElement3D parent) {
         super(x, y, z, r, r, colour, startActive, parent);
-        UI.currentAtoms.add(this);
+        ui.currentAtoms.add(this);
     }
 
     // Returns coordinates of the starting positions of an object boundary in CARTESIAN method.

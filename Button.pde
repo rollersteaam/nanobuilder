@@ -23,7 +23,8 @@ class Button extends ObserverElement2D {
         ui.currentButtonElements.add(this);
     }
 
-    void onMouseClicked(){
+    @Override
+    void click() {
         event.call();
     }
 }

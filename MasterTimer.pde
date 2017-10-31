@@ -16,7 +16,7 @@ class Timer {
         if (onIteration != null)
             onIteration.call();
         
-        duration -= time.DeltaTime();
+        duration -= time.deltaTime();
         
         if (duration <= 0) {
             onEnd.call();

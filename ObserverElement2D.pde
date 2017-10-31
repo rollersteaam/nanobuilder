@@ -33,7 +33,7 @@ class ObserverElement2D extends ObserverElement {
     }
     
     void tick() {
-        if (!enabled || !active) return;
+        picker.stop();
 
         if (hovered) {
             fill(red(colour) * 0.75, green(colour) * 0.75, blue(colour) * 0.75, alpha);

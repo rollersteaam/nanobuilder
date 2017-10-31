@@ -30,23 +30,17 @@ class ObserverElement3D extends ObserverElement {
         return new Vector2(tempX, tempY);
     }
     
-    void tick() {
-        if (!enabled || !active) return;
-        
+    void tick() {        
         pushMatrix();
+
+        fill(colour);
 
         if (beingMoved) {
             stroke(strokeColour, alpha);
-
-            Vector3 lastWorldMouse = camera.ScreenPosToWorldPos(ui.lastMouseX, ui.lastMouseY);
-            Vector3 worldMouse = camera.ScreenPosToWorldPos(mouseX, mouseY);
-            //target.pos.x += mouseX - lastMouseX;
-            pos.x += worldMouse.x - lastWorldMouse.x;
-            //target.pos.y += mouseY - lastMouseY;
-            pos.y += worldMouse.y - lastWorldMouse.y;
-
+            pos.x += mouseX - ui.lastMouseX;
+            pos.y += mouseY - ui.lastMouseY;
         } else if (hovered) {
-            stroke(strokeColour, alpha / 2);
+            stroke(strokeColour, alpha);
         } else {
             noStroke();
         }

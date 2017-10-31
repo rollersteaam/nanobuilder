@@ -7,7 +7,6 @@ abstract class ObserverElement { // Declared as abstract as an element is NEVER 
     protected ObserverElement parent;
     protected ArrayList<ObserverElement> children = new ArrayList<ObserverElement>();
 
-    protected boolean enabled = true;
     protected boolean active = true;
 
     protected boolean screenElement = false;
@@ -69,6 +68,10 @@ abstract class ObserverElement { // Declared as abstract as an element is NEVER 
     
     void hover() {
         this.hovered = true;
+    }
+
+    void unhover() {
+        this.hovered = false;
     }
 
     void click() {}

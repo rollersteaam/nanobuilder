@@ -454,9 +454,9 @@ void mouseWheel(MouseEvent event) {
     if (selectedAtom != null) {
         // The axis modifiers are inverted here on purpose.
         // TODO: Based on rotation stage (quarter) change increment decrement phase.
-        if (e > 0) {
+        if (e > 0) { // If scroll down
 
-            if (camera.rotY >= 180) {
+            if (camera.rotY >= 90 && camera.rotY <= 270) {
                selectedAtom.z -= 50 * camera.getXAxisModifier();
                selectedAtom.x += 50 * camera.getZAxisModifier();
             } else {
@@ -464,8 +464,8 @@ void mouseWheel(MouseEvent event) {
               selectedAtom.x -= 50 * camera.getZAxisModifier();
             }
               
-        } else {
-            if (camera.rotY >= 180) {
+        } else { // if scroll up
+            if (camera.rotY >= 90 && camera.rotY <= 270) {
                selectedAtom.z += 50 * camera.getXAxisModifier();
                selectedAtom.x -= 50 * camera.getZAxisModifier();
             } else {

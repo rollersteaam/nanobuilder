@@ -211,66 +211,54 @@ void draw() {
     }
 
 	if (selectedAtom != null) {
-        println(camera.getXAxisModifier());
-        println(camera.getZAxisModifier());
-
-        float _rotY = camera.getRotYDeg();
-
-        if (_rotY >= 90 && _rotY <= 270) { // if camera rotation in INVERSE region
-            selectedAtom.x -= ( mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z) ) * camera.getXAxisModifier();
-            // selectedAtom.z += (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * camera.getZAxisModifier();
-            // selectedAtom.z += (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * camera.getZAxisModifier();
-            // selectedAtom.z += (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * constrain( abs(sin(camera.rotY)), 0, 1 );
-        } else { // if camera rotation in NORMAL region
-            selectedAtom.x += ( mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z) ) * camera.getXAxisModifier();
-            // selectedAtom.z -= (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * camera.getZAxisModifier();
-            // selectedAtom.z -= (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * camera.getZAxisModifier();
-            // selectedAtom.z += (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * constrain( abs(sin(camera.rotY)), 0, 1 );
-        }
-
-        if (_rotY <= 360 && _rotY >= 180) {
-            selectedAtom.z -= (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * camera.getZAxisModifier();
-        } else {
-            selectedAtom.z += (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * camera.getZAxisModifier();
-        }
-
-        selectedAtom.y += mouseY - screenY(selectedAtom.x, selectedAtom.y, selectedAtom.z);
-        // selectedAtom.z -= (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * abs(sin(camera.rotY);
-        // selectedAtom.z += (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * camera.getZAxisModifier();
-
-        // println(selectedAtom.z);
-        // println(screenZ(selectedAtom.x, selectedAtom.y, selectedAtom.z));
-        println(round(camera.getRotYDeg() + 0.00));
-
-		selectedAtom.currentColor = color(135);
-
-        for (int y = 0; y < 5; y ++) {
-            for (int x = 0; x < 5; x ++) {
-                pushMatrix();
-                
-                translate(selectedAtom.x - 250, selectedAtom.y, selectedAtom.z - 250);
-                rotateX(PI/2);
-                stroke(255, 180);
-                fill(0, 0);
-                
-                rect(100 * x, 100 * y, 100, 100);
-                popMatrix();
+            println(camera.getXAxisModifier());
+            println(camera.getZAxisModifier());
+    
+            float _rotY = camera.getRotYDeg();
+    
+            if (_rotY >= 90 && _rotY <= 270) // if camera rotation in INVERSE region
+                selectedAtom.x -= ( mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z) ) * camera.getXAxisModifier();
+            else// if camera rotation in NORMAL region
+                selectedAtom.x += ( mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z) ) * camera.getXAxisModifier();
+    
+            if (_rotY <= 360 && _rotY >= 180)
+                selectedAtom.z -= (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * camera.getZAxisModifier();
+            else
+                selectedAtom.z += (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * camera.getZAxisModifier();
+    
+            selectedAtom.y += mouseY - screenY(selectedAtom.x, selectedAtom.y, selectedAtom.z);
+    
+            println(round(camera.getRotYDeg() + 0.00));
+    
+            selectedAtom.currentColor = color(135);
+    
+            for (int y = 0; y < 5; y ++) {
+                for (int x = 0; x < 5; x ++) {
+                    pushMatrix();
+                    
+                    translate(selectedAtom.x - 250, selectedAtom.y, selectedAtom.z - 250);
+                    rotateX(PI/2);
+                    stroke(255, 180);
+                    fill(0, 0);
+                    
+                    rect(100 * x, 100 * y, 100, 100);
+                    popMatrix();
+                }
             }
-        }
-
-        for (int y = 0; y < 5; y ++) {
-            for (int x = 0; x < 5; x ++) {
-                pushMatrix();
-                
-                translate(selectedAtom.x, selectedAtom.y - 250, selectedAtom.z + 250);
-                rotateY(PI/2);
-                stroke(255, 180);
-                fill(0, 0);
-                
-                rect(100 * x, 100 * y, 100, 100);
-                popMatrix();
+    
+            for (int y = 0; y < 5; y ++) {
+                for (int x = 0; x < 5; x ++) {
+                    pushMatrix();
+                    
+                    translate(selectedAtom.x, selectedAtom.y - 250, selectedAtom.z + 250);
+                    rotateY(PI/2);
+                    stroke(255, 180);
+                    fill(0, 0);
+                    
+                    rect(100 * x, 100 * y, 100, 100);
+                    popMatrix();
+                }
             }
-        }
 	}
 	
     // println(degrees(camera.rotY) % 360);
@@ -310,25 +298,10 @@ void mousePressed() {
 		
 		float screenPosZ = screenZ(atom.x, atom.y, atom.z);
 
-        // println(screenPosXNegativeLimit);
-        // println(screenPosXLimit);
-        // println(screenPosYNegativeLimit);
-        // println(screenPosYLimit);
-
-        // println(degrees(camera.rotY));
-
-        // println("NORMAL:");
-        // println(screenPosXNegativeLimit + " : " + mouseX + " : " + screenPosXLimit);
-        // println(screenPosYNegativeLimit + " : " + mouseY + " : " + screenPosYLimit);
-
 		if (mouseX >= screenPosXNegativeLimit && mouseX <= screenPosXLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYLimit) {
 			selectedAtom = atom;
             return;
         }
-
-        // println("INVERSE:");
-        // println(screenPosXLimit + " : " + mouseX + " : " + screenPosXNegativeLimit);
-        // println(screenPosYLimit + " : " + mouseY + " : " + screenPosYNegativeLimit);
 
 		if (mouseX >= screenPosXLimit && mouseX <= screenPosXNegativeLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYLimit) {
 			selectedAtom = atom;
@@ -482,11 +455,24 @@ void mouseWheel(MouseEvent event) {
         // The axis modifiers are inverted here on purpose.
         // TODO: Based on rotation stage (quarter) change increment decrement phase.
         if (e > 0) {
-            selectedAtom.z += 50 * camera.getXAxisModifier();
-            selectedAtom.x -= 50 * camera.getZAxisModifier();
+
+            if (camera.rotY >= 180) {
+               selectedAtom.z -= 50 * camera.getXAxisModifier();
+               selectedAtom.x += 50 * camera.getZAxisModifier();
+            } else {
+              selectedAtom.z += 50 * camera.getXAxisModifier();
+              selectedAtom.x -= 50 * camera.getZAxisModifier();
+            }
+              
         } else {
-            selectedAtom.z -= 50 * camera.getXAxisModifier();
-            selectedAtom.x += 50 * camera.getZAxisModifier();
+            if (camera.rotY >= 180) {
+               selectedAtom.z += 50 * camera.getXAxisModifier();
+               selectedAtom.x -= 50 * camera.getZAxisModifier();
+            } else {
+              selectedAtom.z -= 50 * camera.getXAxisModifier();
+              selectedAtom.x += 50 * camera.getZAxisModifier();
+            }
+            
         }
     }
 }

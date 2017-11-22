@@ -56,9 +56,9 @@ class Camera {
         float mod = 0;
 
         if (_rotY >= 0 && _rotY <= 180)
-            mod = (abs(_rotY - 90) / 90);
+            mod = (_rotY - 90) / 90;
         else if (_rotY >= 180 && _rotY <= 360)
-            mod = (abs(_rotY - 270) / 90);
+            mod = (_rotY - 270) / 90;
         
         return mod;
     }
@@ -67,12 +67,12 @@ class Camera {
         float _rotY = getRotYDeg();
         float mod = 0;
 
-        if (_rotY >= 0 && _rotY <= 90)
-            mod = (abs(_rotY) / 90);
-        else if (_rotY >= 90 && _rotY <= 270)
-            mod = (abs(_rotY - 180) / 90);
-        else if (_rotY >= 270 && _rotY <= 360)
-            mod = (abs(_rotY - 360) / 90);
+        if (_rotY <= 90)
+            mod = _rotY / 90;
+        else if (_rotY > 90 && _rotY <= 270)
+            mod = (_rotY - 180) / 90;
+        else if (_rotY > 270 && _rotY <= 360)
+            mod = (_rotY - 360) / 90;
 
         return mod;
     }
@@ -84,13 +84,13 @@ class Atom {
 	float z;
 	int r;
 
-    private color baseColor = color(random(0, 255), random(0, 255), random(0, 255));
+    private color baseColor = color(random(90, 255), random(90, 255), random(90, 255));
 	color currentColor = baseColor;
 
     Atom() {
-        this.x = random(-1000, 1000);
-        this.y = random(-660, 660);
-        this.z = random(-300, 300);
+        this.x = random(-5000, 5000);
+        this.y = random(-5000, 5000);
+        this.z = random(-5000, 5000);
         this.r = 100;
         atomList.add(this);
     }
@@ -133,7 +133,11 @@ void setup() {
     perspective(fov, float(width)/float(height), cameraZ/10.0 / 300, cameraZ*10.0 * 300);
     // perspective();
 
-	new Atom(0, 0, 50, 100);
+    new Atom(0, 0, 50, 100);
+    
+    for (int i = 0; i < 200; i++) {
+     new Atom(); 
+    }
 
   try { 
     robot = new Robot();
@@ -211,20 +215,20 @@ void draw() {
     }
 
 	if (selectedAtom != null) {
-            println(camera.getXAxisModifier());
-            println(camera.getZAxisModifier());
+            //println(camera.getXAxisModifier());
+            //println(camera.getZAxisModifier());
     
             float _rotY = camera.getRotYDeg();
     
             if (_rotY >= 90 && _rotY <= 270) // if camera rotation in INVERSE region
-                selectedAtom.x -= ( mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z) ) * camera.getXAxisModifier();
-            else// if camera rotation in NORMAL region
                 selectedAtom.x += ( mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z) ) * camera.getXAxisModifier();
+            else// if camera rotation in NORMAL region
+                selectedAtom.x -= ( mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z) ) * camera.getXAxisModifier();
     
             if (_rotY <= 360 && _rotY >= 180)
-                selectedAtom.z -= (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * camera.getZAxisModifier();
-            else
                 selectedAtom.z += (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * camera.getZAxisModifier();
+            else
+                selectedAtom.z -= (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * camera.getZAxisModifier();
     
             selectedAtom.y += mouseY - screenY(selectedAtom.x, selectedAtom.y, selectedAtom.z);
     
@@ -300,7 +304,7 @@ void mousePressed() {
 
 		if (mouseX >= screenPosXNegativeLimit && mouseX <= screenPosXLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYLimit) {
 			selectedAtom = atom;
-            return;
+                return;
         }
 
 		if (mouseX >= screenPosXLimit && mouseX <= screenPosXNegativeLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYLimit) {
@@ -396,9 +400,9 @@ class InputManager {
             if (selectedAtom == null)
                 return;
 
-            selectedAtom.x = camera.x;
-            selectedAtom.y = camera.y;
-            selectedAtom.z = camera.z;
+            selectedAtom.x = 0;
+            selectedAtom.y = 0;
+            selectedAtom.z = 0;
         }
 
         if (key == 'f') {
@@ -459,19 +463,23 @@ void mouseWheel(MouseEvent event) {
             if (camera.rotY >= 90 && camera.rotY <= 270) {
                selectedAtom.z -= 50 * camera.getXAxisModifier();
                selectedAtom.x += 50 * camera.getZAxisModifier();
+               println("Phase 1");
             } else {
               selectedAtom.z += 50 * camera.getXAxisModifier();
               selectedAtom.x -= 50 * camera.getZAxisModifier();
-            }
+              println("Phase 2");  
+          }
               
         } else { // if scroll up
             if (camera.rotY >= 90 && camera.rotY <= 270) {
                selectedAtom.z += 50 * camera.getXAxisModifier();
                selectedAtom.x -= 50 * camera.getZAxisModifier();
-            } else {
+               println("Phase 3");  
+          } else {
               selectedAtom.z -= 50 * camera.getXAxisModifier();
               selectedAtom.x += 50 * camera.getZAxisModifier();
-            }
+              println("Phase 4");  
+          }
             
         }
     }

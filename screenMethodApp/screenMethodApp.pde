@@ -23,10 +23,10 @@ void setup() {
 	// perspective();
 
     cam = new PeasyCam(this, 100);
-    cam.setActive(false);
+    cam.setActive(true);
     cam.setSuppressRollRotationMode();
 
-	new Atom(0, 0, 0, 100);
+	// new Atom(0, 0, 0, 100);
 	
 	for (int i = 0; i < 100; i++) {
 		new Atom();
@@ -55,7 +55,7 @@ void draw() {
     // camera(width/2.0 + camera.x, height/2.0 + camera.y, (height/2.0) / tan(PI*30.0 / 180.0) + camera.z, width/2.0 + camera.x, height/2.0 + camera.y, 0, 0, 1, 0);
 
 	// translate(camera.x, camera.y, camera.z);
-	translate(camera.x, 0, camera.z);
+	// translate(camera.x, 0, camera.z);
 	// rotateX(camera.rotX);
 	// rotateY(camera.rotY);
 	// rotateZ(camera.rotZ);
@@ -121,6 +121,14 @@ void mousePressed() {
 
 void keyPressed() {
 	activeInput.keyPressed();
+
+    // if (key == 'w') {
+    //     cam.setDistance(cam.getDistance() - 150);
+    // }
+
+    // if (key == 's') {
+    //     cam.setDistance(cam.getDistance() + 150);
+    // }
 }
 
 void keyReleased() {

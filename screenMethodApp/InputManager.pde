@@ -10,7 +10,12 @@ class InputManager {
 	
     boolean rotating;
 
+    int counter;
+
 	void evaluateActiveInput() {
+        counter++;
+        println("I love evaluating active input" + counter);
+
 		if (up)
 			// camera.y += 50;
             cam.pan(0, -50);
@@ -21,20 +26,47 @@ class InputManager {
 			
 		if (forward) {
 			camera.z += 50 * camera.getXAxisModifier();
+			// camera.z -= 1;
+
+            // cam.setDistance(camera.z);
+            // cam.pan(0, 50);
             camera.x -= 50 * camera.getZAxisModifier();
-            // cam.setDistance(cam.getDistance() - 50);
-            // float[] vecLookAt = cam.getLookAt();
+            // cam.setDistance(cam.getDistance() + 0.1, 0);
+            // cam.setDistance(-1, 0);
+            float[] vecLookAt = cam.getLookAt();
+            println(vecLookAt[0]);
+            println(vecLookAt[1]);
+            println(vecLookAt[2]);
             // println(cam.getDistance());
-            // cam.lookAt(vecLookAt[0], vecLookAt[1], vecLookAt[2], cam.getDistance() + camera.z);
+            cam.lookAt(vecLookAt[0] + camera.x, vecLookAt[1], vecLookAt[2] + camera.z, 0);
         }
 
 		if (back) {
 			camera.z -= 50 * camera.getXAxisModifier();
+            println("Moving backwards");
+			// camera.z += 50;
+
+            // cam.setDistance(camera.z);
             camera.x += 50 * camera.getZAxisModifier();
             // cam.setDistance(cam.getDistance() + 50);
             // float[] vecLookAt = cam.getLookAt();
             // println(cam.getDistance());
             // cam.lookAt(vecLookAt[0], vecLookAt[1], vecLookAt[2], cam.getDistance() - camera.z);
+
+			// camera.z += 1;
+
+            // cam.setDistance(camera.z);
+            // cam.pan(0, 50);
+            // camera.x -= 50 * camera.getZAxisModifier();
+            // cam.setDistance(cam.getDistance() - 0.1, 0);
+            // cam.setDistance(-1, 0);
+            float[] vecLookAt = cam.getLookAt();
+            println(vecLookAt[0]);
+            println(vecLookAt[1]);
+            println(vecLookAt[2]);
+            // println(cam.getDistance());
+            // cam.lookAt(vecLookAt[0], vecLookAt[1], vecLookAt[2] + camera.z, 0);
+            cam.lookAt(vecLookAt[0] + camera.x, vecLookAt[1], vecLookAt[2] + camera.z, 0);
         }
 
 		if (left)
@@ -50,10 +82,10 @@ class InputManager {
             // camera.rotX += radians((mouseY - prevY));
             // camera.rotateY(radians(mouseX - prevX));
             // camera.rotateX(radians(mouseY - prevY) * -1); // Inverts the Y axis rotation.
-            cam.rotateY(radians(mouseX - prevX));
-            camera.rotateY(radians(mouseX - prevX));
-            cam.rotateX(radians(mouseY - prevY) * -1); // Inverts the Y axis rotation.
-            camera.rotateX(radians(mouseY - prevY) * -1);
+            cam.rotateY(radians(mouseX - prevX) * -1);
+            // camera.rotateY(radians(mouseX - prevX));
+            cam.rotateX(radians(mouseY - prevY)); // Inverts the Y axis rotation.
+            // camera.rotateX(radians(mouseY - prevY) * -1);
         }
 	}
 	

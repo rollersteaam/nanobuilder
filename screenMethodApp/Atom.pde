@@ -8,10 +8,10 @@ class Atom {
 	color currentColor = baseColor;
 
 	Atom() {
-		this.x = random(-5000, 5000);
-		this.y = random(-5000, 5000);
-		this.z = random(-5000, 5000);
-		this.r = 100;
+		this.x = random(-500, 500);
+		this.y = random(-500, 500);
+		this.z = random(-500, 500);
+		this.r = 10;
 		atomList.add(this);
 	}
 
@@ -43,11 +43,11 @@ class Atom {
 		
 		sphere(r);
 
-		fill(0, 0);
-		stroke(255, 170);
-		rect(-100, -100, 200, 200);
-		rotateY(radians(90));
-		rect(-100, -100, 200, 200);
+		//fill(0, 0);
+		//stroke(255, 170);
+		//rect(-100, -100, 200, 200);
+		//rotateY(radians(90));
+		//rect(-100, -100, 200, 200);
 		popMatrix();
 	} 
 }

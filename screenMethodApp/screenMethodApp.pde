@@ -1,18 +1,22 @@
 import java.util.Collections;
 import java.util.ArrayList;
 
-import java.awt.AWTException;
-import java.awt.Robot;
-import peasy.*;
+import remixlab.proscene.*;
+//import remixlab.bias.Shortcut;
+import remixlab.bias.event.MotionShortcut;
+import remixlab.dandelion.geom.Vec;
 
-PeasyCam cam;
 ArrayList<Atom> atomList = new ArrayList<Atom>();
 Camera camera = new Camera();
-Robot robot;
+
 int prevX;
 int prevY;
 Atom selectedAtom;
 InputManager activeInput = new InputManager();
+
+Scene scene;
+InteractiveFrame iFrame;
+
 
 void setup() {
 	size(1280, 720, P3D);
@@ -22,9 +26,9 @@ void setup() {
 	perspective(fov, float(width)/float(height), cameraZ/10.0 / 300, cameraZ*10.0 * 300);
 	// perspective();
 
-    cam = new PeasyCam(this, 100);
-    cam.setActive(true);
-    cam.setSuppressRollRotationMode();
+    scene = new Scene(this);
+    iFrame = new InteractiveFrame(scene);
+    iFrame.translate(30, 30);
 
 	// new Atom(0, 0, 0, 100);
 	
@@ -39,19 +43,73 @@ void setup() {
     //         }
     //     }
     // }
-
-    try {
-        robot = new Robot();
-    } 
-    catch (AWTException e) {
-        e.printStackTrace();
-    }
+    //new KeyboardShortcut();
+    
+    
+    // CONTROL key
+    // Enables mouse movement to look around.
+    // Through binding on eyeFrame.
+    
+    // To use forwards and backwards functions, we need to handle the binding with our own NavigationAgent class.
+    // By creating a new class to handle this, we can handle passing ourselves by manipulating return values.
+    // The even tthat it returns has to be a DOF6 event, which is handled in an overidden handleFeed function when implementing Agent.
+    
+    scene.eyeFrame().setMotionBinding(MouseAgent.NO_BUTTON, "lookAround");
+    //scene.eyeFrame().setKeyBinding(, "moveForward");
+    //scene.eyeFrame().setBinding(new KeyboardShortcut('w'), "moveBackward");
+    //scene.eyeFrame().moveForward();
+    
+    //scene.eyeFrame().setKeyBinding(KeyAgent.keyCode('s'), "moveBackward");
+    //scene.eyeFrame().setMotionBinding(Event.CTRL, "lookAround");
+    //scene.eyeFrame().setKeyBinding(CONTROL, "lookAround");
+    
+    scene.eyeFrame().setKeyBinding(Scene.keyCode('w'), "translateYNeg");
+    scene.eyeFrame().setKeyBinding(Scene.keyCode('s'), "translateYPos");
+    scene.eyeFrame().setKeyBinding(Scene.keyCode('a'), "translateXPos");
+    scene.eyeFrame().setKeyBinding(Scene.keyCode('d'), "translateXNeg");
+    
+    //MotionShortcut.registerID(Scene.keyCode('w'), "w");
+    scene.eyeFrame().setMotionBinding(LEFT, "moveForward");
+    scene.eyeFrame().setMotionBinding(RIGHT, "moveBackward");
+    //scene.eyeFrame().removeKeyBindings();
+    //scene.eyeFrame().removeMotionBinding(KeyAgent.keyCode('S'));
+    //scene.keyAgent().disableTracking();
+    scene.removeKeyBindings();
+    //MotionShortcut.registerID(KeyAgent.keyCode('w'));
+    //KeyAgent.RIGHT_KEY = KeyAgent.keyCode('w');
+    //scene.eyeFrame().setMotionBinding(KeyAgent.RIGHT_KEY, "moveUp");
 }
 
 void draw() {
 	background(100, 100, 220);
 	lights();
 	
+  scene.drawTorusSolenoid();
+
+  // Save the current model view matrix
+  pushMatrix();
+  // Multiply matrix to get in the frame coordinate system.
+  // applyMatrix(Scene.toPMatrix(iFrame.matrix())); //is possible but inefficient
+  iFrame.applyTransformation();//very efficient
+  // Draw an axis using the Scene static function
+  scene.drawAxes(20);
+
+  // Draw a second torus
+  if (scene.motionAgent().defaultGrabber() == iFrame) {
+    fill(0, 255, 255);
+    scene.drawTorusSolenoid();
+  }
+  else if (iFrame.grabsInput()) {
+    fill(255, 0, 0);
+    scene.drawTorusSolenoid();
+  }
+  else {
+    fill(0, 0, 255, 150);
+    scene.drawTorusSolenoid();
+  }
+
+  popMatrix();
+
     // camera(width/2.0 + camera.x, height/2.0 + camera.y, (height/2.0) / tan(PI*30.0 / 180.0) + camera.z, width/2.0 + camera.x, height/2.0 + camera.y, 0, 0, 1, 0);
 
 	// translate(camera.x, camera.y, camera.z);
@@ -128,7 +186,25 @@ void keyPressed() {
 
     // if (key == 's') {
     //     cam.setDistance(cam.getDistance() + 150);
-    // }
+    // 
+    
+    // Move camera forwards.
+    if (key == 'w') {
+        //Vec curPos = scene.eye().position();
+        //Vec newPos = new Vec(curPos.x(), curPos.y(), curPos.z() - 100);
+        //scene.eye().setPosition(newPos);
+        
+        //Vec originalLookAt = scene.eye().at();
+        //Vec newLookAt = new Vec(originalLookAt.x(), originalLookAt.y(), originalLookAt.z() - 100);
+        //scene.eye().lookAt(newLookAt);
+    }
+    
+    // Move camera backwards.
+    if (key == 's') {
+        //Vec curPos = scene.eye().position();
+        //Vec newPos = new Vec(curPos.x(), curPos.y(), curPos.z() + 100);
+        //scene.eye().setPosition(newPos);
+    }
 }
 
 void keyReleased() {
@@ -146,7 +222,7 @@ void mouseWheel(MouseEvent event) {
         
 		// The axis modifiers are inverted here on purpose.
 		if (e > 0) { // If scroll down
-            cam.setDistance(cam.getDistance() + 50);
+
 
             if (_rotY >= 315 || _rotY <= 135)
                 if (_rotY >= 270 && _rotY <= 360)

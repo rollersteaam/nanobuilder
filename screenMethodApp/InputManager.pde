@@ -10,19 +10,19 @@ class InputManager {
 	
     boolean rotating;
 
-    int counter;
+    //int counter;
 
 	void evaluateActiveInput() {
-        counter++;
-        println("I love evaluating active input" + counter);
+        //counter++;
+        //println("I love evaluating active input" + counter);
 
 		if (up)
-			// camera.y += 50;
-            cam.pan(0, -50);
+			 camera.y += 50;
+
 			
 		if (down)
-			// camera.y -= 50;
-            cam.pan(0, 50);
+			 camera.y -= 50;
+
 			
 		if (forward) {
 			camera.z += 50 * camera.getXAxisModifier();
@@ -33,17 +33,11 @@ class InputManager {
             camera.x -= 50 * camera.getZAxisModifier();
             // cam.setDistance(cam.getDistance() + 0.1, 0);
             // cam.setDistance(-1, 0);
-            float[] vecLookAt = cam.getLookAt();
-            println(vecLookAt[0]);
-            println(vecLookAt[1]);
-            println(vecLookAt[2]);
-            // println(cam.getDistance());
-            cam.lookAt(vecLookAt[0] + camera.x, vecLookAt[1], vecLookAt[2] + camera.z, 0);
+
         }
 
 		if (back) {
 			camera.z -= 50 * camera.getXAxisModifier();
-            println("Moving backwards");
 			// camera.z += 50;
 
             // cam.setDistance(camera.z);
@@ -60,32 +54,26 @@ class InputManager {
             // camera.x -= 50 * camera.getZAxisModifier();
             // cam.setDistance(cam.getDistance() - 0.1, 0);
             // cam.setDistance(-1, 0);
-            float[] vecLookAt = cam.getLookAt();
-            println(vecLookAt[0]);
-            println(vecLookAt[1]);
-            println(vecLookAt[2]);
-            // println(cam.getDistance());
-            // cam.lookAt(vecLookAt[0], vecLookAt[1], vecLookAt[2] + camera.z, 0);
-            cam.lookAt(vecLookAt[0] + camera.x, vecLookAt[1], vecLookAt[2] + camera.z, 0);
+
         }
 
 		if (left)
-			// camera.x += 50 * camera.getZAxisModifier();
-            cam.pan(-50, 0);
+			 camera.x += 50 * camera.getZAxisModifier();
+            //cam.pan(-50, 0);
 			
 		if (right)
-			// camera.x -= 50 * camera.getZAxisModifier();
-            cam.pan(50, 0);
+			 camera.x -= 50 * camera.getZAxisModifier();
+            //cam.pan(50, 0);
 
         if (rotating) {
             // camera.rotY += radians((mouseX - prevX));
             // camera.rotX += radians((mouseY - prevY));
             // camera.rotateY(radians(mouseX - prevX));
             // camera.rotateX(radians(mouseY - prevY) * -1); // Inverts the Y axis rotation.
-            cam.rotateY(radians(mouseX - prevX) * -1);
-            // camera.rotateY(radians(mouseX - prevX));
-            cam.rotateX(radians(mouseY - prevY)); // Inverts the Y axis rotation.
-            // camera.rotateX(radians(mouseY - prevY) * -1);
+            //cam.rotateY(radians(mouseX - prevX) * -1);
+             camera.rotateY(radians(mouseX - prevX));
+            //cam.rotateX(radians(mouseY - prevY)); // Inverts the Y axis rotation.
+             camera.rotateX(radians(mouseY - prevY) * -1);
         }
 	}
 	
@@ -141,8 +129,7 @@ class InputManager {
 			camera.rotY = 0;
 			camera.rotZ = 0;
 
-			if (selectedAtom == null)
-				return;
+			if (selectedAtom == null) return;
 
 			selectedAtom.x = 0;
 			selectedAtom.y = 0;
@@ -150,8 +137,8 @@ class InputManager {
 		}
 
 		if (key == 'f') {
-			if (selectedAtom == null)
-				return;
+			if (selectedAtom == null) return;
+            
 			println("" + camera.x + " : " + selectedAtom.x);
 			camera.x = selectedAtom.x + 500f;
 			camera.y = selectedAtom.y + 500f;

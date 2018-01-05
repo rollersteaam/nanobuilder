@@ -1,8 +1,5 @@
 class Atom {
     PVector pos = new PVector();
-    // float x;
-    // float y;
-    // float z;
     int r;
 
     private color baseColor = color(random(90, 255), random(90, 255), random(90, 255));
@@ -17,18 +14,27 @@ class Atom {
     }
 
     Atom(float x, float y, float z, int r) {
-        // this.x = x;
-        // this.y = y;
-        // this.z = z;
         pos = new PVector(x, y, z);
-        this.r = r;        
+        this.r = r;
         atomList.add(this);
+    }
+
+    void select() {
+        // currentColor = color(135);
+    }
+
+    void deselect() {
+        revertToBaseColor();
     }
 
     void revertToBaseColor() {
         currentColor = baseColor;
     }
-  
+
+    void setPosition(PVector newPos) {
+        pos = newPos.copy();
+    }
+
     void display() {
         // Added radius so pop-in limits are more forgiving and less obvious.
         float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);

@@ -41,14 +41,22 @@ class Camera extends QueasyCam {
         super(applet);
     }
     
+    float getRotY() {
+        return abs(tilt % PI);
+    }
+
     float getRotYDeg() {
         // An absolute value has to be returned here so that the orientation is easier to handle.
         return abs(degrees(tilt % PI));
     }
     
+    float getRotX() {
+        return abs(pan % (2 * PI));
+    }
+
     float getRotXDeg() {
         // An absolute value has to be returned here so that the orientation is easier to handle.
-        return abs(degrees(pan % PI));
+        return abs(degrees(pan % (2 * PI)));
     }
 
     float getXAxisModifier() {

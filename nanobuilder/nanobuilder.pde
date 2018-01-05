@@ -4,11 +4,9 @@ import processing.event.KeyEvent;
 
 Camera cam;
 Robot robot;
+SelectionAgent selectionAgent;
 
 ArrayList<Atom> atomList = new ArrayList<Atom>();
-
-Atom selectedAtom;
-PVector selectedAtomIncidentVector;
 
 /*
 MAIN FILE
@@ -28,6 +26,8 @@ void setup() {
     float cameraZ = (height/2.0) / tan(fov/2.0);
     perspective(fov, float(width)/float(height), cameraZ/10.0 / 300, cameraZ*10.0 * 300);
     
+    selectionAgent = new SelectionAgent();
+
     for (int i = 0; i < 50; i++) {
         new Atom();
     }
@@ -40,8 +40,60 @@ void setup() {
     registerMethod("keyEvent", this);
 }
 
+void drawRect(float x, float y, float w, float h, color color_) {
+    pushStyle();
+    pushMatrix();
+    noLights();
+
+    fill(color_);
+
+    /*
+    Get camera's forward pointing vector and begin to draw 2D element
+    at a unit vector position (so it is created right in front of the camera's view). 
+    */
+    // getForward() returns a normalized vector (unit vector) that is helpful to us.
+    PVector camFwd = cam.getForward();
+    PVector rectPos = PVector.add(cam.position, new PVector(
+        camFwd.x,
+        camFwd.y,
+        camFwd.z
+    ));
+    translate(rectPos.x, rectPos.y, rectPos.z);
+
+    /*
+    Make the object's rotation have a relationship with camera rotation
+    so that it is 'billboarded', and therefore rotationally stationary
+    with camera view.
+    */
+    rotateY(radians(270) - cam.pan);
+    rotateX(cam.tilt);
+
+    /*
+    Due to the issues from the perspective of the camera, I had to find arbitrary values
+    found by trial and error that best mask 2D elements to the view by a normalized
+    value.
+    */
+    float normX = 1.03;
+    float normY = 0.58;
+    // Now time to change the pixel parameters to ones that correspond to that on screen.
+    float pixelsX = (float) (x / width) * normX * 2 - normX;
+    float pixelsY = (float) (y / height) * normY * 2 - normY;
+
+    float pixelsW = (float) (w / width) * normX * 2;
+    float pixelsH = (float) (h / height) * normY * 2;
+
+    rect(pixelsX, pixelsY, pixelsW, pixelsH);
+    // float ratio1 = (float) mouseX / width;
+    // float ratio2 = (float) mouseY / height;
+
+    popMatrix();
+    popStyle();
+}
+
+boolean rightClicker = false;
+
 void draw() {
-    background(100, 100, 220);
+    background(100, 100, 220);    
     lights();
 
     for (Atom atom : atomList) {
@@ -50,107 +102,42 @@ void draw() {
 
     drawOriginArrows();
     drawOriginGrid();
-    evaluateAtomMovement();
-    
+    selectionAgent.draw();
+    selectionAgent.updateSelectionMovement();
+
+    if (rightClicker) {
+        drawRect(mouseX, mouseY, 120, 200, color(230, 230, 230));
+        pushMatrix();
+        translate(0, 0, 0.005);
+        drawRect(mouseX + 5, mouseY + 5, 120 - 10, 40 - 10, color(120, 120, 120));
+        popMatrix();
+    }
+
     // SPACE
     if (keys.containsKey(32) && keys.get(32)) cam.velocity.sub(PVector.mult(cam.getUp(), cam.speed));
     // SHIFT
     if (keys.containsKey(16) && keys.get(16)) cam.velocity.add(PVector.mult(cam.getUp(), cam.speed));
 }
 
-void selectAtom(Atom atom) {
-    selectedAtom = atom;
-    // if (cam.position.x > 0)
-        // selectedAtomIncidentVector = PVector.sub(cam.position, selectedAtom.pos);
-    // else
-    selectedAtomIncidentVector = PVector.sub(selectedAtom.pos, cam.position);
-}
-
-void mousePressed() {
-    // Case 1: Cancel selection.
-    if (selectedAtom != null) {
-        selectedAtom.revertToBaseColor();
-        selectedAtom = null;
-        selectedAtomIncidentVector = null;
-        hoveringDistanceMult = 1;
-        return;
-    }
-
-    // Case 2: Find selectable atom.
-    for (Atom atom : atomList) {
-        float screenPosX = screenX(atom.pos.x, atom.pos.y, atom.pos.z);
-        float screenPosXNegativeLimit = screenX(atom.pos.x - atom.r, atom.pos.y, atom.pos.z);
-        float screenPosXPositiveLimit = screenX(atom.pos.x + atom.r, atom.pos.y, atom.pos.z);
-        
-        float screenPosY = screenY(atom.pos.x, atom.pos.y, atom.pos.z);
-        float screenPosYNegativeLimit = screenY(atom.pos.x, atom.pos.y - atom.r, atom.pos.z);
-        float screenPosYPositiveLimit = screenY(atom.pos.x, atom.pos.y + atom.r, atom.pos.z);
-        
-        float screenPosZ = screenZ(atom.pos.x, atom.pos.y, atom.pos.z);
-        float screenPosZNegativeLimit = screenY(atom.pos.x, atom.pos.y, atom.pos.z - atom.r);
-        float screenPosZPositiveLimit = screenY(atom.pos.x, atom.pos.y, atom.pos.z + atom.r);
-
-        if (mouseX >= screenPosXNegativeLimit && mouseX <= screenPosXPositiveLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-            selectAtom(atom);
-            return;
-        }
-
-        /*
-        Allows selection in 'opposite region' camera space, since the limits switch around.
-        */
-        if (mouseX >= screenPosXPositiveLimit && mouseX <= screenPosXNegativeLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-            selectAtom(atom);
-            return;
-        }
-
-        if (mouseX >= screenPosZNegativeLimit && mouseX <= screenPosZPositiveLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-            selectAtom(atom);
-            return;
-        }
-
-        /*
-        Allows selection in 'opposite region' camera space, since the limits switch around.
-        */
-        if (mouseX >= screenPosZPositiveLimit && mouseX <= screenPosZNegativeLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-            selectAtom(atom);
-            return;
-        }
+void mousePressed(MouseEvent event) {
+    // If selection agent's events have been triggered, then we are finished for this mouse event.
+    if (mouseButton == LEFT) {
+        rightClicker = false;
+        if (selectionAgent.mousePressed()) return;
+    } else if (mouseButton == RIGHT) {
+        rightClicker = true;
+    } else if (mouseButton == CENTER) {
+        // Undeclared for now.
     }
 }
 
-float hoveringDistanceMult = 1;
+void mouseReleased() {
+    if (selectionAgent.mouseReleased()) return;
+}
 
 void mouseWheel(MouseEvent event) {
     float e = event.getCount();
-    //float rotX = camera.getRotXDeg();
-    float rotX = cam.getRotXDeg();
-
-    if (selectedAtom != null) {
-        // float pAX = selectedAtom.x;
-        // float pAY = selectedAtom.y;
-        // float pAZ = selectedAtom.z;
-        
-        /*
-        This if block takes mouse scroll wheel input, which returns between 1 and -1 whether
-        scroll up or scroll down happened.
-
-        It takes these events and adds that to the Atom's position, based on the orientation of the camera,
-        because what counts as 'X' and 'Z' and positive and negative translations change depending on the
-        camera's rotation in the X axis.
-
-        The getZAxisModifier and getXAxisModifier return a value between 0 and 1 which determines how much an atom should
-        move in their respective axis. This allows the camera to move parallel to the camera.
-        */
-        if (e > 0) { // If scroll down
-            // hoveringDistanceMult -= 100 + (100000 / PVector.dist(cam.position, selectedAtom.pos));
-            hoveringDistanceMult -= 0.5 * PVector.dist(cam.position, selectedAtom.pos) / 5000;
-        } else { // if scroll up
-            // hoveringDistanceMult += 100 + (PVector.dist(cam.position, selectedAtom.pos) / 10);
-            hoveringDistanceMult += 0.5 / PVector.dist(cam.position, selectedAtom.pos) * 500;
-        }
-        // println("Vector Difference: [" + (selectedAtom.x - pAX) + "," + (selectedAtom.y - pAY) + "," + (selectedAtom.z - pAZ) + "]");
-        // println(camera.getRotXDeg());
-    }
+    if (selectionAgent.mouseWheel(e)) return;
 }
 
 boolean turnCamera = false;
@@ -274,72 +261,3 @@ void drawOriginGrid() {
     } 
 }
 
-void evaluateAtomMovement() {
-    if (selectedAtom == null)
-        return;
-
-    // println("The X axis should move this much... " + cam.getXAxisModifier());
-    // println("The Z axis should move this much..." + cam.getZAxisModifier());
-    
-    float rotX = cam.getRotXDeg();
-    
-    // if (rotX >= 90 && rotX <= 270) // if camera rotation in INVERSE region
-    //     selectedAtom.x -= ( mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z) ) * cam.getZAxisModifier() * 2;
-    // else// if camera rotation in NORMAL region
-    //     selectedAtom.x += ( mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z) ) * cam.getZAxisModifier() * 2;
-    
-    // if (rotX <= 360 && rotX >= 180)
-    //     selectedAtom.z -= (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * cam.getXAxisModifier() * 2;
-    // else
-    //     selectedAtom.z += (mouseX - screenX(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * cam.getXAxisModifier() * 2;
-    
-    // selectedAtom.y += (mouseY - screenY(selectedAtom.x, selectedAtom.y, selectedAtom.z)) * 2;
-
-    //selectedAtom.pos = PVector.mult(cam.getForward(), cam.position);
-    PVector forward = cam.getForward();
-    // PVector incidentVector = selectedAtomIncidentVector.normalize();
-    // println(selectedAtomIncidentVector);
-    // Null is passed as an argument so the original vector variable is not normalized.
-    // PVector normalizedIncidentVector = selectedAtomIncidentVector.normalize(null);
-
-    selectedAtom.pos = PVector.add(cam.position, new PVector(
-        // Fine tune mode
-        (400 * hoveringDistanceMult) * forward.x,
-        (400 * hoveringDistanceMult) * forward.y,
-        (400 * hoveringDistanceMult) * forward.z) );
-        
-        // Large movement mode
-        // (selectedAtomIncidentVector.x) * forward.x * hoveringDistanceMult,
-        // (selectedAtomIncidentVector.y) * forward.y * hoveringDistanceMult,
-        // (selectedAtomIncidentVector.x) * forward.z * hoveringDistanceMult ));
-
-    selectedAtom.currentColor = color(135);
-    
-    for (int y = 0; y < 5; y ++) {
-        for (int x = 0; x < 5; x ++) {
-            pushMatrix();
-            
-            translate(selectedAtom.pos.x - 250, selectedAtom.pos.y, selectedAtom.pos.z - 250);
-            rotateX(PI/2);
-            stroke(255, 180);
-            noFill();
-            
-            rect(100 * x, 100 * y, 100, 100);
-            popMatrix();
-        }
-    }
-    
-    for (int y = 0; y < 5; y ++) {
-        for (int x = 0; x < 5; x ++) {
-            pushMatrix();
-            
-            translate(selectedAtom.pos.x, selectedAtom.pos.y - 250, selectedAtom.pos.z + 250);
-            rotateY(PI/2);
-            stroke(255, 180);
-            noFill();
-            
-            rect(100 * x, 100 * y, 100, 100);
-            popMatrix();
-        }
-    }
-}

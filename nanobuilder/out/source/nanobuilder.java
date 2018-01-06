@@ -452,8 +452,36 @@ Atoms in its possession.
 */
 
 class SelectionAgent {
-    ArrayList<Atom> selectedAtoms = new ArrayList<Atom>();
-    PVector selectionIncidentVector;
+    /*
+    Selection shouldn't be used outside of the selection agent, as it pertains
+    to no other context.
+
+    Class was required to be created as the Vector from the camera to the atom position
+    needed to be saved for multiple atoms, so a single field to save that vector was not enough.
+    */
+    private class Selection {
+        private Atom atom;
+        /*
+        Defined a getter and declared private so read-only, if this gets changed accidently
+        the reason for the field existing becomes redundant.
+        */
+        private PVector fromCameraVector;
+
+        private Selection(Atom atom_) {
+            atom = atom_;
+            fromCameraVector = PVector.sub(atom.pos, cam.position);
+        }
+
+        public PVector getFromCameraVector() {
+            return fromCameraVector;
+        }
+
+        public Atom getAtom() {
+            return atom;
+        }
+    }
+
+    ArrayList<Selection> selectedAtoms = new ArrayList<Selection>();
     float hoveringDistanceMult = 1;
 
     public boolean hasActiveSelection() {
@@ -464,19 +492,24 @@ class SelectionAgent {
     }
 
     public void select(Atom atom) {
+        if (atom == null) {
+            println("URGENT: SelectionAgent was requested to select a null reference.");
+            Thread.dumpStack();
+            return;
+        }
+
         atom.select();
-        selectedAtoms.add(atom);
+        selectedAtoms.add(new Selection(atom));
     }
 
     public void cancel() {
         if (!hasActiveSelection()) return;
 
-        for (Atom atom : selectedAtoms) {
-            atom.deselect();
+        for (Selection selection : selectedAtoms) {
+            selection.getAtom().deselect();
         }
 
         selectedAtoms.clear();
-        selectionIncidentVector = null;
         hoveringDistanceMult = 1;
     }
 
@@ -539,6 +572,8 @@ class SelectionAgent {
                 higherBoundary.x < screenPosXNegativeLimit &&
                 higherBoundary.y > screenPosYNegativeLimit)
                 select(atom);
+
+            // TODO: Investigate if Z values are accounted for in group selection.
         }
 
         selecting = false;
@@ -596,7 +631,7 @@ class SelectionAgent {
         // Case 3: Begin an area selection.
         startSelecting();
 
-        // No cases passed, return and continue on the main calling routine.
+        // No interrupts passed, return and continue on the main calling routine.
         return false;
     }
 
@@ -622,7 +657,7 @@ class SelectionAgent {
     /*
     While functions such as updateSelectionMovement() also use nanobuilder's draw method and
     could otherwise be routed through here, this would create a messy network of references
-    that I want to avoid for now. This may change.
+    that I want to avoid for now. This may change. I will keep this draw() for graphical contexts.
     */
     public void draw() {
         if (selecting)
@@ -634,18 +669,62 @@ class SelectionAgent {
  
         PVector forward = cam.getForward();
 
-        for (Atom atom : selectedAtoms) {
+        // float dist = PVector.dist(cam.position, fromCameraVector);
+
+        for (Selection selection : selectedAtoms) {
+            Atom atom = selection.getAtom();
+            // fromCameraVector = PVector.sub(atom.pos, cam.position);
+            // Normalize a copy, don't want to change the original reference otherwise that would occur every frame.
+            // PVector fromCameraVectorNormalized = fromCameraVector.copy().normalize();
+
+            // float yDistMul = PVector.dist(cam.position, atom.pos) / 900;
+            // float xDistMul = PVector.dist(cam.position, atom.pos) / 500;
+
+            // PVector cross = cam.position.copy().cross(atom.pos).normalize();
+
+            // PVector normalizationConstant = new PVector(
+            //     // map(mouseX, 0, width, -1, 1),
+            //     0,
+            //     map(mouseY, 0, width, -1, 1),
+            //     map(mouseX, 0, width, -1, 1)
+            // );
+
             atom.setPosition( PVector.add(cam.position, new PVector(
                 // Fine tune mode
-                (600 * hoveringDistanceMult) * forward.x,
-                (600 * hoveringDistanceMult) * forward.y,
-                (600 * hoveringDistanceMult) * forward.z )) );
-                
-                // Large movement mode
-                // (atomIncidentVector.x) * forward.x * hoveringDistanceMult,
-                // (atomIncidentVector.y) * forward.y * hoveringDistanceMult,
-                // (atomIncidentVector.x) * forward.z * hoveringDistanceMult ));
+                // (600 * hoveringDistanceMult) * forward.x,
+                // (600 * hoveringDistanceMult) * forward.y,
+                // (600 * hoveringDistanceMult) * forward.z )) );
+
+                // (600 * hoveringDistanceMult) * forward.x * fromCameraVectorNormalized.x,
+                // (600 * hoveringDistanceMult) * forward.y * fromCameraVectorNormalized.y,
+                // (600 * hoveringDistanceMult) * forward.z * fromCameraVectorNormalized.z )) );
+
+                // (hoveringDistanceMult) * fromCameraVector.x + (mouseX - pmouseX) * xDistMul * fromCameraVectorNormalized.x,
+                // (hoveringDistanceMult) * fromCameraVector.y + (mouseY - pmouseY) * yDistMul,
+                // (hoveringDistanceMult) * fromCameraVector.z + (mouseX - pmouseX) * xDistMul )) );
+                // (hoveringDistanceMult) * forward.x * 600 + fromCameraVector.x,
+                // (hoveringDistanceMult) * forward.y * 600 + fromCameraVector.y,
+                // (hoveringDistanceMult) * forward.z * 600 + fromCameraVector.z )) );
+                // (hoveringDistanceMult) * fromCameraVector.x * forward.x,
+                // (hoveringDistanceMult) * fromCameraVector.y * forward.y,
+                // (hoveringDistanceMult) * fromCameraVector.z * forward.z)) );
+                (hoveringDistanceMult) * selection.getFromCameraVector().x,
+                (hoveringDistanceMult) * selection.getFromCameraVector().y,
+                (hoveringDistanceMult) * selection.getFromCameraVector().z )) );
+                // (hoveringDistanceMult) * fromCameraVector.x * normalizationConstant.x,
+                // (hoveringDistanceMult) * fromCameraVector.y * normalizationConstant.y,
+                // (hoveringDistanceMult) * fromCameraVector.z * normalizationConstant.z)) );
+                // (hoveringDistanceMult) * fromCameraVector.x + (mouseX - pmouseX) * xDistMul * cross.x,
+                // (hoveringDistanceMult) * fromCameraVector.y + (mouseY - pmouseY) * yDistMul,
+                // (hoveringDistanceMult) * fromCameraVector.z + (mouseX - pmouseX) * xDistMul * cross.z )) );
             
+            // The changes given by the mouse need to be added to the constant difference
+            // fromCameraVector.add(new PVector(
+                // (mouseX - pmouseX) * xDistMul * fromCameraVectorNormalized.x,
+                // (mouseY - pmouseY) * yDistMul,
+                // (mouseX - pmouseX) * xDistMul
+                // ));
+
             // Picking guide //
             for (int y = 0; y < 5; y ++) {
                 for (int x = 0; x < 5; x ++) {

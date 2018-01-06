@@ -13,20 +13,20 @@ class SelectionAgent {
     needed to be saved for multiple atoms, so a single field to save that vector was not enough.
     */
     private class Selection {
-        private Atom atom;
+        private final Atom atom;
         /*
         Defined a getter and declared private so read-only, if this gets changed accidently
         the reason for the field existing becomes redundant.
         */
-        private PVector fromCameraVector;
+        private final PVector fromCameraVector;
 
-        private Selection(Atom atom_) {
-            atom = atom_;
+        private Selection(Atom atom) {
+            this.atom = atom;
             fromCameraVector = PVector.sub(atom.pos, cam.position);
         }
 
         PVector getFromCameraVector() {
-            return fromCameraVector;
+            return fromCameraVector.copy();
         }
 
         Atom getAtom() {
@@ -214,7 +214,7 @@ class SelectionAgent {
     */
     void draw() {
         if (selecting)
-            drawRect(selectingStartPos.x, selectingStartPos.y, mouseX - selectingStartPos.x, mouseY - selectingStartPos.y, color(30, 30, 90, 80));
+            drawRect(selectingStartPos.x, selectingStartPos.y, mouseX - selectingStartPos.x, mouseY - selectingStartPos.y, color(30, 30, 90, 80), 1);
     }
 
     void updateSelectionMovement() {

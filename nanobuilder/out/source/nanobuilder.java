@@ -60,7 +60,7 @@ public void setup() {
     registerMethod("keyEvent", this);
 }
 
-public void drawRect(float x, float y, float w, float h, int color_) {
+public void drawRect(float x, float y, float w, float h, int color_, int layer) {
     pushStyle();
     pushMatrix();
     noLights();
@@ -68,17 +68,40 @@ public void drawRect(float x, float y, float w, float h, int color_) {
     fill(color_);
 
     /*
+    Due to the issues from the perspective of the camera, I had to find arbitrary values
+    found by trial and error that best mask 2D elements to the view by a normalized
+    value.
+    */
+    float normX = 1.03f;
+    float normY = 0.58f;
+
+    // Now time to change the pixel parameters to ones that correspond to that on screen.
+    float pixelsX = (float) (x / width) * normX * 2 - normX;
+    float pixelsY = (float) (y / height) * normY * 2 - normY;
+
+    float pixelsW = (float) (w / width) * normX * 2;
+    float pixelsH = (float) (h / height) * normY * 2;
+
+    /*
     Get camera's forward pointing vector and begin to draw 2D element
     at a unit vector position (so it is created right in front of the camera's view). 
     */
     // getForward() returns a normalized vector (unit vector) that is helpful to us.
     PVector camFwd = cam.getForward();
-    PVector rectPos = PVector.add(cam.position, new PVector(
-        camFwd.x,
-        camFwd.y,
-        camFwd.z
-    ));
-    translate(rectPos.x, rectPos.y, rectPos.z);
+    // Rectangles will now always appear infront of the camera.
+    PVector rectPos = PVector.add(cam.position, camFwd);
+    /*
+    We have to change the X and Z values so that layers of UI do not merge with each other and glitch.
+    
+    Timesing by the forward unit vector of the camera causes changes in the original position to be modified
+    based on the perspective of the camera, lowering the amount of change based on if it is suitable (should be
+    projected more or less in the camera's direction).
+    */
+    translate(
+        rectPos.x - (0.001f * layer) * camFwd.x,
+        rectPos.y - (0.001f * layer) * camFwd.y,
+        rectPos.z - (0.001f * layer) * camFwd.z
+    );
 
     /*
     Make the object's rotation have a relationship with camera rotation
@@ -88,20 +111,6 @@ public void drawRect(float x, float y, float w, float h, int color_) {
     rotateY(radians(270) - cam.pan);
     rotateX(cam.tilt);
 
-    /*
-    Due to the issues from the perspective of the camera, I had to find arbitrary values
-    found by trial and error that best mask 2D elements to the view by a normalized
-    value.
-    */
-    float normX = 1.03f;
-    float normY = 0.58f;
-    // Now time to change the pixel parameters to ones that correspond to that on screen.
-    float pixelsX = (float) (x / width) * normX * 2 - normX;
-    float pixelsY = (float) (y / height) * normY * 2 - normY;
-
-    float pixelsW = (float) (w / width) * normX * 2;
-    float pixelsH = (float) (h / height) * normY * 2;
-
     rect(pixelsX, pixelsY, pixelsW, pixelsH);
     // float ratio1 = (float) mouseX / width;
     // float ratio2 = (float) mouseY / height;
@@ -110,7 +119,148 @@ public void drawRect(float x, float y, float w, float h, int color_) {
     popStyle();
 }
 
+public void drawText(float x, float y, float w, float h, String text, int color_, int layer) {
+    pushStyle();
+    pushMatrix();
+    noLights();
+
+    fill(color_);
+
+    /*
+    Due to the issues from the perspective of the camera, I had to find arbitrary values
+    found by trial and error that best mask 2D elements to the view by a normalized
+    value.
+    */
+    float normX = 1.03f;
+    float normY = 0.58f;
+
+    // Now time to change the pixel parameters to ones that correspond to that on screen.
+    float pixelsX = (float) (x / width) * normX * 2 - normX;
+    float pixelsY = (float) (y / height) * normY * 2 - normY;
+
+    float pixelsW = (float) (w / width) * normX * 2;
+    float pixelsH = (float) (h / height) * normY * 2;
+
+    /*
+    Get camera's forward pointing vector and begin to draw 2D element
+    at a unit vector position (so it is created right in front of the camera's view). 
+    */
+    // getForward() returns a normalized vector (unit vector) that is helpful to us.
+    PVector camFwd = cam.getForward();
+    // Rectangles will now always appear infront of the camera.
+    PVector textPos = PVector.add(cam.position, camFwd);
+    /*
+    We have to change the X and Z values so that layers of UI do not merge with each other and glitch.
+    
+    Timesing by the forward unit vector of the camera causes changes in the original position to be modified
+    based on the perspective of the camera, lowering the amount of change based on if it is suitable (should be
+    projected more or less in the camera's direction).
+
+    This results in a 'layer' system, where UI elements are moved backwards or forwards based on what should have
+    priority over another.
+    */
+    translate(
+        textPos.x + (100 * layer) * camFwd.x,
+        textPos.y + (100 * layer) * camFwd.y,
+        textPos.z + (100 * layer) * camFwd.z
+    );
+
+    /*
+    Make the object's rotation have a relationship with camera rotation
+    so that it is 'billboarded', and therefore rotationally stationary
+    with camera view.
+    */
+    rotateY(radians(270) - cam.pan);
+    rotateX(cam.tilt);
+
+    fill(0);
+    textSize(50);
+    text(text, x - width/2, y - height/2);
+    // float ratio1 = (float) mouseX / width;
+    // float ratio2 = (float) mouseY / height;
+
+    popMatrix();
+    popStyle();
+}
+
+// void drawText(float x, float y, int size, String text, int layer) {
+//     pushStyle();
+//     pushMatrix();
+//     noLights();
+
+//     // fill(color_);
+
+//     /*
+//     Due to the issues from the perspective of the camera, I had to find arbitrary values
+//     found by trial and error that best mask 2D elements to the view by a normalized
+//     value.
+//     */
+//     float normX = 1.03;
+//     float normY = 0.58;
+
+//     // Now time to change the pixel parameters to ones that correspond to that on screen.
+//     float pixelsX = (float) (x / width) * normX * 2 - normX;
+//     float pixelsY = (float) (y / height) * normY * 2 - normY;
+
+//     // float pixelsW = (float) (w / width) * normX * 2;
+//     // float pixelsH = (float) (h / height) * normY * 2;
+
+//     /*
+//     Get camera's forward pointing vector and begin to draw 2D element
+//     at a unit vector position (so it is created right in front of the camera's view). 
+//     */
+//     // getForward() returns a normalized vector (unit vector) that is helpful to us.
+//     PVector camFwd = cam.getForward();
+//     // Rectangles will now always appear infront of the camera.
+//     PVector textPos = PVector.add(cam.position, camFwd);
+//     /*
+//     We have to change the X and Z values so that layers of UI do not merge with each other and glitch.
+    
+//     Timesing by the forward unit vector of the camera causes changes in the original position to be modified
+//     based on the perspective of the camera, lowering the amount of change based on if it is suitable (should be
+//     projected more or less in the camera's direction).
+//     */
+//     translate(
+//         textPos.x - (0.001 * layer) * camFwd.x,
+//         textPos.y - (0.001 * layer) * camFwd.y,
+//         textPos.z - (0.001 * layer) * camFwd.z
+//     );
+
+//     /*
+//     Make the object's rotation have a relationship with camera rotation
+//     so that it is 'billboarded', and therefore rotationally stationary
+//     with camera view.
+//     */
+//     rotateY(radians(270) - cam.pan);
+//     rotateX(cam.tilt);
+
+//     fill(0);
+
+//     textSize(size);
+//     text(text, x, y);
+
+//     popMatrix();
+//     popStyle();
+// }
+
+public boolean checkIntersect2D(PVector v, PVector cV1, PVector cV2) {
+    /*
+    The + 5 constant to the comparison vectors fixes the desychronization between the
+    camera's projection of the UI element and where it actually appears on screen.
+    */
+    if(
+    v.x > (cV1.x + 5) &&
+    v.x < (cV2.x + 5) &&
+    v.y > (cV1.y + 5) &&
+    v.y < (cV2.y + 5))
+        return true;
+    else
+        return false;
+}
+
 boolean rightClicker = false;
+PVector spawnPosition;
+int drawingColor = color(255);
 
 public void draw() {
     background(100, 100, 220);    
@@ -125,12 +275,34 @@ public void draw() {
     selectionAgent.draw();
     selectionAgent.updateSelectionMovement();
 
-    if (rightClicker) {
-        drawRect(mouseX, mouseY, 120, 200, color(230, 230, 230));
-        pushMatrix();
-        translate(0, 0, 0.005f);
-        drawRect(mouseX + 5, mouseY + 5, 120 - 10, 40 - 10, color(120, 120, 120));
-        popMatrix();
+    if (spawnPosition != null) {
+        // if (mouseX > spawnPosition.x && mouseX < (spawnPosition.x + 120 - 10) &&
+        // mouseY > spawnPosition.y && mouseY < (spawnPosition.y + 40 - 10))
+        if (checkIntersect2D(new PVector(mouseX, mouseY), spawnPosition, new PVector(spawnPosition.x + 120 - 10, spawnPosition.y + 40 - 10)))
+            drawingColor = color(135);
+        else
+            drawingColor = color(255);
+    }
+
+    if (rightClicker && spawnPosition != null) {
+        drawRect(spawnPosition.x, spawnPosition.y, 120, 200, color(230, 230, 230), 1);
+        drawRect(spawnPosition.x + 5, spawnPosition.y + 5, 120 - 10, 40 - 10, drawingColor, 2);
+        drawText(0, 0, 120 - 10, 40 - 10, "Add Atom", drawingColor, 3);
+
+        // drawText(spawnPosition.x, spawnPosition.y, 1200, "Add Atom", 3);
+
+        // // crap shit
+        // textSize(120);
+        // pushMatrix();
+
+        // translate(cam.position.x * cam.getForward().x, cam.position.y * cam.getForward().y, cam.position.z * cam.getForward().z);
+        // rotateY(radians(270) - cam.pan);
+        // rotateX(cam.tilt);
+
+        // rect(0, 0, 200, 200);
+        // text("HAHAHAA", cam.position.x * cam.getForward().x, cam.position.y * cam.getForward().y, cam.position.z * cam.getForward().z);
+    
+        // popMatrix();
     }
 
     // SPACE
@@ -142,16 +314,32 @@ public void draw() {
 public void mousePressed(MouseEvent event) {
     // If selection agent's events have been triggered, then we are finished for this mouse event.
     if (mouseButton == LEFT) {
-        rightClicker = false;
         if (selectionAgent.mousePressed()) return;
     } else if (mouseButton == RIGHT) {
-        rightClicker = true;
+
     } else if (mouseButton == CENTER) {
         // Undeclared for now.
     }
 }
 
 public void mouseReleased() {
+    if (spawnPosition != null) {
+        // if (mouseX > spawnPosition.x && mouseX < (spawnPosition.x + 120 - 10) &&
+        // mouseY > spawnPosition.y && mouseY < (spawnPosition.y + 40 - 10)) {
+        if (checkIntersect2D(new PVector(mouseX, mouseY), spawnPosition, new PVector(spawnPosition.x + 120 - 10, spawnPosition.y + 40 - 10))) {
+            PVector fwd = cam.getForward();
+            new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 100);
+        }
+    }
+
+    if (mouseButton == LEFT) {
+        spawnPosition = null;
+        rightClicker = false;
+    } else if (mouseButton == RIGHT) {
+        spawnPosition = new PVector(mouseX, mouseY);
+        rightClicker = true;
+    }
+
     if (selectionAgent.mouseReleased()) return;
 }
 
@@ -216,13 +404,13 @@ public void keyEvent(KeyEvent event){
 
 // Draws a lattice (structured cube) of atoms.
 public void drawAtomLattice() {
-     for (int y = 0; y < 5; y++) {
-         for (int z = 0; z < 5; z++) {
-             for (int x = 0; x < 5; x++) {
-                 new Atom(200 * x, 200 * y, 200 * z, 100); 
-             }
-         }
-     }   
+    for (int y = 0; y < 5; y++) {
+        for (int z = 0; z < 5; z++) {
+            for (int x = 0; x < 5; x++) {
+                new Atom(200 * x, 200 * y, 200 * z, 100); 
+            }
+        }
+    }   
 }
 
 // Draws arrows pointing out from the origin point of the scene.
@@ -460,20 +648,20 @@ class SelectionAgent {
     needed to be saved for multiple atoms, so a single field to save that vector was not enough.
     */
     private class Selection {
-        private Atom atom;
+        private final Atom atom;
         /*
         Defined a getter and declared private so read-only, if this gets changed accidently
         the reason for the field existing becomes redundant.
         */
-        private PVector fromCameraVector;
+        private final PVector fromCameraVector;
 
-        private Selection(Atom atom_) {
-            atom = atom_;
+        private Selection(Atom atom) {
+            this.atom = atom;
             fromCameraVector = PVector.sub(atom.pos, cam.position);
         }
 
         public PVector getFromCameraVector() {
-            return fromCameraVector;
+            return fromCameraVector.copy();
         }
 
         public Atom getAtom() {
@@ -661,7 +849,7 @@ class SelectionAgent {
     */
     public void draw() {
         if (selecting)
-            drawRect(selectingStartPos.x, selectingStartPos.y, mouseX - selectingStartPos.x, mouseY - selectingStartPos.y, color(30, 30, 90, 80));
+            drawRect(selectingStartPos.x, selectingStartPos.y, mouseX - selectingStartPos.x, mouseY - selectingStartPos.y, color(30, 30, 90, 80), 1);
     }
 
     public void updateSelectionMovement() {

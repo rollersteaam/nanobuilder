@@ -24,7 +24,9 @@ public class nanobuilder extends PApplet {
 
 Camera cam;
 Robot robot;
-SelectionAgent selectionAgent;
+SelectionManager selectionManager;
+UIManager uiManager;
+UIFactory uiFactory;
 
 ArrayList<Atom> atomList = new ArrayList<Atom>();
 
@@ -37,6 +39,12 @@ allowing all modules and classes to work properly.
 public void setup() {
     
 
+    try {
+        robot = new Robot();
+    } catch (AWTException e) {}
+
+    registerMethod("keyEvent", this);
+
     cam = new Camera(this);
     cam.speed = 7.5f;              // default is 3
     cam.sensitivity = 0;      // default is 2
@@ -46,225 +54,21 @@ public void setup() {
     float cameraZ = (height/2.0f) / tan(fov/2.0f);
     perspective(fov, PApplet.parseFloat(width)/PApplet.parseFloat(height), cameraZ/10.0f / 300, cameraZ*10.0f * 300);
     
-    selectionAgent = new SelectionAgent();
-
+    selectionManager = new SelectionManager();
+    uiManager = new UIManager();
+    uiFactory = new UIFactory();
+    
     for (int i = 0; i < 50; i++) {
         new Atom();
     }
-    
-    try {
-        robot = new Robot();
-    } catch (AWTException e) {}
-    
-    // Required for keyEvent to work, interestingly.
-    registerMethod("keyEvent", this);
 }
-
-public void drawRect(float x, float y, float w, float h, int color_, int layer) {
-    pushStyle();
-    pushMatrix();
-    noLights();
-
-    fill(color_);
-
-    /*
-    Due to the issues from the perspective of the camera, I had to find arbitrary values
-    found by trial and error that best mask 2D elements to the view by a normalized
-    value.
-    */
-    float normX = 1.03f;
-    float normY = 0.58f;
-
-    // Now time to change the pixel parameters to ones that correspond to that on screen.
-    float pixelsX = (float) (x / width) * normX * 2 - normX;
-    float pixelsY = (float) (y / height) * normY * 2 - normY;
-
-    float pixelsW = (float) (w / width) * normX * 2;
-    float pixelsH = (float) (h / height) * normY * 2;
-
-    /*
-    Get camera's forward pointing vector and begin to draw 2D element
-    at a unit vector position (so it is created right in front of the camera's view). 
-    */
-    // getForward() returns a normalized vector (unit vector) that is helpful to us.
-    PVector camFwd = cam.getForward();
-    // Rectangles will now always appear infront of the camera.
-    PVector rectPos = PVector.add(cam.position, camFwd);
-    /*
-    We have to change the X and Z values so that layers of UI do not merge with each other and glitch.
-    
-    Timesing by the forward unit vector of the camera causes changes in the original position to be modified
-    based on the perspective of the camera, lowering the amount of change based on if it is suitable (should be
-    projected more or less in the camera's direction).
-    */
-    translate(
-        rectPos.x - (0.001f * layer) * camFwd.x,
-        rectPos.y - (0.001f * layer) * camFwd.y,
-        rectPos.z - (0.001f * layer) * camFwd.z
-    );
-
-    /*
-    Make the object's rotation have a relationship with camera rotation
-    so that it is 'billboarded', and therefore rotationally stationary
-    with camera view.
-    */
-    rotateY(radians(270) - cam.pan);
-    rotateX(cam.tilt);
-
-    rect(pixelsX, pixelsY, pixelsW, pixelsH);
-    // float ratio1 = (float) mouseX / width;
-    // float ratio2 = (float) mouseY / height;
-
-    popMatrix();
-    popStyle();
-}
-
-public void drawText(float x, float y, float w, float h, String text, int color_, int layer) {
-    pushStyle();
-    pushMatrix();
-    noLights();
-
-    fill(color_);
-
-    /*
-    Due to the issues from the perspective of the camera, I had to find arbitrary values
-    found by trial and error that best mask 2D elements to the view by a normalized
-    value.
-    */
-    float normX = 1.03f;
-    float normY = 0.58f;
-
-    // Now time to change the pixel parameters to ones that correspond to that on screen.
-    float pixelsX = (float) (x / width) * normX * 2 - normX;
-    float pixelsY = (float) (y / height) * normY * 2 - normY;
-
-    float pixelsW = (float) (w / width) * normX * 2;
-    float pixelsH = (float) (h / height) * normY * 2;
-
-    /*
-    Get camera's forward pointing vector and begin to draw 2D element
-    at a unit vector position (so it is created right in front of the camera's view). 
-    */
-    // getForward() returns a normalized vector (unit vector) that is helpful to us.
-    PVector camFwd = cam.getForward();
-    // Rectangles will now always appear infront of the camera.
-    PVector textPos = PVector.add(cam.position, camFwd);
-    /*
-    We have to change the X and Z values so that layers of UI do not merge with each other and glitch.
-    
-    Timesing by the forward unit vector of the camera causes changes in the original position to be modified
-    based on the perspective of the camera, lowering the amount of change based on if it is suitable (should be
-    projected more or less in the camera's direction).
-
-    This results in a 'layer' system, where UI elements are moved backwards or forwards based on what should have
-    priority over another.
-    */
-    translate(
-        textPos.x + (100 * layer) * camFwd.x,
-        textPos.y + (100 * layer) * camFwd.y,
-        textPos.z + (100 * layer) * camFwd.z
-    );
-
-    /*
-    Make the object's rotation have a relationship with camera rotation
-    so that it is 'billboarded', and therefore rotationally stationary
-    with camera view.
-    */
-    rotateY(radians(270) - cam.pan);
-    rotateX(cam.tilt);
-
-    fill(0);
-    textSize(50);
-    text(text, x - width/2, y - height/2);
-    // float ratio1 = (float) mouseX / width;
-    // float ratio2 = (float) mouseY / height;
-
-    popMatrix();
-    popStyle();
-}
-
-// void drawText(float x, float y, int size, String text, int layer) {
-//     pushStyle();
-//     pushMatrix();
-//     noLights();
-
-//     // fill(color_);
-
-//     /*
-//     Due to the issues from the perspective of the camera, I had to find arbitrary values
-//     found by trial and error that best mask 2D elements to the view by a normalized
-//     value.
-//     */
-//     float normX = 1.03;
-//     float normY = 0.58;
-
-//     // Now time to change the pixel parameters to ones that correspond to that on screen.
-//     float pixelsX = (float) (x / width) * normX * 2 - normX;
-//     float pixelsY = (float) (y / height) * normY * 2 - normY;
-
-//     // float pixelsW = (float) (w / width) * normX * 2;
-//     // float pixelsH = (float) (h / height) * normY * 2;
-
-//     /*
-//     Get camera's forward pointing vector and begin to draw 2D element
-//     at a unit vector position (so it is created right in front of the camera's view). 
-//     */
-//     // getForward() returns a normalized vector (unit vector) that is helpful to us.
-//     PVector camFwd = cam.getForward();
-//     // Rectangles will now always appear infront of the camera.
-//     PVector textPos = PVector.add(cam.position, camFwd);
-//     /*
-//     We have to change the X and Z values so that layers of UI do not merge with each other and glitch.
-    
-//     Timesing by the forward unit vector of the camera causes changes in the original position to be modified
-//     based on the perspective of the camera, lowering the amount of change based on if it is suitable (should be
-//     projected more or less in the camera's direction).
-//     */
-//     translate(
-//         textPos.x - (0.001 * layer) * camFwd.x,
-//         textPos.y - (0.001 * layer) * camFwd.y,
-//         textPos.z - (0.001 * layer) * camFwd.z
-//     );
-
-//     /*
-//     Make the object's rotation have a relationship with camera rotation
-//     so that it is 'billboarded', and therefore rotationally stationary
-//     with camera view.
-//     */
-//     rotateY(radians(270) - cam.pan);
-//     rotateX(cam.tilt);
-
-//     fill(0);
-
-//     textSize(size);
-//     text(text, x, y);
-
-//     popMatrix();
-//     popStyle();
-// }
-
-public boolean checkIntersect2D(PVector v, PVector cV1, PVector cV2) {
-    /*
-    The + 5 constant to the comparison vectors fixes the desychronization between the
-    camera's projection of the UI element and where it actually appears on screen.
-    */
-    if(
-    v.x > (cV1.x + 5) &&
-    v.x < (cV2.x + 5) &&
-    v.y > (cV1.y + 5) &&
-    v.y < (cV2.y + 5))
-        return true;
-    else
-        return false;
-}
-
-boolean rightClicker = false;
-PVector spawnPosition;
-int drawingColor = color(255);
 
 public void draw() {
-    background(100, 100, 220);    
+    // Undoes the use of DISABLE_DEPTH_TEST so 3D objects act naturally after it was called.
+    hint(ENABLE_DEPTH_TEST);
+    background(100, 100, 220);
     lights();
+    noStroke();
 
     for (Atom atom : atomList) {
         atom.display();
@@ -272,38 +76,20 @@ public void draw() {
 
     drawOriginArrows();
     drawOriginGrid();
-    selectionAgent.draw();
-    selectionAgent.updateSelectionMovement();
 
-    if (spawnPosition != null) {
-        // if (mouseX > spawnPosition.x && mouseX < (spawnPosition.x + 120 - 10) &&
-        // mouseY > spawnPosition.y && mouseY < (spawnPosition.y + 40 - 10))
-        if (checkIntersect2D(new PVector(mouseX, mouseY), spawnPosition, new PVector(spawnPosition.x + 120 - 10, spawnPosition.y + 40 - 10)))
-            drawingColor = color(135);
-        else
-            drawingColor = color(255);
-    }
-
-    if (rightClicker && spawnPosition != null) {
-        drawRect(spawnPosition.x, spawnPosition.y, 120, 200, color(230, 230, 230), 1);
-        drawRect(spawnPosition.x + 5, spawnPosition.y + 5, 120 - 10, 40 - 10, drawingColor, 2);
-        drawText(0, 0, 120 - 10, 40 - 10, "Add Atom", drawingColor, 3);
-
-        // drawText(spawnPosition.x, spawnPosition.y, 1200, "Add Atom", 3);
-
-        // // crap shit
-        // textSize(120);
-        // pushMatrix();
-
-        // translate(cam.position.x * cam.getForward().x, cam.position.y * cam.getForward().y, cam.position.z * cam.getForward().z);
-        // rotateY(radians(270) - cam.pan);
-        // rotateX(cam.tilt);
-
-        // rect(0, 0, 200, 200);
-        // text("HAHAHAA", cam.position.x * cam.getForward().x, cam.position.y * cam.getForward().y, cam.position.z * cam.getForward().z);
+    /*
+        2D drawing beyond here ONLY.
     
-        // popMatrix();
-    }
+        This causes any more drawing to appear as a 'painting over other objects'
+        allowing 2D elements to be rendered in the same environment as 3D ones.
+    */
+    hint(DISABLE_DEPTH_TEST);
+
+    selectionManager.updateSelectionMovement();
+    selectionManager.updateGroupSelectionDrawing();
+
+    uiManager.checkHoverForButtons();
+    uiManager.draw();
 
     // SPACE
     if (keys.containsKey(32) && keys.get(32)) cam.velocity.sub(PVector.mult(cam.getUp(), cam.speed));
@@ -313,56 +99,32 @@ public void draw() {
 
 public void mousePressed(MouseEvent event) {
     // If selection agent's events have been triggered, then we are finished for this mouse event.
-    if (mouseButton == LEFT) {
-        if (selectionAgent.mousePressed()) return;
-    } else if (mouseButton == RIGHT) {
-
-    } else if (mouseButton == CENTER) {
-        // Undeclared for now.
-    }
+    if (mouseButton == LEFT)
+        if (selectionManager.mousePressed()) return;
 }
 
 public void mouseReleased() {
-    if (spawnPosition != null) {
-        // if (mouseX > spawnPosition.x && mouseX < (spawnPosition.x + 120 - 10) &&
-        // mouseY > spawnPosition.y && mouseY < (spawnPosition.y + 40 - 10)) {
-        if (checkIntersect2D(new PVector(mouseX, mouseY), spawnPosition, new PVector(spawnPosition.x + 120 - 10, spawnPosition.y + 40 - 10))) {
-            PVector fwd = cam.getForward();
-            new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 100);
-        }
-    }
+    uiManager.checkClickForButtons();
 
     if (mouseButton == LEFT) {
-        spawnPosition = null;
-        rightClicker = false;
+        uiManager.leftClick();
     } else if (mouseButton == RIGHT) {
-        spawnPosition = new PVector(mouseX, mouseY);
-        rightClicker = true;
+        uiManager.rightClick();
     }
-
-    if (selectionAgent.mouseReleased()) return;
+    
+    // TODO: Model selectionManager after uiManager.
+    if (selectionManager.mouseReleased()) return;
 }
 
 public void mouseWheel(MouseEvent event) {
     float e = event.getCount();
-    if (selectionAgent.mouseWheel(e)) return;
+    if (selectionManager.mouseWheel(e)) return;
 }
 
-boolean turnCamera = false;
 
 public void keyPressed() {
-    if (key == 'z') {
-        if (turnCamera) {
-            cam.sensitivity = 0;
-            robot.mouseMove(width/4 + width/2, height/2 + height/4);
-            turnCamera = false;
-            cursor();
-        } else {
-            cam.sensitivity = 0.5f;
-            turnCamera = true;
-            noCursor();
-        }
-    }
+    if (key == 'z')
+        cam.togglePilot();
 }
 
 // This ensures a character can never have more than one value associated to it (technically).
@@ -379,18 +141,6 @@ input lag.
 public void keyEvent(KeyEvent event){
     // Using key codes instead of reading the character allows us to use all the keys on the keyboard.
     int key = event.getKeyCode();
-    
-    //println(key);
-    
-    //if (toggleKeys.containsKey(key)) {
-    //    if (event.getAction() == KeyEvent.PRESS) {
-    //        toggleKeys.put(Character.toLowerCase(key), !toggleKeys.get(key));
-    //    }
-    //} else {
-    //    if (event.getAction() == KeyEvent.PRESS) {
-    //        toggleKeys.put(Character.toLowerCase(key), true);
-    //    }
-    //}
 
     switch (event.getAction()) {
         case KeyEvent.PRESS:
@@ -415,6 +165,7 @@ public void drawAtomLattice() {
 
 // Draws arrows pointing out from the origin point of the scene.
 public void drawOriginArrows() {
+    pushStyle();
     fill(color(0, 0, 255));
     box(20, 20, 300);
     
@@ -422,49 +173,58 @@ public void drawOriginArrows() {
     box(20, 300, 20);
 
     fill(color(255, 0, 0));
-    box(300, 20, 20); 
+    box(300, 20, 20);
+    popStyle(); 
 }
 
 // Draws squares around an area on the origin point of the scene.
 public void drawOriginGrid() {
     for (int y = 0; y < 5; y ++) {
         for (int x = 0; x < 5; x ++) {
+            pushStyle();
             pushMatrix();
             rotateX(PI/2);
             stroke(255, 180);
             noFill();
             rect(100 * x, 100 * y, 100, 100);
             popMatrix();
+            popStyle();
         }
     }
     for (int y = -5; y < 0; y ++) {
         for (int x = 0; x < 5; x ++) {
+            pushStyle();
             pushMatrix();
             rotateX(PI/2);
             stroke(255, 180);
             noFill();
             rect(100 * x, 100 * y, 100, 100);
             popMatrix();
+            popStyle();
         }
     }
     for (int y = 0; y < 5; y ++) {
         for (int x = -5; x < 0; x ++) {
+            pushStyle();
             pushMatrix();
             rotateX(PI/2);
             stroke(255, 180);
             noFill();
             rect(100 * x, 100 * y, 100, 100);
             popMatrix();
+            popStyle();
         }
     }
     for (int y = -5; y < 0; y ++) {
         for (int x = -5; x < 0; x ++) {
+            pushStyle();
             pushMatrix();
             rotateX(PI/2);
             stroke(255, 180);
             noFill();
             rect(100 * x, 100 * y, 100, 100);
             popMatrix();
+            popStyle();
         }
     } 
 }
@@ -476,17 +236,29 @@ class Atom {
     private int baseColor = color(random(90, 255), random(90, 255), random(90, 255));
     int currentColor = baseColor;
 
+    PShape shape;
+
     Atom() {
         pos.x = random(-500, 500);
         pos.y = random(-500, 500);
         pos.z = random(-500, 500);
-        this.r = round(random(25, 100));
+        r = round(random(25, 100));
+
+        shape = createShape(SPHERE, r);
+        shape.setStroke(false);
+        shape.setFill(baseColor);
+
         atomList.add(this);
     }
 
     Atom(float x, float y, float z, int r) {
         pos = new PVector(x, y, z);
         this.r = r;
+
+        shape = createShape(SPHERE, r);
+        shape.setStroke(false);
+        shape.setFill(baseColor);
+
         atomList.add(this);
     }
 
@@ -508,12 +280,12 @@ class Atom {
 
     public void display() {
         // Added radius so pop-in limits are more forgiving and less obvious.
-        float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);
-        float screenY = screenY(pos.x + r, pos.y + r, pos.z - r);
+        // float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);
+        // float screenY = screenY(pos.x + r, pos.y + r, pos.z - r);
   
         // Disregard objects outside of camera view, saving GPU cycles and improving performance.
-        if ((screenX > width) || (screenY > height) || (screenX < 0) || (screenY < 0)) 
-            return;
+        // if ((screenX > width) || (screenY > height) || (screenX < 0) || (screenY < 0)) 
+        //     return;
         
         /*
         Push functions save the current "drawing" settings for what they do, and allow
@@ -529,7 +301,8 @@ class Atom {
         fill(currentColor);
         translate(pos.x, pos.y, pos.z);
         
-        sphere(r);
+        // sphere(r);
+        shape(shape);
 
         // Guides //
         noFill();
@@ -541,6 +314,37 @@ class Atom {
         popMatrix();
         popStyle();
     } 
+}
+class ButtonUI extends UIElement {
+    ButtonUI(float x, float y, float w, float h, int colour) {
+        super(x, y, w, h, colour);
+    }
+
+    public @Override
+    void display() {
+        super.display();
+
+        stroke(160, 160, 255, 230);
+        strokeWeight(2);
+        rect(position.x, position.y, size.x, size.y);
+
+        finishDrawing();
+    }
+
+    public void hover() {
+        colour = color(200, 200, 255);
+    }
+
+    public void unhover() {
+        colour = color(200);
+    }
+
+    public void click() {
+        if (!active) return;
+        
+        PVector fwd = cam.getForward();
+        new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 100);
+    }
 }
 class Camera extends QueasyCam {
     //float x;
@@ -632,14 +436,96 @@ class Camera extends QueasyCam {
         println(abs(mod));
         return abs(mod);
     }
+
+    public void pilot() {
+        sensitivity = 0;
+        robot.mouseMove(width/4 + width/2, height/2 + height/4);
+        cursor();
+        piloting = true;
+    }
+
+    public void stopPiloting() {
+        sensitivity = 0.5f;
+        noCursor();
+        piloting = false;
+    }
+
+    private boolean piloting = true;
+
+    public void togglePilot() {
+        if (piloting)
+            stopPiloting();
+        else
+            pilot();
+    }
+}
+class ContextMenu extends UIElement {
+    RectangleUI mainPanel;
+    ButtonUI testButton;
+    TextUI testText;
+
+    ContextMenu(float x, float y, float w, float h, int colour) {
+        super(x, y, w, h, colour);
+
+        UIElement background = uiFactory.createRect(-1, -1, w + 4, h + 4, color(135));
+
+        mainPanel = uiFactory.createRect(1, 1, w, h, colour);
+        testButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0));
+        testText = uiFactory.createText(w/4, 40/4 + 2.5f, w - 12, 38, color(70), "Add Atom");
+        
+        UIElement testButton2 = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0));
+        UIElement testText2 = uiFactory.createText(w/4, 40/4 + 2.5f + 40 + 4, w - 12, 38, color(70), "Delete");
+
+        appendChild(background);
+
+        appendChild(mainPanel);
+        appendChild(testButton);
+        appendChild(testText);
+
+        appendChild(testButton2);
+        appendChild(testText2);
+
+        // UI elements start active by default, hiding when construction is finished is standard practice for menus.
+        hide();
+    }
+
+    @Override
+    public void show() {
+        super.show();
+        setPosition(new PVector(mouseX, mouseY));
+    }
+}
+class Menu extends UIElement {
+    Menu(float x, float y, float w, float h, int colour) {
+        super(x, y, w, h, colour);
+    }
+
+    @Override
+    public void show() {
+        super.show();
+    }
+}
+class RectangleUI extends UIElement {
+    RectangleUI(float x, float y, float w, float h, int colour) {
+        super(x, y, w, h, colour);
+    }
+
+    public @Override
+    void display() {
+        super.display();
+        stroke(255, 160);
+        rect(position.x, position.y, size.x, size.y);
+
+        finishDrawing();
+    }
 }
 /*
-SelectionAgent handles the interaction of selecting
+SelectionManager handles the interaction of selecting
 Atoms in space. It also updates the movement of all
 Atoms in its possession.
 */
 
-class SelectionAgent {
+class SelectionManager {
     /*
     Selection shouldn't be used outside of the selection agent, as it pertains
     to no other context.
@@ -681,7 +567,7 @@ class SelectionAgent {
 
     public void select(Atom atom) {
         if (atom == null) {
-            println("URGENT: SelectionAgent was requested to select a null reference.");
+            println("URGENT: SelectionManager was requested to select a null reference.");
             Thread.dumpStack();
             return;
         }
@@ -702,11 +588,11 @@ class SelectionAgent {
     }
 
     PVector selectingStartPos;
-    boolean selecting;
+    RectangleUI groupSelection;
 
     public void startSelecting() {
-        selecting = true;
         selectingStartPos = new PVector(mouseX, mouseY);
+        groupSelection = uiFactory.createRect(selectingStartPos.x, selectingStartPos.y, 1, 1, color(30, 30, 90, 80));
     }
 
     public void stopSelecting() {
@@ -764,8 +650,9 @@ class SelectionAgent {
             // TODO: Investigate if Z values are accounted for in group selection.
         }
 
-        selecting = false;
         selectingStartPos = null;
+        uiManager.removeElement(groupSelection);
+        groupSelection = null;
     }
 
     public boolean mousePressed() {
@@ -834,22 +721,18 @@ class SelectionAgent {
 
         if (e > 0) // On Scroll Down
             // hoveringDistanceMult -= 0.5 * PVector.dist(cam.position, selectedAtom.pos) / 5000;
-            hoveringDistanceMult -= 0.5f;
+            hoveringDistanceMult -= 0.25f;
         else // On Scroll Up
             // hoveringDistanceMult += 0.5 / PVector.dist(cam.position, selectedAtom.pos) * 500;
-            hoveringDistanceMult += 0.5f;
+            hoveringDistanceMult += 0.25f;
 
         return true;
     }
 
-    /*
-    While functions such as updateSelectionMovement() also use nanobuilder's draw method and
-    could otherwise be routed through here, this would create a messy network of references
-    that I want to avoid for now. This may change. I will keep this draw() for graphical contexts.
-    */
-    public void draw() {
-        if (selecting)
-            drawRect(selectingStartPos.x, selectingStartPos.y, mouseX - selectingStartPos.x, mouseY - selectingStartPos.y, color(30, 30, 90, 80), 1);
+    public void updateGroupSelectionDrawing() {
+        if (groupSelection == null) return;
+
+        groupSelection.setSize(new PVector(mouseX - selectingStartPos.x, mouseY - selectingStartPos.y));
     }
 
     public void updateSelectionMovement() {
@@ -942,6 +825,250 @@ class SelectionAgent {
                 }
             }
         }
+    }
+}
+class TextUI extends UIElement {
+    private String text;
+
+    TextUI(float x, float y, float w, float h, int colour, String text) {
+        super(x, y, w, h, colour);
+        this.text = text;
+    }
+
+    public @Override
+    void display() {
+        super.display();
+
+        textSize(18);
+        text(text, position.x, position.y, size.x, size.y);
+
+        finishDrawing();
+    }
+}
+// Defining as abstract ensures UI element has to be inherited.
+abstract class UIElement {
+    /*
+    Declare these final since the reference should NEVER change.
+    
+    If the references were changed to reflect another object,
+    it could very easily cause a hard to detect overlapping issue
+    that has potentially adverse effects.
+    */
+    protected PVector position;
+
+    protected PVector size;
+    protected int colour;
+    protected boolean active = true;
+
+    protected UIElement parent;
+    protected ArrayList<UIElement> children = new ArrayList<UIElement>();
+
+    UIElement(float x, float y, float w, float h, int colour) {
+        position = new PVector(x, y);
+        size = new PVector(w, h);
+        this.colour = colour;
+    }
+
+    public void display() {
+        pushStyle();
+        pushMatrix();
+        noLights();
+
+        fill(colour);
+        /*
+        Get camera's forward pointing vector and begin to draw 2D element
+        at a unit vector position (so it is created right in front of the camera's view).
+
+        Then project it by 625 so it maps properly to 'pixel' form.
+        */
+        // getForward() returns a normalized vector (unit vector) that is helpful to us.
+        PVector projection = PVector.add(cam.position, cam.getForward().copy().mult(625));
+        translate(projection.x, projection.y, projection.z);
+
+        /*
+        Make the object's rotation have a relationship with camera rotation
+        so that it is 'billboarded', and therefore rotationally stationary
+        with camera view.
+        */
+        rotateY(radians(270) - cam.pan);
+        rotateX(cam.tilt);
+
+        translate(-width/2, -height/2);
+        // Any screen drawing methods are now properly mapped to the camera.
+    }
+
+    /*
+    Base display can't call the pops, and to conventionalize
+    the process finishDrawing() visually tells me the element
+    is properly implemented.
+    */
+    protected void finishDrawing() {
+        popStyle();
+        popMatrix();
+    }
+
+    public boolean checkIntersectionWithPoint(PVector v) {
+        if(
+            v.x > position.x &&
+            v.x < (position.x + size.x) &&
+            v.y > position.y &&
+            v.y < (position.y + size.y)
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public PVector getPosition() {
+        return position;
+    }
+
+    public void setPosition(PVector newPosition) {
+        for (UIElement child : children) {
+            if (child == null) continue;
+
+            child.setPosition(PVector.add(child.getPosition(), PVector.sub(newPosition, position)));
+        }
+
+        position = newPosition;
+    }
+
+    public PVector getSize() {
+        return size;
+    }
+
+    public void setSize(PVector newSize) {
+        size = newSize;
+    }
+
+    public boolean getActive() {
+        return active;
+    }
+
+    public void show() {
+        for (UIElement child : children) {
+            if (child == null) continue;
+
+            child.show();
+        }
+
+        active = true;
+    }
+
+    public void hide() {
+        for (UIElement child : children) {
+            if (child == null) continue;
+
+            child.hide();
+        }
+
+        active = false;
+    }
+
+    public void appendChild(UIElement child) {
+        children.add(child);
+        child.setParent(this);
+    }
+
+    public void removeChild(UIElement child) {
+        children.remove(child);
+        child.removeParent();
+    }
+
+    public void setParent(UIElement parent) {
+        if (parent == null) return;
+
+        this.parent = parent;
+        setPosition(PVector.add(position, parent.getPosition()));
+    }
+
+    public void removeParent() {
+        if (parent == null) return;
+
+        setPosition(PVector.sub(position, parent.getPosition()));
+    }
+}
+/*
+Interestingly because of the drawing buffer,
+the order in which these methods are called determine
+what 'layer' UI are drawn on.
+*/
+class UIFactory {
+    public RectangleUI createRect(float x, float y, float w, float h, int colour) {
+        RectangleUI element = new RectangleUI(x, y, w, h, colour);
+        uiManager.addElement(element);
+        return element;
+    }
+
+    public TextUI createText(float x, float y, float w, float h, int colour, String text) {
+        TextUI element = new TextUI(x, y, w, h, colour, text);
+        uiManager.addElement(element);
+        return element;
+    }
+
+    public ButtonUI createButton(float x, float y, float w, float h, int colour) {
+        ButtonUI element = new ButtonUI(x, y, w, h, colour);
+        uiManager.addElement(element);
+        uiManager.addButton(element);
+        return element;
+    }
+}
+class UIManager {
+    private ArrayList<UIElement> screenElements = new ArrayList<UIElement>();
+    private ArrayList<ButtonUI> buttons = new ArrayList<ButtonUI>();
+
+    private ContextMenu contextMenu;
+
+    public void draw() {
+        if (contextMenu == null) contextMenu = new ContextMenu(0, 0, 180, 200, color(230));
+
+        for (UIElement element : screenElements) {
+            if (element.getActive()) element.display();
+        }
+    }
+
+    public void leftClick() {
+        contextMenu.hide();
+    }
+
+    public void rightClick() {
+        contextMenu.show();
+    }
+
+    public void addElement(UIElement element) {
+        screenElements.add(element);
+    }
+
+    public void removeElement(UIElement element) {
+        screenElements.remove(element);
+    }
+
+    public void checkHoverForButtons() {
+        PVector mouse = new PVector(mouseX, mouseY);
+
+        for (ButtonUI button : buttons) {
+            if (button.checkIntersectionWithPoint(mouse))
+                button.hover();
+            else
+                button.unhover();
+        }
+    }
+
+    public void checkClickForButtons() {
+        PVector mouse = new PVector(mouseX, mouseY);
+
+        for (ButtonUI button : buttons) {
+            if (button.checkIntersectionWithPoint(mouse)) button.click();
+        }
+    }
+
+    public void addButton(ButtonUI button) {
+        buttons.add(button);
+    }
+
+    public void removeButton(ButtonUI button) {
+        buttons.remove(button);
     }
 }
     public void settings() {  size(1280, 720, P3D); }

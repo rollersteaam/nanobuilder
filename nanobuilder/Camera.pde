@@ -88,4 +88,26 @@ class Camera extends QueasyCam {
         println(abs(mod));
         return abs(mod);
     }
+
+    void pilot() {
+        sensitivity = 0;
+        robot.mouseMove(width/4 + width/2, height/2 + height/4);
+        cursor();
+        piloting = true;
+    }
+
+    void stopPiloting() {
+        sensitivity = 0.5;
+        noCursor();
+        piloting = false;
+    }
+
+    private boolean piloting = true;
+
+    public void togglePilot() {
+        if (piloting)
+            stopPiloting();
+        else
+            pilot();
+    }
 }

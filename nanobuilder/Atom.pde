@@ -5,17 +5,29 @@ class Atom {
     private color baseColor = color(random(90, 255), random(90, 255), random(90, 255));
     color currentColor = baseColor;
 
+    PShape shape;
+
     Atom() {
         pos.x = random(-500, 500);
         pos.y = random(-500, 500);
         pos.z = random(-500, 500);
-        this.r = round(random(25, 100));
+        r = round(random(25, 100));
+
+        shape = createShape(SPHERE, r);
+        shape.setStroke(false);
+        shape.setFill(baseColor);
+
         atomList.add(this);
     }
 
     Atom(float x, float y, float z, int r) {
         pos = new PVector(x, y, z);
         this.r = r;
+
+        shape = createShape(SPHERE, r);
+        shape.setStroke(false);
+        shape.setFill(baseColor);
+
         atomList.add(this);
     }
 
@@ -37,12 +49,12 @@ class Atom {
 
     void display() {
         // Added radius so pop-in limits are more forgiving and less obvious.
-        float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);
-        float screenY = screenY(pos.x + r, pos.y + r, pos.z - r);
+        // float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);
+        // float screenY = screenY(pos.x + r, pos.y + r, pos.z - r);
   
         // Disregard objects outside of camera view, saving GPU cycles and improving performance.
-        if ((screenX > width) || (screenY > height) || (screenX < 0) || (screenY < 0)) 
-            return;
+        // if ((screenX > width) || (screenY > height) || (screenX < 0) || (screenY < 0)) 
+        //     return;
         
         /*
         Push functions save the current "drawing" settings for what they do, and allow
@@ -58,7 +70,8 @@ class Atom {
         fill(currentColor);
         translate(pos.x, pos.y, pos.z);
         
-        sphere(r);
+        // sphere(r);
+        shape(shape);
 
         // Guides //
         noFill();

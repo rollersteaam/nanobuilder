@@ -22,10 +22,18 @@ class UIManager {
 
     void addElement(UIElement element) {
         screenElements.add(element);
+
+        if (element instanceof ButtonUI) {
+            buttons.add((ButtonUI) element);
+        }
     }
 
     void removeElement(UIElement element) {
         screenElements.remove(element);
+
+        if (element instanceof ButtonUI) {
+            buttons.remove((ButtonUI) element);
+        }
     }
 
     public void checkHoverForButtons() {
@@ -47,11 +55,11 @@ class UIManager {
         }
     }
 
-    public void addButton(ButtonUI button) {
-        buttons.add(button);
-    }
+    // public void addButton(ButtonUI button) {
+    //     buttons.add(button);
+    // }
 
-    public void removeButton(ButtonUI button) {
-        buttons.remove(button);
-    }
+    // public void removeButton(ButtonUI button) {
+    //     buttons.remove(button);
+    // }
 }

@@ -1,53 +1,152 @@
 class Atom {
     PVector pos = new PVector();
-    int r;
+    PVector velocity = new PVector();
+    PVector acceleration = new PVector(0, 0, 0);
+    
+    float r;
 
-    private color baseColor = color(random(90, 255), random(90, 255), random(90, 255));
-    color currentColor = baseColor;
+    float charge;
+    double mass;
+
+    color baseColor;
+    color currentColor;
 
     PShape shape;
 
-    Atom() {
-        pos.x = random(-500, 500);
-        pos.y = random(-500, 500);
-        pos.z = random(-500, 500);
-        r = round(random(25, 100));
+    Atom(float x, float y, float z, float r) {
+        pos = new PVector(x, y, z);
+        this.r = r;
+        baseColor = color(random(90, 255), random(90, 255), random(90, 255));
+        currentColor = baseColor;
+        fill(currentColor);
 
         shape = createShape(SPHERE, r);
         shape.setStroke(false);
-        shape.setFill(baseColor);
+        shape.setFill(currentColor);
+
+        // velocity = velocity.random3D().mult(10);
+        // acceleration = acceleration.random3D().mult(5);
 
         atomList.add(this);
     }
 
-    Atom(float x, float y, float z, int r) {
-        pos = new PVector(x, y, z);
-        this.r = r;
+    Atom() {
+        this(
+            random(-500, 500),
+            random(-500, 500),
+            random(-500, 500),
+            round(random(25, 100))
+        );
+    }
 
-        shape = createShape(SPHERE, r);
-        shape.setStroke(false);
-        shape.setFill(baseColor);
-
-        atomList.add(this);
+    void delete() {
+        shape = null;
+        atomList.remove(this);
     }
 
     void select() {
         // currentColor = color(135);
+        acceleration.mult(0);
+        velocity.mult(0);
     }
 
     void deselect() {
-        revertToBaseColor();
+        // revertToBaseColor();
+        acceleration.mult(0);
+        velocity.mult(0);
+    }
+
+    public void setColour(color colour) {
+        shape.setFill(colour);
     }
 
     void revertToBaseColor() {
-        currentColor = baseColor;
+        shape.setFill(baseColor);
     }
 
     void setPosition(PVector newPos) {
         pos = newPos.copy();
     }
 
+    void evaluateElectricalField() {
+        for (Atom atom : atomList) {
+            if (atom == this) continue;
+
+            PVector dir = PVector.sub(pos, atom.pos).normalize();
+            float sum = abs(dir.x) + abs(dir.y) + abs(dir.z);
+            PVector mod = new PVector(abs(dir.x) / sum, abs(dir.y) / sum, abs(dir.z) / sum);
+
+            // println("START");
+            // println(dir);
+            // println(sum);
+            // println(mod);
+
+            // println("PHASE 2:");
+            // println(atom.charge);
+            // println(charge);
+            // println(atom.charge * charge);
+            // println(dir.x * mod.x);
+
+            // println(atom.charge * charge * dir.x * mod.x);
+            // println((float) atom.mass * 4 * PI * 8.85 * pow(10,5));
+
+            // println((atom.charge * charge * dir.x * mod.x) / ((float) mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2)));
+            // println("END");
+            // println();
+
+            // float top = atom.charge * charge * dir.x * mod.x;
+            float bottom = (float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2);
+            if (bottom == 0) continue;
+
+            atom.acceleration.sub(
+                (atom.charge * charge * dir.x) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 30000),
+                (atom.charge * charge * dir.y) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 30000),
+                (atom.charge * charge * dir.z) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 30000)
+                // (atom.charge * charge * abs(dir.x) * mod.x) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100),
+                // (atom.charge * charge * abs(dir.y) * mod.y) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100),
+                // (atom.charge * charge * abs(dir.z) * mod.z) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100)
+            );
+        }
+    }
+
     void display() {
+        // acceleration = acceleration.random3D().mult(2);
+        PVector oldVelocity = velocity.copy();
+        velocity.add(acceleration);
+        pos.add(velocity);
+
+        if (pos.x > 10000 || pos.x < -10000) {
+            pos.sub(oldVelocity.copy().normalize().mult(r));
+            velocity.x *= -1;
+            velocity.x *= 0.75;
+        }
+
+        if (pos.y > 10000 || pos.y < -10000) {
+            pos.sub(oldVelocity.copy().normalize().mult(r));
+            velocity.y *= -1;
+            velocity.y *= 0.75;
+        }
+
+        if (pos.z > 10000 || pos.z < -10000) {
+            pos.sub(oldVelocity.copy().normalize().mult(r));
+            velocity.z *= -1;
+            velocity.z *= 0.75;
+        }
+        // if (pos.x > 1000 || pos.x < -1000) {
+        //     pos.sub(oldVelocity.copy().normalize().mult(r));
+        //     velocity.x *= -1;
+        // }
+
+        // if (pos.y > 1000 || pos.y < -1000) {
+        //     pos.sub(oldVelocity.copy().normalize().mult(r));
+        //     velocity.y *= -1;
+        // }
+
+        // if (pos.z > 1000 || pos.z < -1000) {
+        //     pos.sub(oldVelocity.copy().normalize().mult(r));
+        //     velocity.z *= -1;
+        // }
+
         // Added radius so pop-in limits are more forgiving and less obvious.
         // float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);
         // float screenY = screenY(pos.x + r, pos.y + r, pos.z - r);
@@ -66,8 +165,6 @@ class Atom {
         pushStyle();
         pushMatrix();
         
-        noStroke();
-        fill(currentColor);
         translate(pos.x, pos.y, pos.z);
         
         // sphere(r);
@@ -76,11 +173,12 @@ class Atom {
         // Guides //
         noFill();
         stroke(255, 170);
+
         rect(-r, -r, r*2, r*2);
         rotateY(radians(90));
         rect(-r, -r, r*2, r*2);
         
         popMatrix();
         popStyle();
-    } 
+    }
 }

@@ -66,6 +66,26 @@ class SelectionManager {
         hoveringDistanceMult = 1;
     }
 
+    public void deleteItemsInSelection() {
+        if (!hasActiveSelection()) return;
+
+        for (Selection selection : selectedAtoms) {
+            selection.getAtom().delete();
+        }
+
+        cancel();
+    }
+
+    public void paintAtoms() {
+        if (!hasActiveSelection()) return;
+
+        for (Selection selection : selectedAtoms) {
+            selection.getAtom().setColour(color(255, 0, 0));
+        }
+
+        cancel();
+    }
+
     PVector selectingStartPos;
     RectangleUI groupSelection;
 
@@ -135,12 +155,6 @@ class SelectionManager {
     }
 
     boolean mousePressed() {
-        // Case 1: Cancel selection.
-        if (hasActiveSelection()) {
-            cancel();
-            return true;
-        }
-
         // Case 2: Find a single Atom at clicking location.
         for (Atom atom : atomList) {
             float screenPosX = screenX(atom.pos.x, atom.pos.y, atom.pos.z);
@@ -182,6 +196,8 @@ class SelectionManager {
             }
         }
 
+
+
         // Case 3: Begin an area selection.
         startSelecting();
 
@@ -190,6 +206,17 @@ class SelectionManager {
     }
 
     boolean mouseReleased() {
+        // // Case 1: Cancel selection.
+        // if (hasActiveSelection()) {
+        //     cancel();
+        //     // return true;
+        // }
+
+        if (hasActiveSelection()) {
+            cancel();
+            // return true;
+        }
+
         stopSelecting();
 
         return false;

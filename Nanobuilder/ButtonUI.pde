@@ -1,6 +1,9 @@
 class ButtonUI extends UIElement {
-    ButtonUI(float x, float y, float w, float h, color colour) {
+    Runnable function;
+    
+    ButtonUI(float x, float y, float w, float h, color colour, Runnable function) {
         super(x, y, w, h, colour);
+        this.function = function;
     }
 
     @Override
@@ -25,7 +28,6 @@ class ButtonUI extends UIElement {
     public void click() {
         if (!active) return;
         
-        PVector fwd = cam.getForward();
-        new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 100);
+        function.run();
     }
 }

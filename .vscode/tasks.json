@@ -5,7 +5,7 @@
 	"showOutput": "always",
 	"args": [
         "--force",
-		"--sketch=${workspaceRoot}",
+		"--sketch=${workspaceRoot}/Nanobuilder",
 		"--output=${workspaceRoot}\\out",
 		"--run"
     ]

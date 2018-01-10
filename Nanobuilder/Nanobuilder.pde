@@ -1,6 +1,9 @@
 import queasycam.*; // cam (Camera)
 import java.awt.*; // robot (Mouse manipulation)
 import processing.event.KeyEvent;
+import java.lang.Runnable;
+import java.util.Deque;
+import java.util.ArrayDeque;
 
 Camera cam;
 Robot robot;
@@ -15,6 +18,9 @@ MAIN FILE
 The primary interface between Processing (and its libraries) and the program,
 allowing all modules and classes to work properly.
 */
+public interface Runnable {
+    void run();
+}
 
 void setup() {
     size(1280, 720, P3D);
@@ -29,6 +35,7 @@ void setup() {
     cam.speed = 7.5;              // default is 3
     cam.sensitivity = 0;      // default is 2
     cam.controllable = true;
+    cam.position = new PVector(-width, height/2, 0);
 
     float fov = PI/3.0;
     float cameraZ = (height/2.0) / tan(fov/2.0);
@@ -38,24 +45,44 @@ void setup() {
     uiManager = new UIManager();
     uiFactory = new UIFactory();
     
-    for (int i = 0; i < 50; i++) {
-        new Atom();
-    }
+    // for (int i = 0; i < 50; i++) {
+        // new Atom();
+    // }
+    new Proton(0, 0, 0);
+    new Electron(500, 500, 500);
 }
 
 void draw() {
     // Undoes the use of DISABLE_DEPTH_TEST so 3D objects act naturally after it was called.
     hint(ENABLE_DEPTH_TEST);
+
     background(100, 100, 220);
     lights();
     noStroke();
 
+    float biggestDistance = 0;
+
     for (Atom atom : atomList) {
         atom.display();
+
+        float dist = PVector.dist(atom.pos, new PVector(0, 0, 0));
+
+        if ((dist > biggestDistance) || (biggestDistance == 0)) {
+            biggestDistance = dist;
+        }
     }
 
     drawOriginArrows();
     drawOriginGrid();
+
+    pushStyle();
+    // stroke(color(70, 70, 255));
+    // strokeWeight(8);
+    // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
+    // box(2000);
+    fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));
+    box(20000);
+    popStyle();
 
     /*
         2D drawing beyond here ONLY.
@@ -88,19 +115,18 @@ void mouseReleased() {
 
     if (mouseButton == LEFT) {
         uiManager.leftClick();
+        if (selectionManager.mouseReleased()) return;
     } else if (mouseButton == RIGHT) {
         uiManager.rightClick();
     }
     
     // TODO: Model selectionManager after uiManager.
-    if (selectionManager.mouseReleased()) return;
 }
 
 void mouseWheel(MouseEvent event) {
     float e = event.getCount();
     if (selectionManager.mouseWheel(e)) return;
 }
-
 
 void keyPressed() {
     if (key == 'z')

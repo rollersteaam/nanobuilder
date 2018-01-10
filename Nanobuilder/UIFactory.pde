@@ -16,10 +16,9 @@ class UIFactory {
         return element;
     }
 
-    ButtonUI createButton(float x, float y, float w, float h, color colour) {
-        ButtonUI element = new ButtonUI(x, y, w, h, colour);
+    ButtonUI createButton(float x, float y, float w, float h, color colour, Runnable function) {
+        ButtonUI element = new ButtonUI(x, y, w, h, colour, function);
         uiManager.addElement(element);
-        uiManager.addButton(element);
         return element;
     }
 }

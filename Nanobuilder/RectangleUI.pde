@@ -6,7 +6,7 @@ class RectangleUI extends UIElement {
     @Override
     void display() {
         super.display();
-        stroke(255, 160);
+        // stroke(255, 160);
         rect(position.x, position.y, size.x, size.y);
 
         finishDrawing();

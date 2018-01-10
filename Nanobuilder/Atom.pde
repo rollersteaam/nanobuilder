@@ -97,15 +97,25 @@ class Atom {
             // float top = atom.charge * charge * dir.x * mod.x;
             float bottom = (float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2);
             if (bottom == 0) continue;
-
-            atom.acceleration.sub(
-                (atom.charge * charge * dir.x) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 30000),
-                (atom.charge * charge * dir.y) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 30000),
-                (atom.charge * charge * dir.z) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 30000)
-                // (atom.charge * charge * abs(dir.x) * mod.x) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100),
-                // (atom.charge * charge * abs(dir.y) * mod.y) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100),
-                // (atom.charge * charge * abs(dir.z) * mod.z) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100)
-            );
+            
+            //
+            PVector d = PVector.sub(atom.pos, pos);
+            float distance = d.mag();
+            double force = atom.charge*charge/(4*PI*8.85*pow(10, -12)*distance*distance);
+            //PVector f = d.setMag((float) force*pow(10, -52));  
+            PVector f = d.setMag((float) force*1000);
+            println(f);
+            atom.acceleration = PVector.div(f, (float) atom.mass);
+            //
+            
+            //atom.acceleration.add(
+            //    (atom.charge * charge * dir.x) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 3000),
+            //    (atom.charge * charge * dir.y) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 3000),
+            //    (atom.charge * charge * dir.z) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 3000)
+            //    // (atom.charge * charge * abs(dir.x) * mod.x) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100),
+            //    // (atom.charge * charge * abs(dir.y) * mod.y) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100),
+            //    // (atom.charge * charge * abs(dir.z) * mod.z) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100)
+            //);
         }
     }
 
@@ -114,6 +124,8 @@ class Atom {
         PVector oldVelocity = velocity.copy();
         velocity.add(acceleration);
         pos.add(velocity);
+        
+        acceleration = new PVector();
 
         if (pos.x > 10000 || pos.x < -10000) {
             pos.sub(oldVelocity.copy().normalize().mult(r));

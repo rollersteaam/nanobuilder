@@ -6,8 +6,8 @@ class Proton extends Atom {
     */
     Proton(float x, float y, float z) {
         super(x, y, z, random(0.84, 0.87) * 100);
-        charge = 1.6 * pow(10, -2);
-        mass = 1.6726219 * pow(10, -10);
+        charge = 1.6 * pow(10, -19);
+        mass = 1.6726219 * pow(10, -27);
 
         baseColor = color(255, 0, 0);
         revertToBaseColor();
@@ -15,8 +15,10 @@ class Proton extends Atom {
 
     @Override
     void display() {
-        super.display();
-
         evaluateElectricalField();
+      
+      super.display();
+
+
     }
 }

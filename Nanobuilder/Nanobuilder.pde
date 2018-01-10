@@ -49,7 +49,7 @@ void setup() {
         // new Atom();
     // }
     new Proton(0, 0, 0);
-    new Electron(500, 500, 500);
+    new Electron(0, 500, 0);
 }
 
 void draw() {
@@ -234,4 +234,3 @@ void drawOriginGrid() {
         }
     } 
 }
-

@@ -50,6 +50,9 @@ void setup() {
     // }
     Atom proton = new Proton(0, 0, 0);
     new Electron(0, 500, 0, proton);
+    new Electron(0, -500, 0, proton);
+    // new Electron(0, 2000, 0, proton);
+    // new Electron(0, -2000, 0, proton);
     // new Electron(0, 1000, 0);
 }
 

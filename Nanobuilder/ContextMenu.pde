@@ -13,7 +13,7 @@ class ContextMenu extends UIElement {
     Runnable createElectronAtCamera = new Runnable() {
         public void run() {
             PVector fwd = cam.getForward();
-            new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z);
+            // new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z);
         }
     };
 

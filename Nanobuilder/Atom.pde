@@ -46,14 +46,14 @@ class Atom {
 
     void select() {
         // currentColor = color(135);
-        acceleration.mult(0);
-        velocity.mult(0);
+        // acceleration.mult(0);
+        // velocity.mult(0);
     }
 
     void deselect() {
         // revertToBaseColor();
-        acceleration.mult(0);
-        velocity.mult(0);
+        // acceleration.mult(0);
+        // velocity.mult(0);
     }
 
     public void setColour(color colour) {
@@ -68,96 +68,53 @@ class Atom {
         pos = newPos.copy();
     }
 
+    public void applyForce(Atom atom, float force) {
+        /*
+            Acceleration is a vector quantity (has both magnitude and direction),
+            the direction is the vector to the CoM of the particle, so the magnitude must be
+            the force from coulomb's law.
+
+            The 100 mult increases the force given from the equation, because pixels need to translate
+            into world space for a scale.
+        */
+        PVector vector = PVector.sub(atom.pos, pos);
+        vector.setMag(force * 100 / (float) atom.mass);
+        atom.acceleration.add(vector);
+    }
+
     void evaluateElectricalField() {
         for (Atom atom : atomList) {
             if (atom == this) continue;
-
-            PVector dir = PVector.sub(pos, atom.pos).normalize();
-            float sum = abs(dir.x) + abs(dir.y) + abs(dir.z);
-            PVector mod = new PVector(abs(dir.x) / sum, abs(dir.y) / sum, abs(dir.z) / sum);
-
-            // println("START");
-            // println(dir);
-            // println(sum);
-            // println(mod);
-
-            // println("PHASE 2:");
-            // println(atom.charge);
-            // println(charge);
-            // println(atom.charge * charge);
-            // println(dir.x * mod.x);
-
-            // println(atom.charge * charge * dir.x * mod.x);
-            // println((float) atom.mass * 4 * PI * 8.85 * pow(10,5));
-
-            // println((atom.charge * charge * dir.x * mod.x) / ((float) mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2)));
-            // println("END");
-            // println();
-
-            // float top = atom.charge * charge * dir.x * mod.x;
-            float bottom = (float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2);
-            if (bottom == 0) continue;
-            
-            //
-            PVector d = PVector.sub(atom.pos, pos);
-            float distance = d.mag();
-            double force = atom.charge*charge/(4*PI*8.85*pow(10, -12)*distance*distance);
-            //PVector f = d.setMag((float) force*pow(10, -52));  
-            PVector f = d.setMag((float) force*1000);
-            println(f);
-            atom.acceleration = PVector.div(f, (float) atom.mass);
-            //
-            
-            //atom.acceleration.add(
-            //    (atom.charge * charge * dir.x) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 3000),
-            //    (atom.charge * charge * dir.y) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 3000),
-            //    (atom.charge * charge * dir.z) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 3000)
-            //    // (atom.charge * charge * abs(dir.x) * mod.x) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100),
-            //    // (atom.charge * charge * abs(dir.y) * mod.y) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100),
-            //    // (atom.charge * charge * abs(dir.z) * mod.z) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100)
-            //);
+            applyForce(atom, calculateCoulombsLawForceOn(atom));
         }
     }
 
     void display() {
-        // acceleration = acceleration.random3D().mult(2);
-        PVector oldVelocity = velocity.copy();
         velocity.add(acceleration);
         pos.add(velocity);
-        
+        /*
+        Acceleration once 'dealt' is never kept, since it converts into velocity.
+        This line resets acceleration so we're ready to regather all forces next frame.
+        */
         acceleration = new PVector();
 
         if (pos.x > 10000 || pos.x < -10000) {
-            pos.sub(oldVelocity.copy().normalize().mult(r));
+            pos.x -= velocity.copy().setMag(r*2).x;
             velocity.x *= -1;
             velocity.x *= 0.75;
         }
 
         if (pos.y > 10000 || pos.y < -10000) {
-            pos.sub(oldVelocity.copy().normalize().mult(r));
+            pos.y -= velocity.copy().setMag(r*2).y;
             velocity.y *= -1;
             velocity.y *= 0.75;
         }
 
         if (pos.z > 10000 || pos.z < -10000) {
-            pos.sub(oldVelocity.copy().normalize().mult(r));
+            pos.z -= velocity.copy().setMag(r*2).z;
             velocity.z *= -1;
             velocity.z *= 0.75;
         }
-        // if (pos.x > 1000 || pos.x < -1000) {
-        //     pos.sub(oldVelocity.copy().normalize().mult(r));
-        //     velocity.x *= -1;
-        // }
-
-        // if (pos.y > 1000 || pos.y < -1000) {
-        //     pos.sub(oldVelocity.copy().normalize().mult(r));
-        //     velocity.y *= -1;
-        // }
-
-        // if (pos.z > 1000 || pos.z < -1000) {
-        //     pos.sub(oldVelocity.copy().normalize().mult(r));
-        //     velocity.z *= -1;
-        // }
 
         // Added radius so pop-in limits are more forgiving and less obvious.
         // float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);
@@ -192,5 +149,25 @@ class Atom {
         
         popMatrix();
         popStyle();
+    }
+
+    public float calculateCoulombsLawForceOn(Atom targetAtom) {
+        PVector vector = PVector.sub(targetAtom.pos, pos);
+        /*
+        Coulomb's Law of Electrostatic Force
+        F = Qq
+            --
+            4*PI*8.85*10^-12*r^2
+
+        where vector.mag() == r
+        */
+        float topExpression = targetAtom.charge * charge;
+        float bottomExpression = 4 * PI * 8.85 * pow(10, -12) * pow(vector.mag(), 2);
+        /*
+        If the force is infinite (which should be impossible)
+        then disregard current frame.
+        */
+        if (bottomExpression == 0) return 0;
+        return topExpression / bottomExpression;
     }
 }

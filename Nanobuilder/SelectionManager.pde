@@ -266,34 +266,14 @@ class SelectionManager {
             //     map(mouseX, 0, width, -1, 1)
             // );
 
-            atom.setPosition( PVector.add(cam.position, new PVector(
+            // atom.setPosition( PVector.add(cam.position, new PVector(
                 // Fine tune mode
                 // (600 * hoveringDistanceMult) * forward.x,
                 // (600 * hoveringDistanceMult) * forward.y,
                 // (600 * hoveringDistanceMult) * forward.z )) );
-
-                // (600 * hoveringDistanceMult) * forward.x * fromCameraVectorNormalized.x,
-                // (600 * hoveringDistanceMult) * forward.y * fromCameraVectorNormalized.y,
-                // (600 * hoveringDistanceMult) * forward.z * fromCameraVectorNormalized.z )) );
-
-                // (hoveringDistanceMult) * fromCameraVector.x + (mouseX - pmouseX) * xDistMul * fromCameraVectorNormalized.x,
-                // (hoveringDistanceMult) * fromCameraVector.y + (mouseY - pmouseY) * yDistMul,
-                // (hoveringDistanceMult) * fromCameraVector.z + (mouseX - pmouseX) * xDistMul )) );
-                // (hoveringDistanceMult) * forward.x * 600 + fromCameraVector.x,
-                // (hoveringDistanceMult) * forward.y * 600 + fromCameraVector.y,
-                // (hoveringDistanceMult) * forward.z * 600 + fromCameraVector.z )) );
-                // (hoveringDistanceMult) * fromCameraVector.x * forward.x,
-                // (hoveringDistanceMult) * fromCameraVector.y * forward.y,
-                // (hoveringDistanceMult) * fromCameraVector.z * forward.z)) );
-                (hoveringDistanceMult) * selection.getFromCameraVector().x,
-                (hoveringDistanceMult) * selection.getFromCameraVector().y,
-                (hoveringDistanceMult) * selection.getFromCameraVector().z )) );
-                // (hoveringDistanceMult) * fromCameraVector.x * normalizationConstant.x,
-                // (hoveringDistanceMult) * fromCameraVector.y * normalizationConstant.y,
-                // (hoveringDistanceMult) * fromCameraVector.z * normalizationConstant.z)) );
-                // (hoveringDistanceMult) * fromCameraVector.x + (mouseX - pmouseX) * xDistMul * cross.x,
-                // (hoveringDistanceMult) * fromCameraVector.y + (mouseY - pmouseY) * yDistMul,
-                // (hoveringDistanceMult) * fromCameraVector.z + (mouseX - pmouseX) * xDistMul * cross.z )) );
+                // (hoveringDistanceMult) * selection.getFromCameraVector().x,
+                // (hoveringDistanceMult) * selection.getFromCameraVector().y,
+                // (hoveringDistanceMult) * selection.getFromCameraVector().z )) );
             
             // The changes given by the mouse need to be added to the constant difference
             // fromCameraVector.add(new PVector(

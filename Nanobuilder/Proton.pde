@@ -15,10 +15,7 @@ class Proton extends Atom {
 
     @Override
     void display() {
-        evaluateElectricalField();
-      
-      super.display();
-
-
+        // evaluateElectricalField();
+        super.display();
     }
 }

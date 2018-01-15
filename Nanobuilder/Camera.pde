@@ -1,38 +1,4 @@
 class Camera extends QueasyCam {
-    //float x;
-    //float y;
-    //float z;
-
-    //private float rotX;
-    //private float rotY;
-    //private float rotZ;
-
-    //void rotateY(float amt) {
-        //rotY += amt;
-
-        //if (rotY > 2 * PI)
-            //rotY = 0;
-        //else if (rotY < 0)
-            //rotY = 2 * PI;
-    //}
-
-    //float getRotY() {
-        //return rotY;
-    //}
-
-    //void rotateX(float amt) {
-        //rotX += amt;
-
-        //if (rotX > 2 * PI)
-            //rotX = 0;
-        //else if (rotX < 0)
-            //rotX = 2 * PI;
-    //}
-
-    //float getRotX() {
-        //return rotX;
-    //}
-
     /*
     Completing our camera extension, an argument of our processing 'app'
     is required to be passed to QueasyCam's constructor (Camera's parent).

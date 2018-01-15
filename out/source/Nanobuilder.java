@@ -71,8 +71,9 @@ public void setup() {
     // for (int i = 0; i < 50; i++) {
         // new Atom();
     // }
-    new Proton(0, 0, 0);
-    new Electron(500, 500, 500);
+    Atom proton = new Proton(0, 0, 0);
+    new Electron(0, 500, 0, proton);
+    // new Electron(0, 1000, 0);
 }
 
 public void draw() {
@@ -257,7 +258,6 @@ public void drawOriginGrid() {
         }
     } 
 }
-
 class Atom {
     PVector pos = new PVector();
     PVector velocity = new PVector();
@@ -306,14 +306,14 @@ class Atom {
 
     public void select() {
         // currentColor = color(135);
-        acceleration.mult(0);
-        velocity.mult(0);
+        // acceleration.mult(0);
+        // velocity.mult(0);
     }
 
     public void deselect() {
         // revertToBaseColor();
-        acceleration.mult(0);
-        velocity.mult(0);
+        // acceleration.mult(0);
+        // velocity.mult(0);
     }
 
     public void setColour(int colour) {
@@ -328,84 +328,53 @@ class Atom {
         pos = newPos.copy();
     }
 
+    public void applyForce(Atom atom, float force) {
+        /*
+            Acceleration is a vector quantity (has both magnitude and direction),
+            the direction is the vector to the CoM of the particle, so the magnitude must be
+            the force from coulomb's law.
+
+            The 100 mult increases the force given from the equation, because pixels need to translate
+            into world space for a scale.
+        */
+        PVector vector = PVector.sub(atom.pos, pos);
+        vector.setMag(force * 100 / (float) atom.mass);
+        atom.acceleration.add(vector);
+    }
+
     public void evaluateElectricalField() {
         for (Atom atom : atomList) {
             if (atom == this) continue;
-
-            PVector dir = PVector.sub(pos, atom.pos).normalize();
-            float sum = abs(dir.x) + abs(dir.y) + abs(dir.z);
-            PVector mod = new PVector(abs(dir.x) / sum, abs(dir.y) / sum, abs(dir.z) / sum);
-
-            // println("START");
-            // println(dir);
-            // println(sum);
-            // println(mod);
-
-            // println("PHASE 2:");
-            // println(atom.charge);
-            // println(charge);
-            // println(atom.charge * charge);
-            // println(dir.x * mod.x);
-
-            // println(atom.charge * charge * dir.x * mod.x);
-            // println((float) atom.mass * 4 * PI * 8.85 * pow(10,5));
-
-            // println((atom.charge * charge * dir.x * mod.x) / ((float) mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2)));
-            // println("END");
-            // println();
-
-            // float top = atom.charge * charge * dir.x * mod.x;
-            float bottom = (float) atom.mass * 4 * PI * 8.85f * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2);
-            if (bottom == 0) continue;
-
-            atom.acceleration.sub(
-                (atom.charge * charge * dir.x) / ((float) atom.mass * 4 * PI * 8.85f * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 30000),
-                (atom.charge * charge * dir.y) / ((float) atom.mass * 4 * PI * 8.85f * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 30000),
-                (atom.charge * charge * dir.z) / ((float) atom.mass * 4 * PI * 8.85f * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 30000)
-                // (atom.charge * charge * abs(dir.x) * mod.x) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100),
-                // (atom.charge * charge * abs(dir.y) * mod.y) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100),
-                // (atom.charge * charge * abs(dir.z) * mod.z) / ((float) atom.mass * 4 * PI * 8.85 * pow(10, 5) * pow(PVector.dist(atom.pos, pos), 2) / 100)
-            );
+            applyForce(atom, calculateCoulombsLawForceOn(atom));
         }
     }
 
     public void display() {
-        // acceleration = acceleration.random3D().mult(2);
-        PVector oldVelocity = velocity.copy();
         velocity.add(acceleration);
         pos.add(velocity);
+        /*
+        Acceleration once 'dealt' is never kept, since it converts into velocity.
+        This line resets acceleration so we're ready to regather all forces next frame.
+        */
+        acceleration = new PVector();
 
         if (pos.x > 10000 || pos.x < -10000) {
-            pos.sub(oldVelocity.copy().normalize().mult(r));
+            pos.x -= velocity.copy().setMag(r*2).x;
             velocity.x *= -1;
             velocity.x *= 0.75f;
         }
 
         if (pos.y > 10000 || pos.y < -10000) {
-            pos.sub(oldVelocity.copy().normalize().mult(r));
+            pos.y -= velocity.copy().setMag(r*2).y;
             velocity.y *= -1;
             velocity.y *= 0.75f;
         }
 
         if (pos.z > 10000 || pos.z < -10000) {
-            pos.sub(oldVelocity.copy().normalize().mult(r));
+            pos.z -= velocity.copy().setMag(r*2).z;
             velocity.z *= -1;
             velocity.z *= 0.75f;
         }
-        // if (pos.x > 1000 || pos.x < -1000) {
-        //     pos.sub(oldVelocity.copy().normalize().mult(r));
-        //     velocity.x *= -1;
-        // }
-
-        // if (pos.y > 1000 || pos.y < -1000) {
-        //     pos.sub(oldVelocity.copy().normalize().mult(r));
-        //     velocity.y *= -1;
-        // }
-
-        // if (pos.z > 1000 || pos.z < -1000) {
-        //     pos.sub(oldVelocity.copy().normalize().mult(r));
-        //     velocity.z *= -1;
-        // }
 
         // Added radius so pop-in limits are more forgiving and less obvious.
         // float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);
@@ -440,6 +409,26 @@ class Atom {
         
         popMatrix();
         popStyle();
+    }
+
+    public float calculateCoulombsLawForceOn(Atom targetAtom) {
+        PVector vector = PVector.sub(targetAtom.pos, pos);
+        /*
+        Coulomb's Law of Electrostatic Force
+        F = Qq
+            --
+            4*PI*8.85*10^-12*r^2
+
+        where vector.mag() == r
+        */
+        float topExpression = targetAtom.charge * charge;
+        float bottomExpression = 4 * PI * 8.85f * pow(10, -12) * pow(vector.mag(), 2);
+        /*
+        If the force is infinite (which should be impossible)
+        then disregard current frame.
+        */
+        if (bottomExpression == 0) return 0;
+        return topExpression / bottomExpression;
     }
 }
 class ButtonUI extends UIElement {
@@ -476,40 +465,6 @@ class ButtonUI extends UIElement {
     }
 }
 class Camera extends QueasyCam {
-    //float x;
-    //float y;
-    //float z;
-
-    //private float rotX;
-    //private float rotY;
-    //private float rotZ;
-
-    //void rotateY(float amt) {
-        //rotY += amt;
-
-        //if (rotY > 2 * PI)
-            //rotY = 0;
-        //else if (rotY < 0)
-            //rotY = 2 * PI;
-    //}
-
-    //float getRotY() {
-        //return rotY;
-    //}
-
-    //void rotateX(float amt) {
-        //rotX += amt;
-
-        //if (rotX > 2 * PI)
-            //rotX = 0;
-        //else if (rotX < 0)
-            //rotX = 2 * PI;
-    //}
-
-    //float getRotX() {
-        //return rotX;
-    //}
-
     /*
     Completing our camera extension, an argument of our processing 'app'
     is required to be passed to QueasyCam's constructor (Camera's parent).
@@ -603,7 +558,7 @@ class ContextMenu extends UIElement {
     Runnable createElectronAtCamera = new Runnable() {
         public void run() {
             PVector fwd = cam.getForward();
-            new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z);
+            // new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z);
         }
     };
 
@@ -668,11 +623,32 @@ class ContextMenu extends UIElement {
 }
 class Electron extends Atom {
     // Will add 17 to all powers of 10 for now.
-    Electron(float x, float y, float z) {
+    Electron(float x, float y, float z, Atom orbiting) {
         super(x, y, z, random(0.84f, 0.87f) / 10 * 1000 / 2);
-        charge = -1.6f * pow(10, -5);
-        mass = 9.10938356f * pow(10, -14);
-        velocity = new PVector(-5, 5, -5);
+
+        charge = -1.6f * pow(10, -19);
+        mass = 9.10938356f * pow(10, -31);
+        /*
+        F = mv^2/r
+        Fr
+        - = v^2
+        m
+        F = Qq
+            -
+            4PIE0R^2
+
+        */
+        PVector diff = PVector.sub(pos, orbiting.pos);
+        // PVector cross = diff.cross(PVector.add(pos, new PVector(0, 1, 0)));
+        // PVector cross = new PVector(0, 0, 1).cross(diff);
+        PVector cross = diff.cross(PVector.add(pos, new PVector(50, 50, 50)));
+        println(pos);
+        println(diff);
+        println(cross);
+        velocity = cross.setMag(8);
+        // velocity = cross.setMag(sqrt(orbiting.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(orbiting.pos, this.pos) / (float) mass));
+        // velocity = new PVector(0.710884794 * sqrt(100), 0, 0);
+        // velocity = new PVector(0.710884794*sqrt(10000), 0, 0);
 
         baseColor = color(0, 0, 255);
         revertToBaseColor();
@@ -693,31 +669,60 @@ class Electron extends Atom {
         }
     }
 
-    Deque<TrailElement> trail = new ArrayDeque<TrailElement>();
+    private class Point {
+        float x;
+        float y;
+        float z;
+
+        Point() {
+            x = pos.x;
+            y = pos.y;
+            z = pos.z;
+        }
+    }
+
+    Deque<Point> trail = new ArrayDeque<Point>();
 
     public @Override
     void display() {
+        // evaluateElectricalField();
         super.display();
 
-        trail.push(new TrailElement());
+        pushMatrix();
+        pushStyle();
+            fill(0);
+            stroke(0);
+            strokeWeight(4);
+            // translate(pos.x, pos.y, pos.z);
+            line(pos.x, pos.y, pos.z, pos.x + velocity.x, pos.y + velocity.y, pos.z + velocity.z);
+        popMatrix();
+        popStyle();
 
-        pointLight(120, 120, 255, pos.x, pos.y, pos.z);
+        Point point = new Point();
+        trail.push(point);
 
-        for (TrailElement element : trail) {
+        int trailSize = 600;
+
+        Point lastPoint = null;
+        int counter = 0;
+        for (Point element : trail) {
+            counter++;
             pushMatrix();
             pushStyle();
-            fill(0);
-            translate(element.position.x, element.position.y, element.position.z);
-            // sphere(10);
-            shape(element.shape);
+                fill(0);
+                stroke(0, map(counter, 0, (trailSize - 1), 255, 0));
+                strokeWeight(4);
+
+                if (lastPoint != null)
+                    line(lastPoint.x, lastPoint.y, lastPoint.z, element.x, element.y, element.z);
+
+                lastPoint = element;
             popMatrix();
             popStyle();
         }
 
-        if (trail.size() > 100)
+        if (trail.size() > trailSize)
             trail.removeLast();
-
-        evaluateElectricalField();
     }
 }
 class Menu extends UIElement {
@@ -755,8 +760,8 @@ class Proton extends Atom {
     */
     Proton(float x, float y, float z) {
         super(x, y, z, random(0.84f, 0.87f) * 100);
-        charge = 1.6f * pow(10, -2);
-        mass = 1.6726219f * pow(10, -10);
+        charge = 1.6f * pow(10, -19);
+        mass = 1.6726219f * pow(10, -27);
 
         baseColor = color(255, 0, 0);
         revertToBaseColor();
@@ -764,9 +769,8 @@ class Proton extends Atom {
 
     public @Override
     void display() {
+        // evaluateElectricalField();
         super.display();
-
-        evaluateElectricalField();
     }
 }
 class RectangleUI extends UIElement {
@@ -1051,34 +1055,14 @@ class SelectionManager {
             //     map(mouseX, 0, width, -1, 1)
             // );
 
-            atom.setPosition( PVector.add(cam.position, new PVector(
+            // atom.setPosition( PVector.add(cam.position, new PVector(
                 // Fine tune mode
                 // (600 * hoveringDistanceMult) * forward.x,
                 // (600 * hoveringDistanceMult) * forward.y,
                 // (600 * hoveringDistanceMult) * forward.z )) );
-
-                // (600 * hoveringDistanceMult) * forward.x * fromCameraVectorNormalized.x,
-                // (600 * hoveringDistanceMult) * forward.y * fromCameraVectorNormalized.y,
-                // (600 * hoveringDistanceMult) * forward.z * fromCameraVectorNormalized.z )) );
-
-                // (hoveringDistanceMult) * fromCameraVector.x + (mouseX - pmouseX) * xDistMul * fromCameraVectorNormalized.x,
-                // (hoveringDistanceMult) * fromCameraVector.y + (mouseY - pmouseY) * yDistMul,
-                // (hoveringDistanceMult) * fromCameraVector.z + (mouseX - pmouseX) * xDistMul )) );
-                // (hoveringDistanceMult) * forward.x * 600 + fromCameraVector.x,
-                // (hoveringDistanceMult) * forward.y * 600 + fromCameraVector.y,
-                // (hoveringDistanceMult) * forward.z * 600 + fromCameraVector.z )) );
-                // (hoveringDistanceMult) * fromCameraVector.x * forward.x,
-                // (hoveringDistanceMult) * fromCameraVector.y * forward.y,
-                // (hoveringDistanceMult) * fromCameraVector.z * forward.z)) );
-                (hoveringDistanceMult) * selection.getFromCameraVector().x,
-                (hoveringDistanceMult) * selection.getFromCameraVector().y,
-                (hoveringDistanceMult) * selection.getFromCameraVector().z )) );
-                // (hoveringDistanceMult) * fromCameraVector.x * normalizationConstant.x,
-                // (hoveringDistanceMult) * fromCameraVector.y * normalizationConstant.y,
-                // (hoveringDistanceMult) * fromCameraVector.z * normalizationConstant.z)) );
-                // (hoveringDistanceMult) * fromCameraVector.x + (mouseX - pmouseX) * xDistMul * cross.x,
-                // (hoveringDistanceMult) * fromCameraVector.y + (mouseY - pmouseY) * yDistMul,
-                // (hoveringDistanceMult) * fromCameraVector.z + (mouseX - pmouseX) * xDistMul * cross.z )) );
+                // (hoveringDistanceMult) * selection.getFromCameraVector().x,
+                // (hoveringDistanceMult) * selection.getFromCameraVector().y,
+                // (hoveringDistanceMult) * selection.getFromCameraVector().z )) );
             
             // The changes given by the mouse need to be added to the constant difference
             // fromCameraVector.add(new PVector(

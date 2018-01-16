@@ -4,38 +4,22 @@ class Electron extends Atom {
     final int Z_DOMINANT = 2;
 
     // Will add 17 to all powers of 10 for now.
-    Electron(float x, float y, float z, Atom orbiting) {
-        super(x, y, z, random(0.84, 0.87) / 10 * 1000 / 2);
+    Electron(float x, float y, float z, Atom proton) {
+        super(x, y, z, random(0.84, 0.87) / 10);
 
         charge = -1.6 * pow(10, -19);
         mass = 9.10938356 * pow(10, -31);
-        /*
-        F = mv^2/r
-        Fr
-        - = v^2
-        m
-        F = Qq
-            -
-            4PIE0R^2
 
-        */
-        PVector diff = PVector.sub(pos, orbiting.pos).normalize();
-        // PVector cross = diff.cross(PVector.add(pos, new PVector(0, 1, 0)));
-        // PVector cross = new PVector(0, 0, 1).cross(diff);
-        // PVector cross = diff.cross(PVector.add(pos, new PVector(50, 50, 50)));
-        // PVector to_cross = new PVector(0.0f, 1.0f, 0.0f).normalize();
-        // println(diff);
-        // println(to_cross);
-        // println("---");
-        // // Make sure that the normal and cross vector are not the same, if they are change the cross vector
-        // if (
-        //     to_cross.x == diff.x &&
-        //     to_cross.y == diff.y &&
-        //     to_cross.z == diff.z
-        //     ) {
-        //     to_cross = new PVector(0.0f, 0.0f, 1.0f);
-        // }
+        baseColor = color(0, 0, 255);
+        revertToBaseColor();
 
+        // If no initial proton then spawn with random velocity.
+        if (proton == null) {
+            velocity = PVector.random3D().setMag(30);
+            return;
+        }
+
+        PVector diff = PVector.sub(pos, proton.pos).normalize();
         PVector diffMag = new PVector(
             abs(diff.x),
             abs(diff.y),
@@ -65,24 +49,36 @@ class Electron extends Atom {
             toCross = new PVector(0, 1, 0);
         } else if (magRecordCoordinate == Z_DOMINANT) {
             toCross = new PVector(0, 0, 1);
-        } else {
-            println("Something fucked up, bad.");
-            // throw new Exception("CRITICAL");
         }
 
-        // Get the cross product
         PVector cross = diff.cross(toCross);
-        println(pos);
-        println(diff);
-        println(cross);
-        // velocity = cross.setMag(8);
-        // velocity = cross.setMag(sqrt(orbiting.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(orbiting.pos, this.pos) / (float) mass));
-        velocity = cross.setMag(sqrt(abs(orbiting.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(orbiting.pos, this.pos) / (float) mass)));
-        // velocity = cross.setMag(0.710884794 * sqrt(100));
-        // velocity = new PVector(0.710884794*sqrt(10000), 0, 0);
 
-        baseColor = color(0, 0, 255);
-        revertToBaseColor();
+        /*
+        Substituting circular motion and couloumb's law...
+        F = mv^2/r
+        Fr
+        - = v^2
+        m
+        where F = Qq
+                  -
+                  4(PI)(E0)R^2
+
+        This value returns what the magnitude of the perpendicular
+        vector to the proton must be for circular motion to take place.
+
+        This is used because we are trying to model the physics, so some
+        assumptions (like the initial state of an atom) need to be initially
+        assumed. Any changes after are then just part of the simulated space,
+        so should be dynamic.
+        */
+        velocity = cross.setMag(
+            sqrt(
+                // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
+                abs(
+                    proton.calculateCoulombsLawForceOn(this) * 100000 * PVector.dist(proton.pos, this.pos) / (float) mass
+                )
+            )
+        );
     }
 
     class TrailElement {
@@ -116,7 +112,7 @@ class Electron extends Atom {
 
     @Override
     void display() {
-        evaluateElectricalField();
+        // evaluateElectricalField();
         super.display();
 
         pushMatrix();
@@ -124,7 +120,6 @@ class Electron extends Atom {
             fill(0);
             stroke(0);
             strokeWeight(4);
-            // translate(pos.x, pos.y, pos.z);
             line(pos.x, pos.y, pos.z, pos.x + velocity.x, pos.y + velocity.y, pos.z + velocity.z);
         popMatrix();
         popStyle();

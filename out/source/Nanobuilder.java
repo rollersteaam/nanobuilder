@@ -55,7 +55,8 @@ public void setup() {
     registerMethod("keyEvent", this);
 
     cam = new Camera(this);
-    cam.speed = 7.5f;              // default is 3
+    // cam.speed = 7.5;              // default is 3
+    cam.speed = 15;              // default is 3
     cam.sensitivity = 0;      // default is 2
     cam.controllable = true;
     cam.position = new PVector(-width, height/2, 0);
@@ -102,14 +103,14 @@ public void draw() {
     drawOriginArrows();
     drawOriginGrid();
 
-    pushStyle();
-    // stroke(color(70, 70, 255));
-    // strokeWeight(8);
-    // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
-    // box(2000);
-    fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));
-    box(20000);
-    popStyle();
+    // pushStyle();
+    // // stroke(color(70, 70, 255));
+    // // strokeWeight(8);
+    // // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
+    // // box(2000);
+    // fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));
+    // box(20000);
+    // popStyle();
 
     /*
         2D drawing beyond here ONLY.
@@ -341,7 +342,7 @@ class Atom {
             into world space for a scale.
         */
         PVector vector = PVector.sub(atom.pos, pos);
-        vector.setMag(force * 100 / (float) atom.mass);
+        vector.setMag(force * 100000 / (float) atom.mass);
         atom.acceleration.add(vector);
     }
 
@@ -361,23 +362,23 @@ class Atom {
         */
         acceleration = new PVector();
 
-        if (pos.x > 10000 || pos.x < -10000) {
-            pos.x -= velocity.copy().setMag(r*2).x;
-            velocity.x *= -1;
-            velocity.x *= 0.75f;
-        }
+        // if (pos.x > 10000 || pos.x < -10000) {
+        //     pos.x -= velocity.copy().setMag(r*2).x;
+        //     velocity.x *= -1;
+        //     velocity.x *= 0.75;
+        // }
 
-        if (pos.y > 10000 || pos.y < -10000) {
-            pos.y -= velocity.copy().setMag(r*2).y;
-            velocity.y *= -1;
-            velocity.y *= 0.75f;
-        }
+        // if (pos.y > 10000 || pos.y < -10000) {
+        //     pos.y -= velocity.copy().setMag(r*2).y;
+        //     velocity.y *= -1;
+        //     velocity.y *= 0.75;
+        // }
 
-        if (pos.z > 10000 || pos.z < -10000) {
-            pos.z -= velocity.copy().setMag(r*2).z;
-            velocity.z *= -1;
-            velocity.z *= 0.75f;
-        }
+        // if (pos.z > 10000 || pos.z < -10000) {
+        //     pos.z -= velocity.copy().setMag(r*2).z;
+        //     velocity.z *= -1;
+        //     velocity.z *= 0.75;
+        // }
 
         // Added radius so pop-in limits are more forgiving and less obvious.
         // float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);
@@ -561,7 +562,7 @@ class ContextMenu extends UIElement {
     Runnable createElectronAtCamera = new Runnable() {
         public void run() {
             PVector fwd = cam.getForward();
-            // new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z);
+            new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, null);
         }
     };
 
@@ -573,11 +574,6 @@ class ContextMenu extends UIElement {
 
     Runnable paintAtom = new Runnable() {
         public void run() {
-            // for (SelectionManager.Selection selection : selectionManager.selectedAtoms) {
-            //     println(color(255, 0, 0, 255));
-            //     println(selection.getAtom().setColour(color(255, 0, 0, 255)));
-            //     println(selection.getAtom());
-            // }
             selectionManager.paintAtoms();
         }
     };
@@ -630,38 +626,22 @@ class Electron extends Atom {
     final int Z_DOMINANT = 2;
 
     // Will add 17 to all powers of 10 for now.
-    Electron(float x, float y, float z, Atom orbiting) {
-        super(x, y, z, random(0.84f, 0.87f) / 10 * 1000 / 2);
+    Electron(float x, float y, float z, Atom proton) {
+        super(x, y, z, random(0.84f, 0.87f) / 10);
 
         charge = -1.6f * pow(10, -19);
         mass = 9.10938356f * pow(10, -31);
-        /*
-        F = mv^2/r
-        Fr
-        - = v^2
-        m
-        F = Qq
-            -
-            4PIE0R^2
 
-        */
-        PVector diff = PVector.sub(pos, orbiting.pos).normalize();
-        // PVector cross = diff.cross(PVector.add(pos, new PVector(0, 1, 0)));
-        // PVector cross = new PVector(0, 0, 1).cross(diff);
-        // PVector cross = diff.cross(PVector.add(pos, new PVector(50, 50, 50)));
-        // PVector to_cross = new PVector(0.0f, 1.0f, 0.0f).normalize();
-        // println(diff);
-        // println(to_cross);
-        // println("---");
-        // // Make sure that the normal and cross vector are not the same, if they are change the cross vector
-        // if (
-        //     to_cross.x == diff.x &&
-        //     to_cross.y == diff.y &&
-        //     to_cross.z == diff.z
-        //     ) {
-        //     to_cross = new PVector(0.0f, 0.0f, 1.0f);
-        // }
+        baseColor = color(0, 0, 255);
+        revertToBaseColor();
 
+        // If no initial proton then spawn with random velocity.
+        if (proton == null) {
+            velocity = PVector.random3D().setMag(30);
+            return;
+        }
+
+        PVector diff = PVector.sub(pos, proton.pos).normalize();
         PVector diffMag = new PVector(
             abs(diff.x),
             abs(diff.y),
@@ -691,24 +671,36 @@ class Electron extends Atom {
             toCross = new PVector(0, 1, 0);
         } else if (magRecordCoordinate == Z_DOMINANT) {
             toCross = new PVector(0, 0, 1);
-        } else {
-            println("Something fucked up, bad.");
-            // throw new Exception("CRITICAL");
         }
 
-        // Get the cross product
         PVector cross = diff.cross(toCross);
-        println(pos);
-        println(diff);
-        println(cross);
-        // velocity = cross.setMag(8);
-        // velocity = cross.setMag(sqrt(orbiting.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(orbiting.pos, this.pos) / (float) mass));
-        velocity = cross.setMag(sqrt(abs(orbiting.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(orbiting.pos, this.pos) / (float) mass)));
-        // velocity = cross.setMag(0.710884794 * sqrt(100));
-        // velocity = new PVector(0.710884794*sqrt(10000), 0, 0);
 
-        baseColor = color(0, 0, 255);
-        revertToBaseColor();
+        /*
+        Substituting circular motion and couloumb's law...
+        F = mv^2/r
+        Fr
+        - = v^2
+        m
+        where F = Qq
+                  -
+                  4(PI)(E0)R^2
+
+        This value returns what the magnitude of the perpendicular
+        vector to the proton must be for circular motion to take place.
+
+        This is used because we are trying to model the physics, so some
+        assumptions (like the initial state of an atom) need to be initially
+        assumed. Any changes after are then just part of the simulated space,
+        so should be dynamic.
+        */
+        velocity = cross.setMag(
+            sqrt(
+                // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
+                abs(
+                    proton.calculateCoulombsLawForceOn(this) * 100000 * PVector.dist(proton.pos, this.pos) / (float) mass
+                )
+            )
+        );
     }
 
     class TrailElement {
@@ -742,7 +734,7 @@ class Electron extends Atom {
 
     public @Override
     void display() {
-        evaluateElectricalField();
+        // evaluateElectricalField();
         super.display();
 
         pushMatrix();
@@ -750,7 +742,6 @@ class Electron extends Atom {
             fill(0);
             stroke(0);
             strokeWeight(4);
-            // translate(pos.x, pos.y, pos.z);
             line(pos.x, pos.y, pos.z, pos.x + velocity.x, pos.y + velocity.y, pos.z + velocity.z);
         popMatrix();
         popStyle();

@@ -78,7 +78,7 @@ class Atom {
             into world space for a scale.
         */
         PVector vector = PVector.sub(atom.pos, pos);
-        vector.setMag(force * 100 / (float) atom.mass);
+        vector.setMag(force * 100000 / (float) atom.mass);
         atom.acceleration.add(vector);
     }
 
@@ -98,23 +98,23 @@ class Atom {
         */
         acceleration = new PVector();
 
-        if (pos.x > 10000 || pos.x < -10000) {
-            pos.x -= velocity.copy().setMag(r*2).x;
-            velocity.x *= -1;
-            velocity.x *= 0.75;
-        }
+        // if (pos.x > 10000 || pos.x < -10000) {
+        //     pos.x -= velocity.copy().setMag(r*2).x;
+        //     velocity.x *= -1;
+        //     velocity.x *= 0.75;
+        // }
 
-        if (pos.y > 10000 || pos.y < -10000) {
-            pos.y -= velocity.copy().setMag(r*2).y;
-            velocity.y *= -1;
-            velocity.y *= 0.75;
-        }
+        // if (pos.y > 10000 || pos.y < -10000) {
+        //     pos.y -= velocity.copy().setMag(r*2).y;
+        //     velocity.y *= -1;
+        //     velocity.y *= 0.75;
+        // }
 
-        if (pos.z > 10000 || pos.z < -10000) {
-            pos.z -= velocity.copy().setMag(r*2).z;
-            velocity.z *= -1;
-            velocity.z *= 0.75;
-        }
+        // if (pos.z > 10000 || pos.z < -10000) {
+        //     pos.z -= velocity.copy().setMag(r*2).z;
+        //     velocity.z *= -1;
+        //     velocity.z *= 0.75;
+        // }
 
         // Added radius so pop-in limits are more forgiving and less obvious.
         // float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);

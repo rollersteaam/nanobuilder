@@ -32,7 +32,8 @@ void setup() {
     registerMethod("keyEvent", this);
 
     cam = new Camera(this);
-    cam.speed = 7.5;              // default is 3
+    // cam.speed = 7.5;              // default is 3
+    cam.speed = 15;              // default is 3
     cam.sensitivity = 0;      // default is 2
     cam.controllable = true;
     cam.position = new PVector(-width, height/2, 0);
@@ -79,14 +80,14 @@ void draw() {
     drawOriginArrows();
     drawOriginGrid();
 
-    pushStyle();
-    // stroke(color(70, 70, 255));
-    // strokeWeight(8);
-    // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
-    // box(2000);
-    fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));
-    box(20000);
-    popStyle();
+    // pushStyle();
+    // // stroke(color(70, 70, 255));
+    // // strokeWeight(8);
+    // // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
+    // // box(2000);
+    // fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));
+    // box(20000);
+    // popStyle();
 
     /*
         2D drawing beyond here ONLY.

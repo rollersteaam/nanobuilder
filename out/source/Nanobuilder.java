@@ -34,7 +34,7 @@ SelectionManager selectionManager;
 UIManager uiManager;
 UIFactory uiFactory;
 
-ArrayList<Atom> atomList = new ArrayList<Atom>();
+ArrayList<Particle> particleList = new ArrayList<Particle>();
 
 /*
 MAIN FILE
@@ -56,7 +56,7 @@ public void setup() {
 
     cam = new Camera(this);
     // cam.speed = 7.5;              // default is 3
-    cam.speed = 15;              // default is 3
+    cam.speed = 7.5f;              // default is 3
     cam.sensitivity = 0;      // default is 2
     cam.controllable = true;
     cam.position = new PVector(-width, height/2, 0);
@@ -72,9 +72,11 @@ public void setup() {
     // for (int i = 0; i < 50; i++) {
         // new Atom();
     // }
-    Atom proton = new Proton(0, 0, 0);
-    new Electron(0, 500, 0, proton);
-    new Electron(0, -500, 0, proton);
+    // Particle proton = new Proton(0, 0, 0);
+    // new Electron(0, 500, 0, proton);
+    // new Electron(0, -500, 0, proton);
+    // new Atom(0, 500, 0, 100);
+    new Atom();
     // new Electron(0, 2000, 0, proton);
     // new Electron(0, -2000, 0, proton);
     // new Electron(0, 1000, 0);
@@ -90,10 +92,11 @@ public void draw() {
 
     float biggestDistance = 0;
 
-    for (Atom atom : atomList) {
-        atom.display();
+    for (Particle particle : particleList) {
+        particle.evaluatePhysics();
+        particle.display();
 
-        float dist = PVector.dist(atom.pos, new PVector(0, 0, 0));
+        float dist = PVector.dist(particle.pos, new PVector(0, 0, 0));
 
         if ((dist > biggestDistance) || (biggestDistance == 0)) {
             biggestDistance = dist;
@@ -186,12 +189,12 @@ public void keyEvent(KeyEvent event){
     }
 }
 
-// Draws a lattice (structured cube) of atoms.
-public void drawAtomLattice() {
+// Draws a lattice (structured cube) of particles.
+public void drawParticleLattice() {
     for (int y = 0; y < 5; y++) {
         for (int z = 0; z < 5; z++) {
             for (int x = 0; x < 5; x++) {
-                new Atom(200 * x, 200 * y, 200 * z, 100); 
+                new Particle(200 * x, 200 * y, 200 * z, 100); 
             }
         }
     }   
@@ -262,177 +265,33 @@ public void drawOriginGrid() {
         }
     } 
 }
-class Atom {
-    PVector pos = new PVector();
-    PVector velocity = new PVector();
-    PVector acceleration = new PVector(0, 0, 0);
-    
-    float r;
-
-    float charge;
-    double mass;
-
-    int baseColor;
-    int currentColor;
-
-    PShape shape;
-
-    Atom(float x, float y, float z, float r) {
-        pos = new PVector(x, y, z);
-        this.r = r;
-        baseColor = color(random(90, 255), random(90, 255), random(90, 255));
-        currentColor = baseColor;
-        fill(currentColor);
-
-        shape = createShape(SPHERE, r);
-        shape.setStroke(false);
-        shape.setFill(currentColor);
-
-        // velocity = velocity.random3D().mult(10);
-        // acceleration = acceleration.random3D().mult(5);
-
-        atomList.add(this);
+class Atom extends Particle {
+    Atom(float x, float y, float z, float radius) {
+        super(x, y, z, radius);
+        Proton contentOne = new Proton(x, y, z);
+        new Electron(x + contentOne.r + 10, y + contentOne.r + 10, z + contentOne.r + 10, contentOne);
     }
-
-    Atom() {
+    
+    Atom() {        
         this(
-            random(-500, 500),
-            random(-500, 500),
-            random(-500, 500),
-            round(random(25, 100))
+            random(-1000, 1000),
+            random(-1000, 1000),
+            random(-1000, 1000),
+            round(random(200, 600))
         );
     }
 
-    public void delete() {
-        shape = null;
-        atomList.remove(this);
-    }
-
-    public void select() {
-        // currentColor = color(135);
-        // acceleration.mult(0);
-        // velocity.mult(0);
-    }
-
-    public void deselect() {
-        // revertToBaseColor();
-        // acceleration.mult(0);
-        // velocity.mult(0);
-    }
-
-    public void setColour(int colour) {
-        shape.setFill(colour);
-    }
-
-    public void revertToBaseColor() {
-        shape.setFill(baseColor);
-    }
-
-    public void setPosition(PVector newPos) {
-        pos = newPos.copy();
-    }
-
-    public void applyForce(Atom atom, float force) {
-        /*
-            Acceleration is a vector quantity (has both magnitude and direction),
-            the direction is the vector to the CoM of the particle, so the magnitude must be
-            the force from coulomb's law.
-
-            The 100 mult increases the force given from the equation, because pixels need to translate
-            into world space for a scale.
-        */
-        PVector vector = PVector.sub(atom.pos, pos);
-        vector.setMag(force * 100000 / (float) atom.mass);
-        atom.acceleration.add(vector);
-    }
-
-    public void evaluateElectricalField() {
-        for (Atom atom : atomList) {
-            if (atom == this) continue;
-            applyForce(atom, calculateCoulombsLawForceOn(atom));
-        }
-    }
-
-    public void display() {
-        velocity.add(acceleration);
-        pos.add(velocity);
-        /*
-        Acceleration once 'dealt' is never kept, since it converts into velocity.
-        This line resets acceleration so we're ready to regather all forces next frame.
-        */
-        acceleration = new PVector();
-
-        // if (pos.x > 10000 || pos.x < -10000) {
-        //     pos.x -= velocity.copy().setMag(r*2).x;
-        //     velocity.x *= -1;
-        //     velocity.x *= 0.75;
-        // }
-
-        // if (pos.y > 10000 || pos.y < -10000) {
-        //     pos.y -= velocity.copy().setMag(r*2).y;
-        //     velocity.y *= -1;
-        //     velocity.y *= 0.75;
-        // }
-
-        // if (pos.z > 10000 || pos.z < -10000) {
-        //     pos.z -= velocity.copy().setMag(r*2).z;
-        //     velocity.z *= -1;
-        //     velocity.z *= 0.75;
-        // }
-
-        // Added radius so pop-in limits are more forgiving and less obvious.
-        // float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);
-        // float screenY = screenY(pos.x + r, pos.y + r, pos.z - r);
-  
-        // Disregard objects outside of camera view, saving GPU cycles and improving performance.
-        // if ((screenX > width) || (screenY > height) || (screenX < 0) || (screenY < 0)) 
-        //     return;
-        
-        /*
-        Push functions save the current "drawing" settings for what they do, and allow
-        "popping" to restore the settings back to prvious ones after you're finished.
-
-        e.g. pushStyle saves current drawing styles.
-        pushMatrix saves the current translated position which any drawing throughout the program would otherwise be affected by.
-        */
-        pushStyle();
-        pushMatrix();
-        
-        translate(pos.x, pos.y, pos.z);
-        
-        // sphere(r);
-        shape(shape);
-
-        // Guides //
-        noFill();
-        stroke(255, 170);
-
-        rect(-r, -r, r*2, r*2);
-        rotateY(radians(90));
-        rect(-r, -r, r*2, r*2);
-        
-        popMatrix();
-        popStyle();
-    }
-
-    public float calculateCoulombsLawForceOn(Atom targetAtom) {
-        PVector vector = PVector.sub(targetAtom.pos, pos);
-        /*
-        Coulomb's Law of Electrostatic Force
-        F = Qq
-            --
-            4*PI*8.85*10^-12*r^2
-
-        where vector.mag() == r
-        */
-        float topExpression = targetAtom.charge * charge;
-        float bottomExpression = 4 * PI * 8.85f * pow(10, -12) * pow(vector.mag(), 2);
-        /*
-        If the force is infinite (which should be impossible)
-        then disregard current frame.
-        */
-        if (bottomExpression == 0) return 0;
-        return topExpression / bottomExpression;
+    public @Override
+    void display() {
+        shape.setFill(
+            color(
+                red(currentColor),
+                green(currentColor),
+                blue(currentColor),
+                lerp(0, 255, PVector.dist(cam.position, pos) / 2000)
+            )
+        );
+        super.display();
     }
 }
 class ButtonUI extends UIElement {
@@ -555,7 +414,7 @@ class ContextMenu extends UIElement {
     Runnable createAtomAtCamera = new Runnable() {
         public void run() {
             PVector fwd = cam.getForward();
-            new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 100);
+            new Particle(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 100);
         }
     };
 
@@ -574,7 +433,7 @@ class ContextMenu extends UIElement {
 
     Runnable paintAtom = new Runnable() {
         public void run() {
-            selectionManager.paintAtoms();
+            selectionManager.paintParticles();
         }
     };
 
@@ -620,14 +479,14 @@ class ContextMenu extends UIElement {
         setPosition(new PVector(mouseX, mouseY));
     }
 }
-class Electron extends Atom {
+class Electron extends Particle {
     final int X_DOMINANT = 0;
     final int Y_DOMINANT = 1;
     final int Z_DOMINANT = 2;
 
     // Will add 17 to all powers of 10 for now.
-    Electron(float x, float y, float z, Atom proton) {
-        super(x, y, z, random(0.84f, 0.87f) / 10);
+    Electron(float x, float y, float z, Particle proton) {
+        super(x, y, z, random(0.84f, 0.87f) * 100 / 3);
 
         charge = -1.6f * pow(10, -19);
         mass = 9.10938356f * pow(10, -31);
@@ -697,7 +556,7 @@ class Electron extends Atom {
             sqrt(
                 // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
                 abs(
-                    proton.calculateCoulombsLawForceOn(this) * 100000 * PVector.dist(proton.pos, this.pos) / (float) mass
+                    proton.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(proton.pos, this.pos) / (float) mass
                 )
             )
         );
@@ -734,7 +593,6 @@ class Electron extends Atom {
 
     public @Override
     void display() {
-        // evaluateElectricalField();
         super.display();
 
         pushMatrix();
@@ -783,7 +641,7 @@ class Menu extends UIElement {
         super.show();
     }
 }
-class Neutron extends Atom {
+class Neutron extends Particle {
     Neutron(float x, float y, float z) {
         super(x, y, z, random(0.84f, 0.87f) * 100);
         charge = 0;
@@ -800,7 +658,184 @@ class Neutron extends Atom {
         // TODO: Implement gravitational force (probably)
     }
 }
-class Proton extends Atom {
+class Particle {
+    PVector pos = new PVector();
+    PVector velocity = new PVector();
+    PVector acceleration = new PVector();
+    
+    float r;
+
+    float charge;
+    double mass;
+
+    int baseColor;
+    int currentColor;
+
+    PShape shape;
+
+    Particle(float x, float y, float z, float r) {
+        pos = new PVector(x, y, z);
+        this.r = r;
+        baseColor = color(random(90, 255), random(90, 255), random(90, 255));
+        currentColor = baseColor;
+        fill(currentColor);
+
+        shape = createShape(SPHERE, r);
+        shape.setStroke(false);
+        shape.setFill(currentColor);
+
+        // velocity = velocity.random3D().mult(10);
+        // acceleration = acceleration.random3D().mult(5);
+
+        particleList.add(this);
+    }
+
+    Particle() {
+        this(
+            random(-500, 500),
+            random(-500, 500),
+            random(-500, 500),
+            round(random(25, 100))
+        );
+    }
+
+    public void delete() {
+        shape = null;
+        particleList.remove(this);
+    }
+
+    public void select() {
+        // currentColor = color(135);
+        // acceleration.mult(0);
+        // velocity.mult(0);
+    }
+
+    public void deselect() {
+        // revertToBaseColor();
+        // acceleration.mult(0);
+        // velocity.mult(0);
+    }
+
+    public void setColour(int colour) {
+        shape.setFill(colour);
+        currentColor = colour;
+    }
+
+    public void revertToBaseColor() {
+        shape.setFill(baseColor);
+        currentColor = baseColor;
+    }
+
+    public void setPosition(PVector newPos) {
+        pos = newPos.copy();
+    }
+
+    public void applyForce(Particle particle, float force) {
+        /*
+            Acceleration is a vector quantity (has both magnitude and direction),
+            the direction is the vector to the CoM of the particle, so the magnitude must be
+            the force from coulomb's law.
+
+            The 100 mult increases the force given from the equation, because pixels need to translate
+            into world space for a scale.
+        */
+        PVector vector = PVector.sub(particle.pos, pos);
+        vector.setMag(force * 100 / (float) particle.mass);
+        particle.acceleration.add(vector);
+    }
+
+    public void evaluateElectricalField() {
+        for (Particle particle : particleList) {
+            if (particle == this) continue;
+            applyForce(particle, calculateCoulombsLawForceOn(particle));
+        }
+    }
+
+    public void evaluatePhysics() {
+        velocity.add(acceleration);
+        pos.add(velocity);
+        /*
+        Acceleration once 'dealt' is never kept, since it converts into velocity.
+        This line resets acceleration so we're ready to regather all forces next frame.
+        */
+        acceleration = new PVector();
+    }
+
+    public void display() {
+        // if (pos.x > 10000 || pos.x < -10000) {
+        //     pos.x -= velocity.copy().setMag(r*2).x;
+        //     velocity.x *= -1;
+        //     velocity.x *= 0.75;
+        // }
+
+        // if (pos.y > 10000 || pos.y < -10000) {
+        //     pos.y -= velocity.copy().setMag(r*2).y;
+        //     velocity.y *= -1;
+        //     velocity.y *= 0.75;
+        // }
+
+        // if (pos.z > 10000 || pos.z < -10000) {
+        //     pos.z -= velocity.copy().setMag(r*2).z;
+        //     velocity.z *= -1;
+        //     velocity.z *= 0.75;
+        // }
+
+        // Added radius so pop-in limits are more forgiving and less obvious.
+        // float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);
+        // float screenY = screenY(pos.x + r, pos.y + r, pos.z - r);
+  
+        // Disregard objects outside of camera view, saving GPU cycles and improving performance.
+        // if ((screenX > width) || (screenY > height) || (screenX < 0) || (screenY < 0)) 
+        //     return;
+        
+        /*
+        Push functions save the current "drawing" settings for what they do, and allow
+        "popping" to restore the settings back to prvious ones after you're finished.
+
+        e.g. pushStyle saves current drawing styles.
+        pushMatrix saves the current translated position which any drawing throughout the program would otherwise be affected by.
+        */
+        pushStyle();
+        pushMatrix();
+        
+        translate(pos.x, pos.y, pos.z);
+        
+        // sphere(r);
+        shape(shape);
+
+        // Guides //
+        noFill();
+        stroke(255, 170);
+
+        rect(-r, -r, r*2, r*2);
+        rotateY(radians(90));
+        rect(-r, -r, r*2, r*2);
+        
+        popMatrix();
+        popStyle();
+    }
+
+    public float calculateCoulombsLawForceOn(Particle targetParticle) {
+        PVector vector = PVector.sub(targetParticle.pos, pos);
+        /*
+        Coulomb's Law of Electrostatic Force
+        F = Qq
+            --
+            4*PI*8.85*10^-12*r^2
+
+        where vector.mag() == r
+        */
+        float topExpression = targetParticle.charge * charge;
+        float bottomExpression = 4 * PI * 8.85f * pow(10, -12) * pow(vector.mag(), 2);
+        /*
+        If the force is infinite (which should be impossible)
+        then disregard current frame.
+        */
+        if (bottomExpression == 0) return 0;
+        return topExpression / bottomExpression;
+    }
+}
+class Proton extends Particle {
     /*
         Let's say 100 pixels = 1fm.
     
@@ -816,9 +851,9 @@ class Proton extends Atom {
     }
 
     public @Override
-    void display() {
+    void evaluatePhysics() {
         evaluateElectricalField();
-        super.display();
+        super.evaluatePhysics();
     }
 }
 class RectangleUI extends UIElement {
@@ -837,8 +872,8 @@ class RectangleUI extends UIElement {
 }
 /*
 SelectionManager handles the interaction of selecting
-Atoms in space. It also updates the movement of all
-Atoms in its possession.
+particles in space. It also updates the movement of all
+particles in its possession.
 */
 
 class SelectionManager {
@@ -846,78 +881,78 @@ class SelectionManager {
     Selection shouldn't be used outside of the selection agent, as it pertains
     to no other context.
 
-    Class was required to be created as the Vector from the camera to the atom position
-    needed to be saved for multiple atoms, so a single field to save that vector was not enough.
+    Class was required to be created as the Vector from the camera to the particle position
+    needed to be saved for multiple particles, so a single field to save that vector was not enough.
     */
     private class Selection {
-        private final Atom atom;
+        private final Particle particle;
         /*
         Defined a getter and declared private so read-only, if this gets changed accidently
         the reason for the field existing becomes redundant.
         */
         private final PVector fromCameraVector;
 
-        private Selection(Atom atom) {
-            this.atom = atom;
-            fromCameraVector = PVector.sub(atom.pos, cam.position);
+        private Selection(Particle particle) {
+            this.particle = particle;
+            fromCameraVector = PVector.sub(particle.pos, cam.position);
         }
 
         public PVector getFromCameraVector() {
             return fromCameraVector.copy();
         }
 
-        public Atom getAtom() {
-            return atom;
+        public Particle getParticle() {
+            return particle;
         }
     }
 
-    ArrayList<Selection> selectedAtoms = new ArrayList<Selection>();
+    ArrayList<Selection> selectedParticles = new ArrayList<Selection>();
     float hoveringDistanceMult = 1;
 
     public boolean hasActiveSelection() {
-        if (selectedAtoms.size() == 0)
+        if (selectedParticles.size() == 0)
             return false;
         else
             return true;
     }
 
-    public void select(Atom atom) {
-        if (atom == null) {
+    public void select(Particle particle) {
+        if (particle == null) {
             println("URGENT: SelectionManager was requested to select a null reference.");
             Thread.dumpStack();
             return;
         }
 
-        atom.select();
-        selectedAtoms.add(new Selection(atom));
+        particle.select();
+        selectedParticles.add(new Selection(particle));
     }
 
     public void cancel() {
         if (!hasActiveSelection()) return;
 
-        for (Selection selection : selectedAtoms) {
-            selection.getAtom().deselect();
+        for (Selection selection : selectedParticles) {
+            selection.getParticle().deselect();
         }
 
-        selectedAtoms.clear();
+        selectedParticles.clear();
         hoveringDistanceMult = 1;
     }
 
     public void deleteItemsInSelection() {
         if (!hasActiveSelection()) return;
 
-        for (Selection selection : selectedAtoms) {
-            selection.getAtom().delete();
+        for (Selection selection : selectedParticles) {
+            selection.getParticle().delete();
         }
 
         cancel();
     }
 
-    public void paintAtoms() {
+    public void paintParticles() {
         if (!hasActiveSelection()) return;
 
-        for (Selection selection : selectedAtoms) {
-            selection.getAtom().setColour(color(255, 0, 0));
+        for (Selection selection : selectedParticles) {
+            selection.getParticle().setColour(color(255, 0, 0));
         }
 
         cancel();
@@ -938,50 +973,50 @@ class SelectionManager {
         PVector higherBoundary = new PVector(mouseX, mouseY);
 
         /*
-        Iterate through all existing atoms and compare their screen coordinates
-        to the selected screen area for all 4 cases, selecting all atoms that
+        Iterate through all existing particles and compare their screen coordinates
+        to the selected screen area for all 4 cases, selecting all particles that
         intersect with the area.
         */
-        for (Atom atom : atomList) {
-            float screenPosX = screenX(atom.pos.x, atom.pos.y, atom.pos.z);
-            float screenPosXNegativeLimit = screenX(atom.pos.x - atom.r, atom.pos.y, atom.pos.z);
-            float screenPosXPositiveLimit = screenX(atom.pos.x + atom.r, atom.pos.y, atom.pos.z);
+        for (Particle particle : particleList) {
+            float screenPosX = screenX(particle.pos.x, particle.pos.y, particle.pos.z);
+            float screenPosXNegativeLimit = screenX(particle.pos.x - particle.r, particle.pos.y, particle.pos.z);
+            float screenPosXPositiveLimit = screenX(particle.pos.x + particle.r, particle.pos.y, particle.pos.z);
             
-            float screenPosY = screenY(atom.pos.x, atom.pos.y, atom.pos.z);
-            float screenPosYNegativeLimit = screenY(atom.pos.x, atom.pos.y - atom.r, atom.pos.z);
-            float screenPosYPositiveLimit = screenY(atom.pos.x, atom.pos.y + atom.r, atom.pos.z);
+            float screenPosY = screenY(particle.pos.x, particle.pos.y, particle.pos.z);
+            float screenPosYNegativeLimit = screenY(particle.pos.x, particle.pos.y - particle.r, particle.pos.z);
+            float screenPosYPositiveLimit = screenY(particle.pos.x, particle.pos.y + particle.r, particle.pos.z);
             
-            float screenPosZ = screenZ(atom.pos.x, atom.pos.y, atom.pos.z);
-            float screenPosZNegativeLimit = screenZ(atom.pos.x, atom.pos.y, atom.pos.z - atom.r);
-            float screenPosZPositiveLimit = screenZ(atom.pos.x, atom.pos.y, atom.pos.z + atom.r);
+            float screenPosZ = screenZ(particle.pos.x, particle.pos.y, particle.pos.z);
+            float screenPosZNegativeLimit = screenZ(particle.pos.x, particle.pos.y, particle.pos.z - particle.r);
+            float screenPosZPositiveLimit = screenZ(particle.pos.x, particle.pos.y, particle.pos.z + particle.r);
 
             // From top left to bottom right
             if (lowerBoundary.x < screenPosXNegativeLimit &&
                 lowerBoundary.y < screenPosYNegativeLimit &&
                 higherBoundary.x > screenPosXNegativeLimit &&
                 higherBoundary.y > screenPosYNegativeLimit)
-                select(atom);
+                select(particle);
             
             // From bottom left to top right
             if (lowerBoundary.x < screenPosXNegativeLimit &&
                 lowerBoundary.y > screenPosYNegativeLimit &&
                 higherBoundary.x > screenPosXNegativeLimit &&
                 higherBoundary.y < screenPosYNegativeLimit)
-                select(atom);
+                select(particle);
 
             // From bottom right to top left
             if (lowerBoundary.x > screenPosXNegativeLimit &&
                 lowerBoundary.y > screenPosYNegativeLimit &&
                 higherBoundary.x < screenPosXNegativeLimit &&
                 higherBoundary.y < screenPosYNegativeLimit)
-                select(atom);
+                select(particle);
 
             // From top right to bottom left
             if (lowerBoundary.x > screenPosXNegativeLimit &&
                 lowerBoundary.y < screenPosYNegativeLimit &&
                 higherBoundary.x < screenPosXNegativeLimit &&
                 higherBoundary.y > screenPosYNegativeLimit)
-                select(atom);
+                select(particle);
 
             // TODO: Investigate if Z values are accounted for in group selection.
         }
@@ -992,22 +1027,22 @@ class SelectionManager {
     }
 
     public boolean mousePressed() {
-        // Case 2: Find a single Atom at clicking location.
-        for (Atom atom : atomList) {
-            float screenPosX = screenX(atom.pos.x, atom.pos.y, atom.pos.z);
-            float screenPosXNegativeLimit = screenX(atom.pos.x - atom.r, atom.pos.y, atom.pos.z);
-            float screenPosXPositiveLimit = screenX(atom.pos.x + atom.r, atom.pos.y, atom.pos.z);
+        // Case 2: Find a single particle at clicking location.
+        for (Particle particle : particleList) {
+            float screenPosX = screenX(particle.pos.x, particle.pos.y, particle.pos.z);
+            float screenPosXNegativeLimit = screenX(particle.pos.x - particle.r, particle.pos.y, particle.pos.z);
+            float screenPosXPositiveLimit = screenX(particle.pos.x + particle.r, particle.pos.y, particle.pos.z);
             
-            float screenPosY = screenY(atom.pos.x, atom.pos.y, atom.pos.z);
-            float screenPosYNegativeLimit = screenY(atom.pos.x, atom.pos.y - atom.r, atom.pos.z);
-            float screenPosYPositiveLimit = screenY(atom.pos.x, atom.pos.y + atom.r, atom.pos.z);
+            float screenPosY = screenY(particle.pos.x, particle.pos.y, particle.pos.z);
+            float screenPosYNegativeLimit = screenY(particle.pos.x, particle.pos.y - particle.r, particle.pos.z);
+            float screenPosYPositiveLimit = screenY(particle.pos.x, particle.pos.y + particle.r, particle.pos.z);
             
-            float screenPosZ = screenZ(atom.pos.x, atom.pos.y, atom.pos.z);
-            float screenPosZNegativeLimit = screenZ(atom.pos.x, atom.pos.y, atom.pos.z - atom.r);
-            float screenPosZPositiveLimit = screenZ(atom.pos.x, atom.pos.y, atom.pos.z + atom.r);
+            float screenPosZ = screenZ(particle.pos.x, particle.pos.y, particle.pos.z);
+            float screenPosZNegativeLimit = screenZ(particle.pos.x, particle.pos.y, particle.pos.z - particle.r);
+            float screenPosZPositiveLimit = screenZ(particle.pos.x, particle.pos.y, particle.pos.z + particle.r);
 
             if (mouseX >= screenPosXNegativeLimit && mouseX <= screenPosXPositiveLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-                select(atom);
+                select(particle);
                 return true;
             }
 
@@ -1015,12 +1050,12 @@ class SelectionManager {
             Allows selection in 'opposite region' camera space, since the limits switch around.
             */
             if (mouseX >= screenPosXPositiveLimit && mouseX <= screenPosXNegativeLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-                select(atom);
+                select(particle);
                 return true;
             }
 
             if (mouseX >= screenPosZNegativeLimit && mouseX <= screenPosZPositiveLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-                select(atom);
+                select(particle);
                 return true;
             }
 
@@ -1028,7 +1063,7 @@ class SelectionManager {
             Allows selection in 'opposite region' camera space, since the limits switch around.
             */
             if (mouseX >= screenPosZPositiveLimit && mouseX <= screenPosZNegativeLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-                select(atom);
+                select(particle);
                 return true;
             }
         }
@@ -1063,10 +1098,10 @@ class SelectionManager {
         if (!hasActiveSelection()) return false;
 
         if (e > 0) // On Scroll Down
-            // hoveringDistanceMult -= 0.5 * PVector.dist(cam.position, selectedAtom.pos) / 5000;
+            // hoveringDistanceMult -= 0.5 * PVector.dist(cam.position, selectedparticle.pos) / 5000;
             hoveringDistanceMult -= 0.25f;
         else // On Scroll Up
-            // hoveringDistanceMult += 0.5 / PVector.dist(cam.position, selectedAtom.pos) * 500;
+            // hoveringDistanceMult += 0.5 / PVector.dist(cam.position, selectedparticle.pos) * 500;
             hoveringDistanceMult += 0.25f;
 
         return true;
@@ -1085,16 +1120,16 @@ class SelectionManager {
 
         // float dist = PVector.dist(cam.position, fromCameraVector);
 
-        for (Selection selection : selectedAtoms) {
-            Atom atom = selection.getAtom();
-            // fromCameraVector = PVector.sub(atom.pos, cam.position);
+        for (Selection selection : selectedParticles) {
+            Particle particle = selection.getParticle();
+            // fromCameraVector = PVector.sub(particle.pos, cam.position);
             // Normalize a copy, don't want to change the original reference otherwise that would occur every frame.
             // PVector fromCameraVectorNormalized = fromCameraVector.copy().normalize();
 
-            // float yDistMul = PVector.dist(cam.position, atom.pos) / 900;
-            // float xDistMul = PVector.dist(cam.position, atom.pos) / 500;
+            // float yDistMul = PVector.dist(cam.position, particle.pos) / 900;
+            // float xDistMul = PVector.dist(cam.position, particle.pos) / 500;
 
-            // PVector cross = cam.position.copy().cross(atom.pos).normalize();
+            // PVector cross = cam.position.copy().cross(particle.pos).normalize();
 
             // PVector normalizationConstant = new PVector(
             //     // map(mouseX, 0, width, -1, 1),
@@ -1103,7 +1138,7 @@ class SelectionManager {
             //     map(mouseX, 0, width, -1, 1)
             // );
 
-            // atom.setPosition( PVector.add(cam.position, new PVector(
+            // particle.setPosition( PVector.add(cam.position, new PVector(
                 // Fine tune mode
                 // (600 * hoveringDistanceMult) * forward.x,
                 // (600 * hoveringDistanceMult) * forward.y,
@@ -1124,7 +1159,7 @@ class SelectionManager {
                 for (int x = 0; x < 5; x ++) {
                     pushMatrix();
                     
-                    translate(atom.pos.x - 250, atom.pos.y, atom.pos.z - 250);
+                    translate(particle.pos.x - 250, particle.pos.y, particle.pos.z - 250);
                     rotateX(PI/2);
                     stroke(255, 180);
                     noFill();
@@ -1138,7 +1173,7 @@ class SelectionManager {
                 for (int x = 0; x < 5; x ++) {
                     pushMatrix();
                     
-                    translate(atom.pos.x, atom.pos.y - 250, atom.pos.z + 250);
+                    translate(particle.pos.x, particle.pos.y - 250, particle.pos.z + 250);
                     rotateY(PI/2);
                     stroke(255, 180);
                     noFill();

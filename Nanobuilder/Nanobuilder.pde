@@ -11,7 +11,7 @@ SelectionManager selectionManager;
 UIManager uiManager;
 UIFactory uiFactory;
 
-ArrayList<Atom> atomList = new ArrayList<Atom>();
+ArrayList<Particle> particleList = new ArrayList<Particle>();
 
 /*
 MAIN FILE
@@ -33,7 +33,7 @@ void setup() {
 
     cam = new Camera(this);
     // cam.speed = 7.5;              // default is 3
-    cam.speed = 15;              // default is 3
+    cam.speed = 7.5;              // default is 3
     cam.sensitivity = 0;      // default is 2
     cam.controllable = true;
     cam.position = new PVector(-width, height/2, 0);
@@ -49,9 +49,11 @@ void setup() {
     // for (int i = 0; i < 50; i++) {
         // new Atom();
     // }
-    Atom proton = new Proton(0, 0, 0);
-    new Electron(0, 500, 0, proton);
-    new Electron(0, -500, 0, proton);
+    // Particle proton = new Proton(0, 0, 0);
+    // new Electron(0, 500, 0, proton);
+    // new Electron(0, -500, 0, proton);
+    // new Atom(0, 500, 0, 100);
+    new Atom();
     // new Electron(0, 2000, 0, proton);
     // new Electron(0, -2000, 0, proton);
     // new Electron(0, 1000, 0);
@@ -67,10 +69,11 @@ void draw() {
 
     float biggestDistance = 0;
 
-    for (Atom atom : atomList) {
-        atom.display();
+    for (Particle particle : particleList) {
+        particle.evaluatePhysics();
+        particle.display();
 
-        float dist = PVector.dist(atom.pos, new PVector(0, 0, 0));
+        float dist = PVector.dist(particle.pos, new PVector(0, 0, 0));
 
         if ((dist > biggestDistance) || (biggestDistance == 0)) {
             biggestDistance = dist;
@@ -163,12 +166,12 @@ public void keyEvent(KeyEvent event){
     }
 }
 
-// Draws a lattice (structured cube) of atoms.
-void drawAtomLattice() {
+// Draws a lattice (structured cube) of particles.
+void drawParticleLattice() {
     for (int y = 0; y < 5; y++) {
         for (int z = 0; z < 5; z++) {
             for (int x = 0; x < 5; x++) {
-                new Atom(200 * x, 200 * y, 200 * z, 100); 
+                new Particle(200 * x, 200 * y, 200 * z, 100); 
             }
         }
     }   

@@ -1,4 +1,4 @@
-class Neutron extends Atom {
+class Neutron extends Particle {
     Neutron(float x, float y, float z) {
         super(x, y, z, random(0.84, 0.87) * 100);
         charge = 0;

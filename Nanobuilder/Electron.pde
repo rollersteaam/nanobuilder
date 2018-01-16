@@ -1,11 +1,11 @@
-class Electron extends Atom {
+class Electron extends Particle {
     final int X_DOMINANT = 0;
     final int Y_DOMINANT = 1;
     final int Z_DOMINANT = 2;
 
     // Will add 17 to all powers of 10 for now.
-    Electron(float x, float y, float z, Atom proton) {
-        super(x, y, z, random(0.84, 0.87) / 10);
+    Electron(float x, float y, float z, Particle proton) {
+        super(x, y, z, random(0.84, 0.87) * 100 / 3);
 
         charge = -1.6 * pow(10, -19);
         mass = 9.10938356 * pow(10, -31);
@@ -75,7 +75,7 @@ class Electron extends Atom {
             sqrt(
                 // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
                 abs(
-                    proton.calculateCoulombsLawForceOn(this) * 100000 * PVector.dist(proton.pos, this.pos) / (float) mass
+                    proton.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(proton.pos, this.pos) / (float) mass
                 )
             )
         );
@@ -112,7 +112,6 @@ class Electron extends Atom {
 
     @Override
     void display() {
-        // evaluateElectricalField();
         super.display();
 
         pushMatrix();

@@ -1,4 +1,4 @@
-class Proton extends Atom {
+class Proton extends Particle {
     /*
         Let's say 100 pixels = 1fm.
     
@@ -14,8 +14,8 @@ class Proton extends Atom {
     }
 
     @Override
-    void display() {
+    void evaluatePhysics() {
         evaluateElectricalField();
-        super.display();
+        super.evaluatePhysics();
     }
 }

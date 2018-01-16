@@ -6,7 +6,7 @@ class ContextMenu extends UIElement {
     Runnable createAtomAtCamera = new Runnable() {
         public void run() {
             PVector fwd = cam.getForward();
-            new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 100);
+            new Particle(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 100);
         }
     };
 
@@ -25,7 +25,7 @@ class ContextMenu extends UIElement {
 
     Runnable paintAtom = new Runnable() {
         public void run() {
-            selectionManager.paintAtoms();
+            selectionManager.paintParticles();
         }
     };
 

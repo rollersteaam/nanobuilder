@@ -13,9 +13,23 @@ class Proton extends Particle {
         revertToBaseColor();
     }
 
+    Proton() {
+        this(
+            random(-1000, 1000),
+            random(-1000, 1000),
+            random(-1000, 1000)
+        );
+    }
+
     @Override
     void evaluatePhysics() {
         evaluateElectricalField();
         super.evaluatePhysics();
+    }
+
+    @Override
+    void display() {
+        if (PVector.dist(cam.position, pos) > 1000) return;
+        super.display();
     }
 }

@@ -81,6 +81,15 @@ class Electron extends Particle {
         );
     }
 
+    Electron() {
+        this(
+            random(-1000, 1000),
+            random(-1000, 1000),
+            random(-1000, 1000),
+            null
+        );
+    }
+
     class TrailElement {
         PVector position;
         PShape shape;
@@ -112,6 +121,8 @@ class Electron extends Particle {
 
     @Override
     void display() {
+        if (PVector.dist(cam.position, pos) > 1000) return;
+
         super.display();
 
         pushMatrix();

@@ -49,14 +49,14 @@ void setup() {
     // for (int i = 0; i < 50; i++) {
         // new Atom();
     // }
-    // Particle proton = new Proton(0, 0, 0);
-    // new Electron(0, 500, 0, proton);
-    // new Electron(0, -500, 0, proton);
-    // new Atom(0, 500, 0, 100);
-    new Atom();
-    // new Electron(0, 2000, 0, proton);
-    // new Electron(0, -2000, 0, proton);
-    // new Electron(0, 1000, 0);
+    // new Electron(150, 150, 150, new Proton(0, 0, 0));
+    // for (int i = 0; i < 50; i++) {
+        // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));
+    // }
+    Atom matt = new Atom(0, 400, 0, 400);
+
+    // Proton contentOne = new Proton(x, y, z);
+    // new Electron(x + contentOne.r + 10, y + contentOne.r + 10, z + contentOne.r + 10, contentOne);
 }
 
 void draw() {

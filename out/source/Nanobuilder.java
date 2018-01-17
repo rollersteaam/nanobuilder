@@ -72,14 +72,14 @@ public void setup() {
     // for (int i = 0; i < 50; i++) {
         // new Atom();
     // }
-    // Particle proton = new Proton(0, 0, 0);
-    // new Electron(0, 500, 0, proton);
-    // new Electron(0, -500, 0, proton);
-    // new Atom(0, 500, 0, 100);
-    new Atom();
-    // new Electron(0, 2000, 0, proton);
-    // new Electron(0, -2000, 0, proton);
-    // new Electron(0, 1000, 0);
+    // new Electron(150, 150, 150, new Proton(0, 0, 0));
+    // for (int i = 0; i < 50; i++) {
+        // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));
+    // }
+    Atom matt = new Atom(0, 400, 0, 400);
+
+    // Proton contentOne = new Proton(x, y, z);
+    // new Electron(x + contentOne.r + 10, y + contentOne.r + 10, z + contentOne.r + 10, contentOne);
 }
 
 public void draw() {
@@ -266,13 +266,20 @@ public void drawOriginGrid() {
     } 
 }
 class Atom extends Particle {
+    Proton core;
+    ArrayList<Proton> listProtons = new ArrayList<Proton>();
+    ArrayList<Electron> listElectrons = new ArrayList<Electron>();
+    ArrayList<Neutron> listNeutrons = new ArrayList<Neutron>();
+
     Atom(float x, float y, float z, float radius) {
         super(x, y, z, radius);
-        Proton contentOne = new Proton(x, y, z);
-        new Electron(x + contentOne.r + 10, y + contentOne.r + 10, z + contentOne.r + 10, contentOne);
+        core = new Proton(x, y, z);
+        listProtons.add(core);
+        listElectrons.add(new Electron(x + 100, y + 100, z + 100, core));
+        listElectrons.add(new Electron(x - 100, y - 100, z - 100, core));
     }
     
-    Atom() {        
+    Atom() {
         this(
             random(-1000, 1000),
             random(-1000, 1000),
@@ -283,14 +290,19 @@ class Atom extends Particle {
 
     public @Override
     void display() {
-        shape.setFill(
-            color(
-                red(currentColor),
-                green(currentColor),
-                blue(currentColor),
-                lerp(0, 255, PVector.dist(cam.position, pos) / 2000)
-            )
+        int formattedColor = color(
+            red(currentColor),
+            green(currentColor),
+            blue(currentColor),
+            // lerp(0, 255, PVector.dist(cam.position, pos) / (r + 1000))
+            255
         );
+
+        pushStyle();
+        fill(formattedColor);
+        shape.setFill(formattedColor);
+        popStyle();
+
         super.display();
     }
 }
@@ -562,6 +574,15 @@ class Electron extends Particle {
         );
     }
 
+    Electron() {
+        this(
+            random(-1000, 1000),
+            random(-1000, 1000),
+            random(-1000, 1000),
+            null
+        );
+    }
+
     class TrailElement {
         PVector position;
         PShape shape;
@@ -593,6 +614,8 @@ class Electron extends Particle {
 
     public @Override
     void display() {
+        if (PVector.dist(cam.position, pos) > 1000) return;
+
         super.display();
 
         pushMatrix();
@@ -850,10 +873,24 @@ class Proton extends Particle {
         revertToBaseColor();
     }
 
+    Proton() {
+        this(
+            random(-1000, 1000),
+            random(-1000, 1000),
+            random(-1000, 1000)
+        );
+    }
+
     public @Override
     void evaluatePhysics() {
         evaluateElectricalField();
         super.evaluatePhysics();
+    }
+
+    public @Override
+    void display() {
+        if (PVector.dist(cam.position, pos) > 1000) return;
+        super.display();
     }
 }
 class RectangleUI extends UIElement {
@@ -1436,13 +1473,13 @@ class UIManager {
     //     buttons.remove(button);
     // }
 }
-    public void settings() {  size(1280, 720, P3D); }
-    static public void main(String[] passedArgs) {
-        String[] appletArgs = new String[] { "Nanobuilder" };
-        if (passedArgs != null) {
-          PApplet.main(concat(appletArgs, passedArgs));
-        } else {
-          PApplet.main(appletArgs);
-        }
+  public void settings() {  size(1280, 720, P3D); }
+  static public void main(String[] passedArgs) {
+    String[] appletArgs = new String[] { "Nanobuilder" };
+    if (passedArgs != null) {
+      PApplet.main(concat(appletArgs, passedArgs));
+    } else {
+      PApplet.main(appletArgs);
     }
+  }
 }

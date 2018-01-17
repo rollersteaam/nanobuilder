@@ -1,11 +1,18 @@
 class Atom extends Particle {
+    Proton core;
+    ArrayList<Proton> listProtons = new ArrayList<Proton>();
+    ArrayList<Electron> listElectrons = new ArrayList<Electron>();
+    ArrayList<Neutron> listNeutrons = new ArrayList<Neutron>();
+
     Atom(float x, float y, float z, float radius) {
         super(x, y, z, radius);
-        Proton contentOne = new Proton(x, y, z);
-        new Electron(x + contentOne.r + 10, y + contentOne.r + 10, z + contentOne.r + 10, contentOne);
+        core = new Proton(x, y, z);
+        listProtons.add(core);
+        listElectrons.add(new Electron(x + 100, y + 100, z + 100, core));
+        listElectrons.add(new Electron(x - 100, y - 100, z - 100, core));
     }
     
-    Atom() {        
+    Atom() {
         this(
             random(-1000, 1000),
             random(-1000, 1000),
@@ -16,14 +23,19 @@ class Atom extends Particle {
 
     @Override
     void display() {
-        shape.setFill(
-            color(
-                red(currentColor),
-                green(currentColor),
-                blue(currentColor),
-                lerp(0, 255, PVector.dist(cam.position, pos) / 2000)
-            )
+        color formattedColor = color(
+            red(currentColor),
+            green(currentColor),
+            blue(currentColor),
+            // lerp(0, 255, PVector.dist(cam.position, pos) / (r + 1000))
+            255
         );
+
+        pushStyle();
+        fill(formattedColor);
+        shape.setFill(formattedColor);
+        popStyle();
+
         super.display();
     }
 }

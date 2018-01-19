@@ -6,12 +6,13 @@ class Particle {
     float r;
 
     float charge;
-    double mass;
+    double mass = 1;
 
     color baseColor;
     color currentColor;
 
     PShape shape;
+    Particle parent;
 
     Particle(float x, float y, float z, float r) {
         pos = new PVector(x, y, z);
@@ -87,6 +88,7 @@ class Particle {
     void evaluateElectricalField() {
         for (Particle particle : particleList) {
             if (particle == this) continue;
+            if (particle.parent != this) continue;
             applyForce(particle, calculateCoulombsLawForceOn(particle));
         }
     }

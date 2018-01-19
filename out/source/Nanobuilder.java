@@ -69,14 +69,14 @@ public void setup() {
     uiManager = new UIManager();
     uiFactory = new UIFactory();
     
-    // for (int i = 0; i < 50; i++) {
-        // new Atom();
-    // }
+    for (int i = 0; i < 50; i++) {
+        new Atom();
+    }
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
     // for (int i = 0; i < 50; i++) {
         // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));
     // }
-    Atom matt = new Atom(0, 400, 0, 400);
+    // Atom matt = new Atom(0, 400, 0, 250);
 
     // Proton contentOne = new Proton(x, y, z);
     // new Electron(x + contentOne.r + 10, y + contentOne.r + 10, z + contentOne.r + 10, contentOne);
@@ -275,27 +275,162 @@ class Atom extends Particle {
         super(x, y, z, radius);
         core = new Proton(x, y, z);
         listProtons.add(core);
-        listElectrons.add(new Electron(x + 100, y + 100, z + 100, core));
-        listElectrons.add(new Electron(x - 100, y - 100, z - 100, core));
+        // listElectrons.add(new Electron(x + 200, y, z, core));
+        // listElectrons.add(new Electron(x - 200, y, z, core));
+        addElectron();
+        addElectron();
+        addElectron();
+        addElectron();
+
+        // PVector newPosition = new PVector(x, y + 100, z);
     }
     
     Atom() {
         this(
-            random(-1000, 1000),
-            random(-1000, 1000),
-            random(-1000, 1000),
-            round(random(200, 600))
+            random(-2000, 2000),
+            random(-2000, 2000),
+            random(-2000, 2000),
+            // round(random(200, 600))
+            250
         );
+    }
+
+    ArrayList<Electron> shell1 = new ArrayList<Electron>();
+    ArrayList<Electron> shell2 = new ArrayList<Electron>();
+
+    PVector[] projectionVertices = new PVector[] {
+        new PVector(-100, 100, 0).normalize(),
+        new PVector(0, 100, 0).normalize(),
+        new PVector(100, 100, 0).normalize(),
+        new PVector(100, 0, 0).normalize(),
+        new PVector(100, -100, 0).normalize(),
+        new PVector(0, -100, 0).normalize(),
+        new PVector(-100, -100, 0).normalize(),
+        new PVector(-100, 0, 0).normalize()
+    };
+
+    public void addElectron() {        
+        for (Electron electron : shell1) {
+            // 1 and 5
+            PVector newPosition;
+
+            if (shell1.size() > 0)
+                newPosition = projectionVertices[1].copy().setMag(150);
+            else
+                newPosition = projectionVertices[5].copy().setMag(150);
+            // shell1.remove(electron);
+            // if (shell1.size() > 0) {
+            //     PVector newPosition = projectionVertices[shell1.size()].copy().setMag(150);
+            // shell1.add(new Electron(
+            //     newPosition.x,
+            //     newPosition.y,
+            //     newPosition.z,
+            //     core
+            // ));
+            electron.pos = PVector.add(pos, newPosition);
+            // shell1.add(new Electron(
+            //     newPosition.x,
+            //     newPosition.y,
+            //     newPosition.z,
+            //     core
+            // ));
+            // } else {
+                
+            // }
+        }
+
+        if (shell1.size() != 2) {
+            int selection = (shell1.size() != 1) ? 1 : 5;
+            PVector newPosition = projectionVertices[selection].copy();
+            newPosition = PVector.add(pos, newPosition).setMag(150);
+            shell1.add(new Electron(
+                newPosition.x,
+                newPosition.y,
+                newPosition.z,
+                core
+            ));
+        }
+
+        for (Electron electron : shell2) {
+            // 1 and 5
+            PVector newPosition = projectionVertices[shell2.size()].copy().setMag(300);
+            // shell1.remove(electron);
+            // if (shell1.size() > 0) {
+            //     PVector newPosition = projectionVertices[shell1.size()].copy().setMag(150);
+            // shell1.add(new Electron(
+            //     newPosition.x,
+            //     newPosition.y,
+            //     newPosition.z,
+            //     core
+            // ));
+            electron.pos = PVector.add(pos, newPosition);
+            // shell1.add(new Electron(
+            //     newPosition.x,
+            //     newPosition.y,
+            //     newPosition.z,
+            //     core
+            // ));
+            // } else {
+                
+            // }
+        }
+
+        if (shell2.size() != 8) {
+            PVector newPosition = projectionVertices[shell2.size()].copy();
+            newPosition = PVector.add(pos, newPosition).setMag(300);
+            shell2.add(new Electron(
+                newPosition.x,
+                newPosition.y,
+                newPosition.z,
+                core
+            ));
+        }
+
+        // int totalElectrons = initialShell1Count + initialShell2Count;
+        // print(totalElectrons);
+        // for (int i = 0; i < totalElectrons; i++) {
+        //     if (shell1.size() == 2) {
+        //         PVector newPosition = projectionVertices[shell2.size()].copy().setMag(300);
+        //         shell2.add(new Electron(
+        //             newPosition.x,
+        //             newPosition.y,
+        //             newPosition.z,
+        //             core
+        //         ));
+        //     } else {
+        //         if (shell1.size() == 1) {
+        //             PVector newPosition = projectionVertices[shell1.size()].copy().setMag(150);
+        //             shell1.add(new Electron(
+        //                 newPosition.x,
+        //                 newPosition.y,
+        //                 newPosition.z,
+        //                 core
+        //             ));
+        //         } else {
+        //             PVector newPosition = projectionVertices[shell1.size()].copy().setMag(150);
+        //             shell1.add(new Electron(
+        //                 newPosition.x,
+        //                 newPosition.y,
+        //                 newPosition.z,
+        //                 core
+        //             ));
+        //         }
+        //     }
+        // }
     }
 
     public @Override
     void display() {
+        if (PVector.dist(cam.position, pos) < (r + 700))
+            return;
+
+        // hint(ENABLE_DEPTH_TEST);
+
         int formattedColor = color(
             red(currentColor),
             green(currentColor),
             blue(currentColor),
-            // lerp(0, 255, PVector.dist(cam.position, pos) / (r + 1000))
-            255
+            lerp(0, 255, (PVector.dist(cam.position, pos) * 2) / ((r + 2000)))
         );
 
         pushStyle();
@@ -304,6 +439,8 @@ class Atom extends Particle {
         popStyle();
 
         super.display();
+
+        // hint(DISABLE_DEPTH_TEST);
     }
 }
 class ButtonUI extends UIElement {
@@ -512,6 +649,8 @@ class Electron extends Particle {
             return;
         }
 
+        parent = proton;
+
         PVector diff = PVector.sub(pos, proton.pos).normalize();
         PVector diffMag = new PVector(
             abs(diff.x),
@@ -614,23 +753,41 @@ class Electron extends Particle {
 
     public @Override
     void display() {
-        if (PVector.dist(cam.position, pos) > 1000) return;
+        if (PVector.dist(cam.position, pos) > (r + 1000)) {
+            for (Point point : trail) {
+                trail.remove(point);
+            }
+            return;
+        }
+
+        int formattedColor = color(
+            red(currentColor),
+            green(currentColor),
+            blue(currentColor),
+            // lerp(255, 0, PVector.dist(cam.position, pos) / ((r + 1000) * 2))
+            255
+        );
+
+        pushStyle();
+        fill(formattedColor);
+        shape.setFill(formattedColor);
+        popStyle();
 
         super.display();
 
-        pushMatrix();
-        pushStyle();
-            fill(0);
-            stroke(0);
-            strokeWeight(4);
-            line(pos.x, pos.y, pos.z, pos.x + velocity.x, pos.y + velocity.y, pos.z + velocity.z);
-        popMatrix();
-        popStyle();
+        // pushMatrix();
+        // pushStyle();
+        //     fill(0);
+        //     stroke(0);
+        //     strokeWeight(4);
+        //     line(pos.x, pos.y, pos.z, pos.x + velocity.x, pos.y + velocity.y, pos.z + velocity.z);
+        // popMatrix();
+        // popStyle();
 
         Point point = new Point();
         trail.push(point);
 
-        int trailSize = 600;
+        int trailSize = 60;
 
         Point lastPoint = null;
         int counter = 0;
@@ -689,12 +846,13 @@ class Particle {
     float r;
 
     float charge;
-    double mass;
+    double mass = 1;
 
     int baseColor;
     int currentColor;
 
     PShape shape;
+    Particle parent;
 
     Particle(float x, float y, float z, float r) {
         pos = new PVector(x, y, z);
@@ -770,6 +928,7 @@ class Particle {
     public void evaluateElectricalField() {
         for (Particle particle : particleList) {
             if (particle == this) continue;
+            if (particle.parent != this) continue;
             applyForce(particle, calculateCoulombsLawForceOn(particle));
         }
     }
@@ -889,7 +1048,22 @@ class Proton extends Particle {
 
     public @Override
     void display() {
-        if (PVector.dist(cam.position, pos) > 1000) return;
+        if (PVector.dist(cam.position, pos) > (r + 1000))
+            return;
+        
+        int formattedColor = color(
+            red(currentColor),
+            green(currentColor),
+            blue(currentColor),
+            255
+            // lerp(255, 0, PVector.dist(cam.position, pos) / ((r + 1000) * 2))
+        );
+
+        pushStyle();
+        fill(formattedColor);
+        shape.setFill(formattedColor);
+        popStyle();
+
         super.display();
     }
 }

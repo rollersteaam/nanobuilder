@@ -19,6 +19,8 @@ class Electron extends Particle {
             return;
         }
 
+        parent = proton;
+
         PVector diff = PVector.sub(pos, proton.pos).normalize();
         PVector diffMag = new PVector(
             abs(diff.x),
@@ -121,23 +123,41 @@ class Electron extends Particle {
 
     @Override
     void display() {
-        if (PVector.dist(cam.position, pos) > 1000) return;
+        if (PVector.dist(cam.position, pos) > (r + 1000)) {
+            for (Point point : trail) {
+                trail.remove(point);
+            }
+            return;
+        }
+
+        color formattedColor = color(
+            red(currentColor),
+            green(currentColor),
+            blue(currentColor),
+            // lerp(255, 0, PVector.dist(cam.position, pos) / ((r + 1000) * 2))
+            255
+        );
+
+        pushStyle();
+        fill(formattedColor);
+        shape.setFill(formattedColor);
+        popStyle();
 
         super.display();
 
-        pushMatrix();
-        pushStyle();
-            fill(0);
-            stroke(0);
-            strokeWeight(4);
-            line(pos.x, pos.y, pos.z, pos.x + velocity.x, pos.y + velocity.y, pos.z + velocity.z);
-        popMatrix();
-        popStyle();
+        // pushMatrix();
+        // pushStyle();
+        //     fill(0);
+        //     stroke(0);
+        //     strokeWeight(4);
+        //     line(pos.x, pos.y, pos.z, pos.x + velocity.x, pos.y + velocity.y, pos.z + velocity.z);
+        // popMatrix();
+        // popStyle();
 
         Point point = new Point();
         trail.push(point);
 
-        int trailSize = 600;
+        int trailSize = 60;
 
         Point lastPoint = null;
         int counter = 0;

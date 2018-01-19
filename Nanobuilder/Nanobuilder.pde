@@ -46,14 +46,14 @@ void setup() {
     uiManager = new UIManager();
     uiFactory = new UIFactory();
     
-    // for (int i = 0; i < 50; i++) {
-        // new Atom();
-    // }
+    for (int i = 0; i < 50; i++) {
+        new Atom();
+    }
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
     // for (int i = 0; i < 50; i++) {
         // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));
     // }
-    Atom matt = new Atom(0, 400, 0, 400);
+    // Atom matt = new Atom(0, 400, 0, 250);
 
     // Proton contentOne = new Proton(x, y, z);
     // new Electron(x + contentOne.r + 10, y + contentOne.r + 10, z + contentOne.r + 10, contentOne);

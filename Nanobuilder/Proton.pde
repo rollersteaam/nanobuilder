@@ -29,7 +29,22 @@ class Proton extends Particle {
 
     @Override
     void display() {
-        if (PVector.dist(cam.position, pos) > 1000) return;
+        if (PVector.dist(cam.position, pos) > (r + 1000))
+            return;
+        
+        color formattedColor = color(
+            red(currentColor),
+            green(currentColor),
+            blue(currentColor),
+            255
+            // lerp(255, 0, PVector.dist(cam.position, pos) / ((r + 1000) * 2))
+        );
+
+        pushStyle();
+        fill(formattedColor);
+        shape.setFill(formattedColor);
+        popStyle();
+
         super.display();
     }
 }

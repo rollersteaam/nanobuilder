@@ -1,10 +1,7 @@
 class Electron extends Particle {
-    final int X_DOMINANT = 0;
-    final int Y_DOMINANT = 1;
-    final int Z_DOMINANT = 2;
-
     // Will add 17 to all powers of 10 for now.
     Electron(float x, float y, float z, Particle proton) {
+        // super(x, y, z, random(0.84, 0.87) * 100 / 1000);
         super(x, y, z, random(0.84, 0.87) * 100 / 3);
 
         charge = -1.6 * pow(10, -19);
@@ -21,66 +18,17 @@ class Electron extends Particle {
 
         parent = proton;
 
-        PVector diff = PVector.sub(pos, proton.pos).normalize();
-        PVector diffMag = new PVector(
-            abs(diff.x),
-            abs(diff.y),
-            abs(diff.z)
-        );
-        int magRecordCoordinate = -1;
-        float magRecord = 0;
-        if (diffMag.x < magRecord || magRecord == 0) {
-            magRecord = diffMag.x;
-            magRecordCoordinate = X_DOMINANT;
-        }
+        setInitialCircularVelocityFromForce(proton, proton.calculateCoulombsLawForceOn(this));
+        // velocity = calculateCircularMotionInitialVelocity(proton, proton.calculateCoulombsLawForceOn(this));
 
-        if (diffMag.y < magRecord) {
-            magRecord = diffMag.y;
-            magRecordCoordinate = Y_DOMINANT;
-        }
-
-        if (diffMag.z < magRecord) {
-            magRecord = diffMag.z;
-            magRecordCoordinate = Z_DOMINANT;
-        }
-
-        PVector toCross = new PVector();
-        if (magRecordCoordinate == X_DOMINANT) {
-            toCross = new PVector(1, 0, 0);
-        } else if (magRecordCoordinate == Y_DOMINANT) {
-            toCross = new PVector(0, 1, 0);
-        } else if (magRecordCoordinate == Z_DOMINANT) {
-            toCross = new PVector(0, 0, 1);
-        }
-
-        PVector cross = diff.cross(toCross);
-
-        /*
-        Substituting circular motion and couloumb's law...
-        F = mv^2/r
-        Fr
-        - = v^2
-        m
-        where F = Qq
-                  -
-                  4(PI)(E0)R^2
-
-        This value returns what the magnitude of the perpendicular
-        vector to the proton must be for circular motion to take place.
-
-        This is used because we are trying to model the physics, so some
-        assumptions (like the initial state of an atom) need to be initially
-        assumed. Any changes after are then just part of the simulated space,
-        so should be dynamic.
-        */
-        velocity = cross.setMag(
-            sqrt(
-                // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
-                abs(
-                    proton.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(proton.pos, this.pos) / (float) mass
-                )
-            )
-        );
+        // velocity = cross.setMag(
+        //     sqrt(
+        //         // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
+        //         abs(
+        //             proton.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(proton.pos, this.pos) / (float) mass
+        //         )
+        //     )
+        // );
     }
 
     Electron() {
@@ -123,12 +71,12 @@ class Electron extends Particle {
 
     @Override
     void display() {
-        if (PVector.dist(cam.position, pos) > (r + 1000)) {
-            for (Point point : trail) {
-                trail.remove(point);
-            }
-            return;
-        }
+        // if (PVector.dist(cam.position, pos) > (r + 1000)) {
+        //     for (Point point : trail) {
+        //         trail.remove(point);
+        //     }
+        //     return;
+        // }
 
         color formattedColor = color(
             red(currentColor),
@@ -166,7 +114,11 @@ class Electron extends Particle {
             pushMatrix();
             pushStyle();
                 fill(0);
-                stroke(0, map(counter, 0, (trailSize - 1), 255, 0));
+                // stroke(0, map(counter, 0, (trailSize - 1), 255, 0));
+                stroke(
+                    lerpColor(color(187, 0, 255), color(0, 187, 255), (counter * 1.5)/trail.size()),
+                    map(counter, 0, (trailSize - 1), 255, 0)
+                );
                 strokeWeight(4);
 
                 if (lastPoint != null)

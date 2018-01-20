@@ -69,8 +69,10 @@ public void setup() {
     uiManager = new UIManager();
     uiFactory = new UIFactory();
     
-    for (int i = 0; i < 50; i++) {
-        new Atom();
+    for (int i = 0; i < 5; i++) {
+        int randNo = (int) random(1, 20);
+        new Atom(randNo);
+        // new Atom(0, 500, 0, 300);
     }
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
     // for (int i = 0; i < 50; i++) {
@@ -265,172 +267,75 @@ public void drawOriginGrid() {
         }
     } 
 }
+protected static class AtomHelper {
+    protected static int calculateNumberOfShells(int electrons) {
+        if (electrons == 0)
+            throw new IllegalStateException("An atom can't have 0 electrons.");
+        
+        return ceil((electrons - 2) / 8) + 1;
+        // if (electrons - 2 <= 0) {
+            // return 1;
+        // } else {
+        // }
+    }
+}
+
 class Atom extends Particle {
     Proton core;
     ArrayList<Proton> listProtons = new ArrayList<Proton>();
     ArrayList<Electron> listElectrons = new ArrayList<Electron>();
     ArrayList<Neutron> listNeutrons = new ArrayList<Neutron>();
 
-    Atom(float x, float y, float z, float radius) {
-        super(x, y, z, radius);
+    ArrayList<ElectronShell> shells = new ArrayList<ElectronShell>();
+
+
+    Atom(float x, float y, float z, int electrons) {
+        super(x, y, z, AtomHelper.calculateNumberOfShells(electrons) * 200);
         core = new Proton(x, y, z);
         listProtons.add(core);
-        // listElectrons.add(new Electron(x + 200, y, z, core));
-        // listElectrons.add(new Electron(x - 200, y, z, core));
-        addElectron();
-        addElectron();
-        addElectron();
-        addElectron();
 
-        // PVector newPosition = new PVector(x, y + 100, z);
+        shells.add(new ElectronShell(2));
+
+        for (int i = 0; i < (AtomHelper.calculateNumberOfShells(electrons) - 1); i++) {
+            shells.add(new ElectronShell(8));
+        }
+
+        for (int i = 0; i < electrons; i++) {
+            addElectron();
+        }
+
+        velocity = velocity.random3D().mult(10);
     }
     
+    Atom(int electrons) {
+        this(
+            random(-2000, 2000),
+            random(-2000, 2000),
+            random(-2000, 2000),
+            electrons
+        );
+    }
+
     Atom() {
         this(
             random(-2000, 2000),
             random(-2000, 2000),
             random(-2000, 2000),
             // round(random(200, 600))
-            250
+            1
         );
     }
-
-    ArrayList<Electron> shell1 = new ArrayList<Electron>();
-    ArrayList<Electron> shell2 = new ArrayList<Electron>();
-
-    PVector[] projectionVertices = new PVector[] {
-        new PVector(-100, 100, 0).normalize(),
-        new PVector(0, 100, 0).normalize(),
-        new PVector(100, 100, 0).normalize(),
-        new PVector(100, 0, 0).normalize(),
-        new PVector(100, -100, 0).normalize(),
-        new PVector(0, -100, 0).normalize(),
-        new PVector(-100, -100, 0).normalize(),
-        new PVector(-100, 0, 0).normalize()
-    };
-
-    public void addElectron() {        
-        for (Electron electron : shell1) {
-            // 1 and 5
-            PVector newPosition;
-
-            if (shell1.size() > 0)
-                newPosition = projectionVertices[1].copy().setMag(150);
-            else
-                newPosition = projectionVertices[5].copy().setMag(150);
-            // shell1.remove(electron);
-            // if (shell1.size() > 0) {
-            //     PVector newPosition = projectionVertices[shell1.size()].copy().setMag(150);
-            // shell1.add(new Electron(
-            //     newPosition.x,
-            //     newPosition.y,
-            //     newPosition.z,
-            //     core
-            // ));
-            electron.pos = PVector.add(pos, newPosition);
-            // shell1.add(new Electron(
-            //     newPosition.x,
-            //     newPosition.y,
-            //     newPosition.z,
-            //     core
-            // ));
-            // } else {
-                
-            // }
-        }
-
-        if (shell1.size() != 2) {
-            int selection = (shell1.size() != 1) ? 1 : 5;
-            PVector newPosition = projectionVertices[selection].copy();
-            newPosition = PVector.add(pos, newPosition).setMag(150);
-            shell1.add(new Electron(
-                newPosition.x,
-                newPosition.y,
-                newPosition.z,
-                core
-            ));
-        }
-
-        for (Electron electron : shell2) {
-            // 1 and 5
-            PVector newPosition = projectionVertices[shell2.size()].copy().setMag(300);
-            // shell1.remove(electron);
-            // if (shell1.size() > 0) {
-            //     PVector newPosition = projectionVertices[shell1.size()].copy().setMag(150);
-            // shell1.add(new Electron(
-            //     newPosition.x,
-            //     newPosition.y,
-            //     newPosition.z,
-            //     core
-            // ));
-            electron.pos = PVector.add(pos, newPosition);
-            // shell1.add(new Electron(
-            //     newPosition.x,
-            //     newPosition.y,
-            //     newPosition.z,
-            //     core
-            // ));
-            // } else {
-                
-            // }
-        }
-
-        if (shell2.size() != 8) {
-            PVector newPosition = projectionVertices[shell2.size()].copy();
-            newPosition = PVector.add(pos, newPosition).setMag(300);
-            shell2.add(new Electron(
-                newPosition.x,
-                newPosition.y,
-                newPosition.z,
-                core
-            ));
-        }
-
-        // int totalElectrons = initialShell1Count + initialShell2Count;
-        // print(totalElectrons);
-        // for (int i = 0; i < totalElectrons; i++) {
-        //     if (shell1.size() == 2) {
-        //         PVector newPosition = projectionVertices[shell2.size()].copy().setMag(300);
-        //         shell2.add(new Electron(
-        //             newPosition.x,
-        //             newPosition.y,
-        //             newPosition.z,
-        //             core
-        //         ));
-        //     } else {
-        //         if (shell1.size() == 1) {
-        //             PVector newPosition = projectionVertices[shell1.size()].copy().setMag(150);
-        //             shell1.add(new Electron(
-        //                 newPosition.x,
-        //                 newPosition.y,
-        //                 newPosition.z,
-        //                 core
-        //             ));
-        //         } else {
-        //             PVector newPosition = projectionVertices[shell1.size()].copy().setMag(150);
-        //             shell1.add(new Electron(
-        //                 newPosition.x,
-        //                 newPosition.y,
-        //                 newPosition.z,
-        //                 core
-        //             ));
-        //         }
-        //     }
-        // }
-    }
-
+    
     public @Override
     void display() {
-        if (PVector.dist(cam.position, pos) < (r + 700))
-            return;
-
-        // hint(ENABLE_DEPTH_TEST);
+        if (PVector.dist(cam.position, pos) < ((r) + 1500)) return;
 
         int formattedColor = color(
             red(currentColor),
             green(currentColor),
             blue(currentColor),
-            lerp(0, 255, (PVector.dist(cam.position, pos) * 2) / ((r + 2000)))
+            255
+            // lerp(0, 255, (PVector.dist(cam.position, pos) * 2) / (r + 4000))
         );
 
         pushStyle();
@@ -439,8 +344,85 @@ class Atom extends Particle {
         popStyle();
 
         super.display();
+    }
 
-        // hint(DISABLE_DEPTH_TEST);
+    private class ElectronShell {
+        private ArrayList<Electron> contents = new ArrayList<Electron>();
+        private int max;
+        private final PVector[] projectionVertices = new PVector[] {
+            new PVector(-100, 100, 0).normalize(),
+            new PVector(0, 100, 0).normalize(),
+            new PVector(100, 100, 0).normalize(),
+            new PVector(100, 0, 0).normalize(),
+            new PVector(100, -100, 0).normalize(),
+            new PVector(0, -100, 0).normalize(),
+            new PVector(-100, -100, 0).normalize(),
+            new PVector(-100, 0, 0).normalize()
+        };
+
+        ElectronShell(int max) {
+            this.max = max;
+        }
+
+        public boolean addElectron() {
+            // This shouldn't happen, but for safety...
+            if (contents.size() == max)
+                return false;
+
+            // Initial position is not important, it will be changed immediately.
+            contents.add(new Electron(0, 0, 0, core));
+
+            int availablePosition = 0;
+            for (Electron electron : contents) {
+                PVector newPosition;
+
+                // TODO: Make projections use a formula to support > 10 e shells.
+                if (max == 2) {
+                    if (availablePosition == 0)
+                        newPosition = projectionVertices[0].copy().setMag(200);
+                    else
+                        newPosition = projectionVertices[4].copy().setMag(200);
+                } else {
+                    newPosition = projectionVertices[availablePosition].copy().setMag(400);
+                }
+
+                availablePosition++;
+
+                electron.pos = PVector.add(pos, newPosition);
+                // println(core);
+                // println(core.calculateCoulombsLawForceOn(electron));
+                // println(calculateCircularMotionInitialVelocity(core, core.calculateCoulombsLawForceOn(electron)));                
+                // electron.velocity = calculateCircularMotionInitialVelocity(core, core.calculateCoulombsLawForceOn(electron));                
+                electron.setInitialCircularVelocityFromForce(core, core.calculateCoulombsLawForceOn(electron));
+                // println(electron.velocity);
+            }
+
+            return true;
+        }
+
+        public boolean removeElectron() {
+            if (contents.size() == 0) return false;
+            
+            // Remove the last appended electron in the shell.
+            int index = contents.size() - 1;
+            Electron target = contents.get(index);
+            target.delete();
+            contents.remove(index);
+            
+            return true;
+        }
+    }
+
+    public void addElectron() {
+        for (ElectronShell shell : shells) {
+            if (shell.addElectron()) return;
+        }
+    }
+
+    public void removeElectron() {
+        // If atom has no shells for some reason...
+        if (shells.size() == 0) return;
+        shells.get(shells.size() - 1).removeElectron();
     }
 }
 class ButtonUI extends UIElement {
@@ -629,12 +611,9 @@ class ContextMenu extends UIElement {
     }
 }
 class Electron extends Particle {
-    final int X_DOMINANT = 0;
-    final int Y_DOMINANT = 1;
-    final int Z_DOMINANT = 2;
-
     // Will add 17 to all powers of 10 for now.
     Electron(float x, float y, float z, Particle proton) {
+        // super(x, y, z, random(0.84, 0.87) * 100 / 1000);
         super(x, y, z, random(0.84f, 0.87f) * 100 / 3);
 
         charge = -1.6f * pow(10, -19);
@@ -651,66 +630,17 @@ class Electron extends Particle {
 
         parent = proton;
 
-        PVector diff = PVector.sub(pos, proton.pos).normalize();
-        PVector diffMag = new PVector(
-            abs(diff.x),
-            abs(diff.y),
-            abs(diff.z)
-        );
-        int magRecordCoordinate = -1;
-        float magRecord = 0;
-        if (diffMag.x < magRecord || magRecord == 0) {
-            magRecord = diffMag.x;
-            magRecordCoordinate = X_DOMINANT;
-        }
+        setInitialCircularVelocityFromForce(proton, proton.calculateCoulombsLawForceOn(this));
+        // velocity = calculateCircularMotionInitialVelocity(proton, proton.calculateCoulombsLawForceOn(this));
 
-        if (diffMag.y < magRecord) {
-            magRecord = diffMag.y;
-            magRecordCoordinate = Y_DOMINANT;
-        }
-
-        if (diffMag.z < magRecord) {
-            magRecord = diffMag.z;
-            magRecordCoordinate = Z_DOMINANT;
-        }
-
-        PVector toCross = new PVector();
-        if (magRecordCoordinate == X_DOMINANT) {
-            toCross = new PVector(1, 0, 0);
-        } else if (magRecordCoordinate == Y_DOMINANT) {
-            toCross = new PVector(0, 1, 0);
-        } else if (magRecordCoordinate == Z_DOMINANT) {
-            toCross = new PVector(0, 0, 1);
-        }
-
-        PVector cross = diff.cross(toCross);
-
-        /*
-        Substituting circular motion and couloumb's law...
-        F = mv^2/r
-        Fr
-        - = v^2
-        m
-        where F = Qq
-                  -
-                  4(PI)(E0)R^2
-
-        This value returns what the magnitude of the perpendicular
-        vector to the proton must be for circular motion to take place.
-
-        This is used because we are trying to model the physics, so some
-        assumptions (like the initial state of an atom) need to be initially
-        assumed. Any changes after are then just part of the simulated space,
-        so should be dynamic.
-        */
-        velocity = cross.setMag(
-            sqrt(
-                // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
-                abs(
-                    proton.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(proton.pos, this.pos) / (float) mass
-                )
-            )
-        );
+        // velocity = cross.setMag(
+        //     sqrt(
+        //         // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
+        //         abs(
+        //             proton.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(proton.pos, this.pos) / (float) mass
+        //         )
+        //     )
+        // );
     }
 
     Electron() {
@@ -753,12 +683,12 @@ class Electron extends Particle {
 
     public @Override
     void display() {
-        if (PVector.dist(cam.position, pos) > (r + 1000)) {
-            for (Point point : trail) {
-                trail.remove(point);
-            }
-            return;
-        }
+        // if (PVector.dist(cam.position, pos) > (r + 1000)) {
+        //     for (Point point : trail) {
+        //         trail.remove(point);
+        //     }
+        //     return;
+        // }
 
         int formattedColor = color(
             red(currentColor),
@@ -796,7 +726,11 @@ class Electron extends Particle {
             pushMatrix();
             pushStyle();
                 fill(0);
-                stroke(0, map(counter, 0, (trailSize - 1), 255, 0));
+                // stroke(0, map(counter, 0, (trailSize - 1), 255, 0));
+                stroke(
+                    lerpColor(color(187, 0, 255), color(0, 187, 255), (counter * 1.5f)/trail.size()),
+                    map(counter, 0, (trailSize - 1), 255, 0)
+                );
                 strokeWeight(4);
 
                 if (lastPoint != null)
@@ -1011,10 +945,93 @@ class Particle {
         float bottomExpression = 4 * PI * 8.85f * pow(10, -12) * pow(vector.mag(), 2);
         /*
         If the force is infinite (which should be impossible)
-        then disregard current frame.
+        then disregard current tick.
         */
         if (bottomExpression == 0) return 0;
         return topExpression / bottomExpression;
+    }
+
+    private final int X_DOMINANT = 0;
+    private final int Y_DOMINANT = 1;
+    private final int Z_DOMINANT = 2;
+
+    public void setInitialCircularVelocityFromForce(Particle particle, float force) {
+        PVector diff = PVector.sub(pos, particle.pos).normalize();
+        PVector diffMag = new PVector(
+            abs(diff.x),
+            abs(diff.y),
+            abs(diff.z)
+        );
+        int magRecordCoordinate = -1;
+        float magRecord = 0;
+        if (diffMag.x < magRecord || magRecord == 0) {
+            magRecord = diffMag.x;
+            magRecordCoordinate = X_DOMINANT;
+        }
+
+        if (diffMag.y < magRecord) {
+            magRecord = diffMag.y;
+            magRecordCoordinate = Y_DOMINANT;
+        }
+
+        if (diffMag.z < magRecord) {
+            magRecord = diffMag.z;
+            magRecordCoordinate = Z_DOMINANT;
+        }
+
+        PVector toCross = new PVector();
+        if (magRecordCoordinate == X_DOMINANT) {
+            toCross = new PVector(1, 0, 0);
+        } else if (magRecordCoordinate == Y_DOMINANT) {
+            toCross = new PVector(0, 1, 0);
+        } else if (magRecordCoordinate == Z_DOMINANT) {
+            toCross = new PVector(0, 0, 1);
+        }
+
+        PVector cross = diff.cross(toCross);
+
+        /*
+        Substituting circular motion and couloumb's law...
+        F = mv^2/r
+        Fr
+        - = v^2
+        m
+        where F = Qq
+                  -
+                  4(PI)(E0)R^2
+
+        This value returns what the magnitude of the perpendicular
+        vector to the proton must be for circular motion to take place.
+
+        This is used because we are trying to model the physics, so some
+        assumptions (like the initial state of an atom) need to be initially
+        assumed. Any changes after are then just part of the simulated space,
+        so should be dynamic.
+        */
+        // return cross.setMag(
+        //     sqrt(
+        //         // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
+        //         abs(
+        //             force * 100 * PVector.dist(particle.pos, this.pos) / (float) mass
+        //         )
+        //     )
+        // );
+        velocity = cross.setMag(
+            sqrt(
+                // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
+                abs(
+                    force * 100 * PVector.dist(particle.pos, this.pos) / (float) mass
+                )
+            )
+        );
+        // velocity = cross.setMag(
+        //     sqrt(
+        //         // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
+        //         abs(
+        //             proton.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(proton.pos, this.pos) / (float) mass
+        //         )
+        //     )
+        // );
     }
 }
 class Proton extends Particle {
@@ -1048,8 +1065,8 @@ class Proton extends Particle {
 
     public @Override
     void display() {
-        if (PVector.dist(cam.position, pos) > (r + 1000))
-            return;
+        // if (PVector.dist(cam.position, pos) > (r + 1000))
+        //     return;
         
         int formattedColor = color(
             red(currentColor),
@@ -1647,13 +1664,13 @@ class UIManager {
     //     buttons.remove(button);
     // }
 }
-  public void settings() {  size(1280, 720, P3D); }
-  static public void main(String[] passedArgs) {
-    String[] appletArgs = new String[] { "Nanobuilder" };
-    if (passedArgs != null) {
-      PApplet.main(concat(appletArgs, passedArgs));
-    } else {
-      PApplet.main(appletArgs);
+    public void settings() {  size(1280, 720, P3D); }
+    static public void main(String[] passedArgs) {
+        String[] appletArgs = new String[] { "Nanobuilder" };
+        if (passedArgs != null) {
+          PApplet.main(concat(appletArgs, passedArgs));
+        } else {
+          PApplet.main(appletArgs);
+        }
     }
-  }
 }

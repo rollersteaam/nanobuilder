@@ -46,8 +46,10 @@ void setup() {
     uiManager = new UIManager();
     uiFactory = new UIFactory();
     
-    for (int i = 0; i < 50; i++) {
-        new Atom();
+    for (int i = 0; i < 5; i++) {
+        int randNo = (int) random(1, 20);
+        new Atom(randNo);
+        // new Atom(0, 500, 0, 300);
     }
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
     // for (int i = 0; i < 50; i++) {

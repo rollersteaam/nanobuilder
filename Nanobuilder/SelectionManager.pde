@@ -90,15 +90,17 @@ class SelectionManager {
     RectangleUI groupSelection;
 
     void startSelecting() {
+        cancel();
         selectingStartPos = new PVector(mouseX, mouseY);
         groupSelection = uiFactory.createRect(selectingStartPos.x, selectingStartPos.y, 1, 1, color(30, 30, 90, 80));
     }
 
-    void stopSelecting() {
-        if (selectingStartPos == null) return;
+    boolean stopSelecting() {
+        if (selectingStartPos == null) return false;
 
         PVector lowerBoundary = new PVector(selectingStartPos.x, selectingStartPos.y);
         PVector higherBoundary = new PVector(mouseX, mouseY);
+        boolean particleFound = false;
 
         /*
         Iterate through all existing particles and compare their screen coordinates
@@ -122,29 +124,37 @@ class SelectionManager {
             if (lowerBoundary.x < screenPosXNegativeLimit &&
                 lowerBoundary.y < screenPosYNegativeLimit &&
                 higherBoundary.x > screenPosXNegativeLimit &&
-                higherBoundary.y > screenPosYNegativeLimit)
+                higherBoundary.y > screenPosYNegativeLimit) {
                 select(particle);
+                particleFound = true;
+            }
             
             // From bottom left to top right
             if (lowerBoundary.x < screenPosXNegativeLimit &&
                 lowerBoundary.y > screenPosYNegativeLimit &&
                 higherBoundary.x > screenPosXNegativeLimit &&
-                higherBoundary.y < screenPosYNegativeLimit)
+                higherBoundary.y < screenPosYNegativeLimit) {
                 select(particle);
+                particleFound = true;
+            }
 
             // From bottom right to top left
             if (lowerBoundary.x > screenPosXNegativeLimit &&
                 lowerBoundary.y > screenPosYNegativeLimit &&
                 higherBoundary.x < screenPosXNegativeLimit &&
-                higherBoundary.y < screenPosYNegativeLimit)
+                higherBoundary.y < screenPosYNegativeLimit) {
                 select(particle);
+                particleFound = true;
+            }
 
             // From top right to bottom left
             if (lowerBoundary.x > screenPosXNegativeLimit &&
                 lowerBoundary.y < screenPosYNegativeLimit &&
                 higherBoundary.x < screenPosXNegativeLimit &&
-                higherBoundary.y > screenPosYNegativeLimit)
+                higherBoundary.y > screenPosYNegativeLimit) {
                 select(particle);
+                particleFound = true;
+            }
 
             // TODO: Investigate if Z values are accounted for in group selection.
         }
@@ -152,10 +162,11 @@ class SelectionManager {
         selectingStartPos = null;
         uiManager.removeElement(groupSelection);
         groupSelection = null;
+
+        return particleFound;
     }
 
-    boolean mousePressed() {
-        // Case 2: Find a single particle at clicking location.
+    Particle checkPointAgainstParticleIntersection(PVector v1) {
         for (Particle particle : particleList) {
             float screenPosX = screenX(particle.pos.x, particle.pos.y, particle.pos.z);
             float screenPosXNegativeLimit = screenX(particle.pos.x - particle.r, particle.pos.y, particle.pos.z);
@@ -169,35 +180,29 @@ class SelectionManager {
             float screenPosZNegativeLimit = screenZ(particle.pos.x, particle.pos.y, particle.pos.z - particle.r);
             float screenPosZPositiveLimit = screenZ(particle.pos.x, particle.pos.y, particle.pos.z + particle.r);
 
-            if (mouseX >= screenPosXNegativeLimit && mouseX <= screenPosXPositiveLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-                select(particle);
-                return true;
-            }
+            if (v1.x >= screenPosXNegativeLimit && v1.x <= screenPosXPositiveLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
+                return particle;
 
             /*
             Allows selection in 'opposite region' camera space, since the limits switch around.
             */
-            if (mouseX >= screenPosXPositiveLimit && mouseX <= screenPosXNegativeLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-                select(particle);
-                return true;
-            }
+            if (v1.x >= screenPosXPositiveLimit && v1.x <= screenPosXNegativeLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
+                return particle;
 
-            if (mouseX >= screenPosZNegativeLimit && mouseX <= screenPosZPositiveLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-                select(particle);
-                return true;
-            }
+            if (v1.x >= screenPosZNegativeLimit && v1.x <= screenPosZPositiveLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
+                return particle;
 
             /*
             Allows selection in 'opposite region' camera space, since the limits switch around.
             */
-            if (mouseX >= screenPosZPositiveLimit && mouseX <= screenPosZNegativeLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-                select(particle);
-                return true;
-            }
+            if (v1.x >= screenPosZPositiveLimit && v1.x <= screenPosZNegativeLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
+                return particle;
         }
 
+        return null;
+    }
 
-
+    boolean mousePressed() {
         // Case 3: Begin an area selection.
         startSelecting();
 
@@ -206,18 +211,30 @@ class SelectionManager {
     }
 
     boolean mouseReleased() {
-        // // Case 1: Cancel selection.
-        // if (hasActiveSelection()) {
-        //     cancel();
-        //     // return true;
-        // }
+        boolean selectionWasAttempted = false;
 
-        if (hasActiveSelection()) {
-            cancel();
+        // Pass 1
+        Particle attemptedSelection = checkPointAgainstParticleIntersection(new PVector(mouseX, mouseY));
+        if (attemptedSelection != null) {
+            select(attemptedSelection);
+            selectionWasAttempted = true;
             // return true;
         }
 
-        stopSelecting();
+        // Pass 2
+        /*
+        If a click selection was processed before, then we don't want to cancel the
+        selection this frame, regardless of if a group selection had returned no particles.
+        */
+        if (!selectionWasAttempted)
+            selectionWasAttempted = stopSelecting();
+        else
+            stopSelecting();
+
+        // If active selection, cancel, but only if mouseX is not over an existing particle.
+        if (hasActiveSelection() && !selectionWasAttempted) {
+            cancel();
+        }
 
         return false;
     }

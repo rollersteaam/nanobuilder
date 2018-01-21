@@ -26,8 +26,6 @@ class Particle {
         shape.setFill(currentColor);
 
         // velocity = velocity.random3D().mult(10);
-        // acceleration = acceleration.random3D().mult(5);
-
         particleList.add(this);
     }
 
@@ -171,12 +169,13 @@ class Particle {
         float bottomExpression = 4 * PI * 8.85 * pow(10, -12) * pow(vector.mag(), 2);
         /*
         If the force is infinite (which should be impossible)
-        then disregard current tick.
+        then disregard current tick. We aren't trying to emulate annihilation.
         */
         if (bottomExpression == 0) return 0;
         return topExpression / bottomExpression;
     }
 
+    // Enumerations
     private final int X_DOMINANT = 0;
     private final int Y_DOMINANT = 1;
     private final int Z_DOMINANT = 2;
@@ -234,14 +233,6 @@ class Particle {
         assumed. Any changes after are then just part of the simulated space,
         so should be dynamic.
         */
-        // return cross.setMag(
-        //     sqrt(
-        //         // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
-        //         abs(
-        //             force * 100 * PVector.dist(particle.pos, this.pos) / (float) mass
-        //         )
-        //     )
-        // );
         velocity = cross.setMag(
             sqrt(
                 // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
@@ -250,13 +241,5 @@ class Particle {
                 )
             )
         );
-        // velocity = cross.setMag(
-        //     sqrt(
-        //         // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
-        //         abs(
-        //             proton.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(proton.pos, this.pos) / (float) mass
-        //         )
-        //     )
-        // );
     }
 }

@@ -55,11 +55,14 @@ class UIManager {
         }
     }
 
-    // public void addButton(ButtonUI button) {
-    //     buttons.add(button);
-    // }
+    boolean checkForFocus() {
+        PVector mouse = new PVector(mouseX, mouseY);
 
-    // public void removeButton(ButtonUI button) {
-    //     buttons.remove(button);
-    // }
+        for (UIElement element : screenElements) {
+            if (element.checkIntersectionWithPoint(mouse))
+                return true;
+        }
+
+        return false;
+    }
 }

@@ -46,11 +46,13 @@ void setup() {
     uiManager = new UIManager();
     uiFactory = new UIFactory();
     
-    for (int i = 0; i < 5; i++) {
-        int randNo = (int) random(1, 20);
-        new Atom(randNo);
-        // new Atom(0, 500, 0, 300);
-    }
+    // for (int i = 0; i < 5; i++) {
+    //     int randNo = (int) random(1, 20);
+    //     new Atom(randNo);
+    //     // new Atom(0, 500, 0, 300);
+    // }
+
+    new Atom(22);
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
     // for (int i = 0; i < 50; i++) {
         // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));
@@ -65,7 +67,7 @@ void draw() {
     // Undoes the use of DISABLE_DEPTH_TEST so 3D objects act naturally after it was called.
     hint(ENABLE_DEPTH_TEST);
 
-    background(100, 100, 220);
+    background(135, 135, 255);
     lights();
     noStroke();
 
@@ -116,8 +118,10 @@ void draw() {
 
 void mousePressed(MouseEvent event) {
     // If selection agent's events have been triggered, then we are finished for this mouse event.
-    if (mouseButton == LEFT)
+    if (mouseButton == LEFT) {
+        if (uiManager.checkForFocus()) return;
         if (selectionManager.mousePressed()) return;
+    }
 }
 
 void mouseReleased() {

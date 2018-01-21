@@ -12,7 +12,7 @@ class Electron extends Particle {
 
         // If no initial proton then spawn with random velocity.
         if (proton == null) {
-            velocity = PVector.random3D().setMag(30);
+            velocity = PVector.random3D().setMag(3);
             return;
         }
 
@@ -105,7 +105,14 @@ class Electron extends Particle {
         Point point = new Point();
         trail.push(point);
 
-        int trailSize = 60;
+        /*
+        Scales trail size based off of distance from it's 'parent' (what it's orbiting)
+
+        It should be noted that this CAN be expensive, but by limiting the draw distance for
+        seeing particles, it isn't necessarily a problem.
+        */
+        float dist = PVector.sub(pos, parent.pos).mag();
+        float trailSize = 60 + (60 * ( (dist/200) - 1 ));
 
         Point lastPoint = null;
         int counter = 0;

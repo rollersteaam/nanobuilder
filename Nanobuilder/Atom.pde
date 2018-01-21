@@ -4,10 +4,6 @@ protected static class AtomHelper {
             throw new IllegalStateException("An atom can't have 0 electrons.");
         
         return ceil((electrons - 2) / 8) + 1;
-        // if (electrons - 2 <= 0) {
-            // return 1;
-        // } else {
-        // }
     }
 }
 
@@ -19,23 +15,36 @@ class Atom extends Particle {
 
     ArrayList<ElectronShell> shells = new ArrayList<ElectronShell>();
 
-
     Atom(float x, float y, float z, int electrons) {
         super(x, y, z, AtomHelper.calculateNumberOfShells(electrons) * 200);
         core = new Proton(x, y, z);
         listProtons.add(core);
 
+        // An atom always has one shell, or it's not an atom.
         shells.add(new ElectronShell(2));
-
+        
         for (int i = 0; i < (AtomHelper.calculateNumberOfShells(electrons) - 1); i++) {
             shells.add(new ElectronShell(8));
         }
 
-        for (int i = 0; i < electrons; i++) {
-            addElectron();
-        }
+        int remainingElectrons = electrons;
+        // For every shell the atom has...
+        for (int i = 0; i < shells.size(); i++) {
+            // Begin to add all electrons needed to each shell.
+            while (remainingElectrons > 0) {
+                /*
+                For every shell, add an electron, passing in i, the shell iterator.
+                This shows the size of the list, and so the position if we + 1.
 
-        velocity = velocity.random3D().mult(10);
+                Passing in the index + 1 just means the electron is projected at the
+                correct distance based on the shell's 'radius'.
+                */
+                if (!shells.get(i).addElectron(i + 1))
+                    break;
+                else
+                    remainingElectrons--;
+            }
+        }
     }
     
     Atom(int electrons) {
@@ -74,12 +83,13 @@ class Atom extends Particle {
         shape.setFill(formattedColor);
         popStyle();
 
-        super.display();
+        // super.display();
     }
 
     private class ElectronShell {
         private ArrayList<Electron> contents = new ArrayList<Electron>();
         private int max;
+        // TODO: Find a way to declare this statically?
         private final PVector[] projectionVertices = new PVector[] {
             new PVector(-100, 100, 0).normalize(),
             new PVector(0, 100, 0).normalize(),
@@ -95,10 +105,14 @@ class Atom extends Particle {
             this.max = max;
         }
 
-        boolean addElectron() {
+        int getSize() {
+            return contents.size();
+        }
+
+        // TODO: Store the shell number as an individual field for shells?
+        boolean addElectron(int shellNumber) {
             // This shouldn't happen, but for safety...
-            if (contents.size() == max)
-                return false;
+            if (contents.size() == max) return false;
 
             // Initial position is not important, it will be changed immediately.
             contents.add(new Electron(0, 0, 0, core));
@@ -107,25 +121,19 @@ class Atom extends Particle {
             for (Electron electron : contents) {
                 PVector newPosition;
 
-                // TODO: Make projections use a formula to support > 10 e shells.
                 if (max == 2) {
                     if (availablePosition == 0)
                         newPosition = projectionVertices[0].copy().setMag(200);
                     else
                         newPosition = projectionVertices[4].copy().setMag(200);
                 } else {
-                    newPosition = projectionVertices[availablePosition].copy().setMag(400);
+                    newPosition = projectionVertices[availablePosition].copy().setMag(200 * shellNumber);
                 }
 
                 availablePosition++;
 
                 electron.pos = PVector.add(pos, newPosition);
-                // println(core);
-                // println(core.calculateCoulombsLawForceOn(electron));
-                // println(calculateCircularMotionInitialVelocity(core, core.calculateCoulombsLawForceOn(electron)));                
-                // electron.velocity = calculateCircularMotionInitialVelocity(core, core.calculateCoulombsLawForceOn(electron));                
                 electron.setInitialCircularVelocityFromForce(core, core.calculateCoulombsLawForceOn(electron));
-                // println(electron.velocity);
             }
 
             return true;
@@ -145,14 +153,27 @@ class Atom extends Particle {
     }
 
     public void addElectron() {
-        for (ElectronShell shell : shells) {
-            if (shell.addElectron()) return;
+        if (shells.size() == 0)
+            throw new IllegalStateException("An atom has no electron shells.");
+
+        int numberOfShells = shells.size();
+        ElectronShell lastShell = shells.get(numberOfShells - 1);
+
+        if (!lastShell.addElectron(numberOfShells)) {
+            ElectronShell newShell = new ElectronShell(8);
+            shells.add(newShell);
+            newShell.addElectron(numberOfShells + 1);
         }
     }
 
     public void removeElectron() {
-        // If atom has no shells for some reason...
-        if (shells.size() == 0) return;
-        shells.get(shells.size() - 1).removeElectron();
+        if (shells.size() == 0)
+            throw new IllegalStateException("An atom has no electron shells.");
+            
+        ElectronShell lastShell = shells.get(shells.size() - 1);
+        lastShell.removeElectron();
+
+        if (lastShell.getSize() == 0)
+            shells.remove(shells.size() - 1);
     }
 }

@@ -69,11 +69,13 @@ public void setup() {
     uiManager = new UIManager();
     uiFactory = new UIFactory();
     
-    for (int i = 0; i < 5; i++) {
-        int randNo = (int) random(1, 20);
-        new Atom(randNo);
-        // new Atom(0, 500, 0, 300);
-    }
+    // for (int i = 0; i < 5; i++) {
+    //     int randNo = (int) random(1, 20);
+    //     new Atom(randNo);
+    //     // new Atom(0, 500, 0, 300);
+    // }
+
+    new Atom(22);
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
     // for (int i = 0; i < 50; i++) {
         // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));
@@ -88,7 +90,7 @@ public void draw() {
     // Undoes the use of DISABLE_DEPTH_TEST so 3D objects act naturally after it was called.
     hint(ENABLE_DEPTH_TEST);
 
-    background(100, 100, 220);
+    background(135, 135, 255);
     lights();
     noStroke();
 
@@ -139,8 +141,10 @@ public void draw() {
 
 public void mousePressed(MouseEvent event) {
     // If selection agent's events have been triggered, then we are finished for this mouse event.
-    if (mouseButton == LEFT)
+    if (mouseButton == LEFT) {
+        if (uiManager.checkForFocus()) return;
         if (selectionManager.mousePressed()) return;
+    }
 }
 
 public void mouseReleased() {
@@ -273,10 +277,6 @@ protected static class AtomHelper {
             throw new IllegalStateException("An atom can't have 0 electrons.");
         
         return ceil((electrons - 2) / 8) + 1;
-        // if (electrons - 2 <= 0) {
-            // return 1;
-        // } else {
-        // }
     }
 }
 
@@ -288,23 +288,36 @@ class Atom extends Particle {
 
     ArrayList<ElectronShell> shells = new ArrayList<ElectronShell>();
 
-
     Atom(float x, float y, float z, int electrons) {
         super(x, y, z, AtomHelper.calculateNumberOfShells(electrons) * 200);
         core = new Proton(x, y, z);
         listProtons.add(core);
 
+        // An atom always has one shell, or it's not an atom.
         shells.add(new ElectronShell(2));
-
+        
         for (int i = 0; i < (AtomHelper.calculateNumberOfShells(electrons) - 1); i++) {
             shells.add(new ElectronShell(8));
         }
 
-        for (int i = 0; i < electrons; i++) {
-            addElectron();
-        }
+        int remainingElectrons = electrons;
+        // For every shell the atom has...
+        for (int i = 0; i < shells.size(); i++) {
+            // Begin to add all electrons needed to each shell.
+            while (remainingElectrons > 0) {
+                /*
+                For every shell, add an electron, passing in i, the shell iterator.
+                This shows the size of the list, and so the position if we + 1.
 
-        velocity = velocity.random3D().mult(10);
+                Passing in the index + 1 just means the electron is projected at the
+                correct distance based on the shell's 'radius'.
+                */
+                if (!shells.get(i).addElectron(i + 1))
+                    break;
+                else
+                    remainingElectrons--;
+            }
+        }
     }
     
     Atom(int electrons) {
@@ -343,12 +356,13 @@ class Atom extends Particle {
         shape.setFill(formattedColor);
         popStyle();
 
-        super.display();
+        // super.display();
     }
 
     private class ElectronShell {
         private ArrayList<Electron> contents = new ArrayList<Electron>();
         private int max;
+        // TODO: Find a way to declare this statically?
         private final PVector[] projectionVertices = new PVector[] {
             new PVector(-100, 100, 0).normalize(),
             new PVector(0, 100, 0).normalize(),
@@ -364,10 +378,14 @@ class Atom extends Particle {
             this.max = max;
         }
 
-        public boolean addElectron() {
+        public int getSize() {
+            return contents.size();
+        }
+
+        // TODO: Store the shell number as an individual field for shells?
+        public boolean addElectron(int shellNumber) {
             // This shouldn't happen, but for safety...
-            if (contents.size() == max)
-                return false;
+            if (contents.size() == max) return false;
 
             // Initial position is not important, it will be changed immediately.
             contents.add(new Electron(0, 0, 0, core));
@@ -376,25 +394,19 @@ class Atom extends Particle {
             for (Electron electron : contents) {
                 PVector newPosition;
 
-                // TODO: Make projections use a formula to support > 10 e shells.
                 if (max == 2) {
                     if (availablePosition == 0)
                         newPosition = projectionVertices[0].copy().setMag(200);
                     else
                         newPosition = projectionVertices[4].copy().setMag(200);
                 } else {
-                    newPosition = projectionVertices[availablePosition].copy().setMag(400);
+                    newPosition = projectionVertices[availablePosition].copy().setMag(200 * shellNumber);
                 }
 
                 availablePosition++;
 
                 electron.pos = PVector.add(pos, newPosition);
-                // println(core);
-                // println(core.calculateCoulombsLawForceOn(electron));
-                // println(calculateCircularMotionInitialVelocity(core, core.calculateCoulombsLawForceOn(electron)));                
-                // electron.velocity = calculateCircularMotionInitialVelocity(core, core.calculateCoulombsLawForceOn(electron));                
                 electron.setInitialCircularVelocityFromForce(core, core.calculateCoulombsLawForceOn(electron));
-                // println(electron.velocity);
             }
 
             return true;
@@ -414,15 +426,28 @@ class Atom extends Particle {
     }
 
     public void addElectron() {
-        for (ElectronShell shell : shells) {
-            if (shell.addElectron()) return;
+        if (shells.size() == 0)
+            throw new IllegalStateException("An atom has no electron shells.");
+
+        int numberOfShells = shells.size();
+        ElectronShell lastShell = shells.get(numberOfShells - 1);
+
+        if (!lastShell.addElectron(numberOfShells)) {
+            ElectronShell newShell = new ElectronShell(8);
+            shells.add(newShell);
+            newShell.addElectron(numberOfShells + 1);
         }
     }
 
     public void removeElectron() {
-        // If atom has no shells for some reason...
-        if (shells.size() == 0) return;
-        shells.get(shells.size() - 1).removeElectron();
+        if (shells.size() == 0)
+            throw new IllegalStateException("An atom has no electron shells.");
+            
+        ElectronShell lastShell = shells.get(shells.size() - 1);
+        lastShell.removeElectron();
+
+        if (lastShell.getSize() == 0)
+            shells.remove(shells.size() - 1);
     }
 }
 class ButtonUI extends UIElement {
@@ -624,7 +649,7 @@ class Electron extends Particle {
 
         // If no initial proton then spawn with random velocity.
         if (proton == null) {
-            velocity = PVector.random3D().setMag(30);
+            velocity = PVector.random3D().setMag(3);
             return;
         }
 
@@ -717,7 +742,14 @@ class Electron extends Particle {
         Point point = new Point();
         trail.push(point);
 
-        int trailSize = 60;
+        /*
+        Scales trail size based off of distance from it's 'parent' (what it's orbiting)
+
+        It should be noted that this CAN be expensive, but by limiting the draw distance for
+        seeing particles, it isn't necessarily a problem.
+        */
+        float dist = PVector.sub(pos, parent.pos).mag();
+        float trailSize = 60 + (60 * ( (dist/200) - 1 ));
 
         Point lastPoint = null;
         int counter = 0;
@@ -800,8 +832,6 @@ class Particle {
         shape.setFill(currentColor);
 
         // velocity = velocity.random3D().mult(10);
-        // acceleration = acceleration.random3D().mult(5);
-
         particleList.add(this);
     }
 
@@ -945,12 +975,13 @@ class Particle {
         float bottomExpression = 4 * PI * 8.85f * pow(10, -12) * pow(vector.mag(), 2);
         /*
         If the force is infinite (which should be impossible)
-        then disregard current tick.
+        then disregard current tick. We aren't trying to emulate annihilation.
         */
         if (bottomExpression == 0) return 0;
         return topExpression / bottomExpression;
     }
 
+    // Enumerations
     private final int X_DOMINANT = 0;
     private final int Y_DOMINANT = 1;
     private final int Z_DOMINANT = 2;
@@ -1008,14 +1039,6 @@ class Particle {
         assumed. Any changes after are then just part of the simulated space,
         so should be dynamic.
         */
-        // return cross.setMag(
-        //     sqrt(
-        //         // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
-        //         abs(
-        //             force * 100 * PVector.dist(particle.pos, this.pos) / (float) mass
-        //         )
-        //     )
-        // );
         velocity = cross.setMag(
             sqrt(
                 // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
@@ -1024,14 +1047,6 @@ class Particle {
                 )
             )
         );
-        // velocity = cross.setMag(
-        //     sqrt(
-        //         // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
-        //         abs(
-        //             proton.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(proton.pos, this.pos) / (float) mass
-        //         )
-        //     )
-        // );
     }
 }
 class Proton extends Particle {
@@ -1190,15 +1205,17 @@ class SelectionManager {
     RectangleUI groupSelection;
 
     public void startSelecting() {
+        cancel();
         selectingStartPos = new PVector(mouseX, mouseY);
         groupSelection = uiFactory.createRect(selectingStartPos.x, selectingStartPos.y, 1, 1, color(30, 30, 90, 80));
     }
 
-    public void stopSelecting() {
-        if (selectingStartPos == null) return;
+    public boolean stopSelecting() {
+        if (selectingStartPos == null) return false;
 
         PVector lowerBoundary = new PVector(selectingStartPos.x, selectingStartPos.y);
         PVector higherBoundary = new PVector(mouseX, mouseY);
+        boolean particleFound = false;
 
         /*
         Iterate through all existing particles and compare their screen coordinates
@@ -1222,29 +1239,37 @@ class SelectionManager {
             if (lowerBoundary.x < screenPosXNegativeLimit &&
                 lowerBoundary.y < screenPosYNegativeLimit &&
                 higherBoundary.x > screenPosXNegativeLimit &&
-                higherBoundary.y > screenPosYNegativeLimit)
+                higherBoundary.y > screenPosYNegativeLimit) {
                 select(particle);
+                particleFound = true;
+            }
             
             // From bottom left to top right
             if (lowerBoundary.x < screenPosXNegativeLimit &&
                 lowerBoundary.y > screenPosYNegativeLimit &&
                 higherBoundary.x > screenPosXNegativeLimit &&
-                higherBoundary.y < screenPosYNegativeLimit)
+                higherBoundary.y < screenPosYNegativeLimit) {
                 select(particle);
+                particleFound = true;
+            }
 
             // From bottom right to top left
             if (lowerBoundary.x > screenPosXNegativeLimit &&
                 lowerBoundary.y > screenPosYNegativeLimit &&
                 higherBoundary.x < screenPosXNegativeLimit &&
-                higherBoundary.y < screenPosYNegativeLimit)
+                higherBoundary.y < screenPosYNegativeLimit) {
                 select(particle);
+                particleFound = true;
+            }
 
             // From top right to bottom left
             if (lowerBoundary.x > screenPosXNegativeLimit &&
                 lowerBoundary.y < screenPosYNegativeLimit &&
                 higherBoundary.x < screenPosXNegativeLimit &&
-                higherBoundary.y > screenPosYNegativeLimit)
+                higherBoundary.y > screenPosYNegativeLimit) {
                 select(particle);
+                particleFound = true;
+            }
 
             // TODO: Investigate if Z values are accounted for in group selection.
         }
@@ -1252,10 +1277,11 @@ class SelectionManager {
         selectingStartPos = null;
         uiManager.removeElement(groupSelection);
         groupSelection = null;
+
+        return particleFound;
     }
 
-    public boolean mousePressed() {
-        // Case 2: Find a single particle at clicking location.
+    public Particle checkPointAgainstParticleIntersection(PVector v1) {
         for (Particle particle : particleList) {
             float screenPosX = screenX(particle.pos.x, particle.pos.y, particle.pos.z);
             float screenPosXNegativeLimit = screenX(particle.pos.x - particle.r, particle.pos.y, particle.pos.z);
@@ -1269,35 +1295,29 @@ class SelectionManager {
             float screenPosZNegativeLimit = screenZ(particle.pos.x, particle.pos.y, particle.pos.z - particle.r);
             float screenPosZPositiveLimit = screenZ(particle.pos.x, particle.pos.y, particle.pos.z + particle.r);
 
-            if (mouseX >= screenPosXNegativeLimit && mouseX <= screenPosXPositiveLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-                select(particle);
-                return true;
-            }
+            if (v1.x >= screenPosXNegativeLimit && v1.x <= screenPosXPositiveLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
+                return particle;
 
             /*
             Allows selection in 'opposite region' camera space, since the limits switch around.
             */
-            if (mouseX >= screenPosXPositiveLimit && mouseX <= screenPosXNegativeLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-                select(particle);
-                return true;
-            }
+            if (v1.x >= screenPosXPositiveLimit && v1.x <= screenPosXNegativeLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
+                return particle;
 
-            if (mouseX >= screenPosZNegativeLimit && mouseX <= screenPosZPositiveLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-                select(particle);
-                return true;
-            }
+            if (v1.x >= screenPosZNegativeLimit && v1.x <= screenPosZPositiveLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
+                return particle;
 
             /*
             Allows selection in 'opposite region' camera space, since the limits switch around.
             */
-            if (mouseX >= screenPosZPositiveLimit && mouseX <= screenPosZNegativeLimit && mouseY >= screenPosYNegativeLimit && mouseY <= screenPosYPositiveLimit) {
-                select(particle);
-                return true;
-            }
+            if (v1.x >= screenPosZPositiveLimit && v1.x <= screenPosZNegativeLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
+                return particle;
         }
 
+        return null;
+    }
 
-
+    public boolean mousePressed() {
         // Case 3: Begin an area selection.
         startSelecting();
 
@@ -1306,18 +1326,30 @@ class SelectionManager {
     }
 
     public boolean mouseReleased() {
-        // // Case 1: Cancel selection.
-        // if (hasActiveSelection()) {
-        //     cancel();
-        //     // return true;
-        // }
+        boolean selectionWasAttempted = false;
 
-        if (hasActiveSelection()) {
-            cancel();
+        // Pass 1
+        Particle attemptedSelection = checkPointAgainstParticleIntersection(new PVector(mouseX, mouseY));
+        if (attemptedSelection != null) {
+            select(attemptedSelection);
+            selectionWasAttempted = true;
             // return true;
         }
 
-        stopSelecting();
+        // Pass 2
+        /*
+        If a click selection was processed before, then we don't want to cancel the
+        selection this frame, regardless of if a group selection had returned no particles.
+        */
+        if (!selectionWasAttempted)
+            selectionWasAttempted = stopSelecting();
+        else
+            stopSelecting();
+
+        // If active selection, cancel, but only if mouseX is not over an existing particle.
+        if (hasActiveSelection() && !selectionWasAttempted) {
+            cancel();
+        }
 
         return false;
     }
@@ -1656,13 +1688,16 @@ class UIManager {
         }
     }
 
-    // public void addButton(ButtonUI button) {
-    //     buttons.add(button);
-    // }
+    public boolean checkForFocus() {
+        PVector mouse = new PVector(mouseX, mouseY);
 
-    // public void removeButton(ButtonUI button) {
-    //     buttons.remove(button);
-    // }
+        for (UIElement element : screenElements) {
+            if (element.checkIntersectionWithPoint(mouse))
+                return true;
+        }
+
+        return false;
+    }
 }
     public void settings() {  size(1280, 720, P3D); }
     static public void main(String[] passedArgs) {

@@ -17,7 +17,7 @@ class Atom extends Particle {
 
     Atom(float x, float y, float z, int electrons) {
         super(x, y, z, AtomHelper.calculateNumberOfShells(electrons) * 200);
-        core = new Proton(x, y, z);
+        core = new Proton(x, y, z, this);
         listProtons.add(core);
 
         // An atom always has one shell, or it's not an atom.
@@ -57,25 +57,22 @@ class Atom extends Particle {
     }
 
     Atom() {
-        this(
-            random(-2000, 2000),
-            random(-2000, 2000),
-            random(-2000, 2000),
-            // round(random(200, 600))
-            1
-        );
+        this(round(random(1, 50)));
     }
     
     @Override
     void display() {
-        if (PVector.dist(cam.position, pos) < ((r) + 1500)) return;
+        calculateShouldParticlesDraw();
+
+        if (shouldParticlesDraw) return;
+        // if (PVector.dist(cam.position, pos) < ((r) + 1500)) return;
 
         color formattedColor = color(
             red(currentColor),
             green(currentColor),
             blue(currentColor),
-            255
-            // lerp(0, 255, (PVector.dist(cam.position, pos) * 2) / (r + 4000))
+            // 255
+            lerp(0, 255, (PVector.dist(cam.position, pos) * 2) / (r + 4000))
         );
 
         pushStyle();
@@ -83,7 +80,7 @@ class Atom extends Particle {
         shape.setFill(formattedColor);
         popStyle();
 
-        // super.display();
+        super.display();
     }
 
     private class ElectronShell {
@@ -175,5 +172,19 @@ class Atom extends Particle {
 
         if (lastShell.getSize() == 0)
             shells.remove(shells.size() - 1);
+    }
+
+    private boolean shouldParticlesDraw = false;
+
+    private void calculateShouldParticlesDraw() {
+        if (PVector.dist(cam.position, pos) > (r * 2)) {
+            shouldParticlesDraw = false;
+        } else {
+            shouldParticlesDraw = true;
+        }
+    }
+
+    boolean shouldParticlesDraw() {
+        return shouldParticlesDraw;
     }
 }

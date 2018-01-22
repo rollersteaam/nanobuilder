@@ -5,6 +5,9 @@ import java.lang.Runnable;
 import java.util.Deque;
 import java.util.ArrayDeque;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 Camera cam;
 Robot robot;
 SelectionManager selectionManager;
@@ -52,7 +55,11 @@ void setup() {
     //     // new Atom(0, 500, 0, 300);
     // }
 
-    new Atom(22);
+    for (int i = 0; i < 5; i++) {
+        new Atom();
+    }
+
+    // new Atom(22);
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
     // for (int i = 0; i < 50; i++) {
         // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));

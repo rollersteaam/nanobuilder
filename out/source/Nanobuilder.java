@@ -9,6 +9,8 @@ import processing.event.KeyEvent;
 import java.lang.Runnable; 
 import java.util.Deque; 
 import java.util.ArrayDeque; 
+import java.util.Timer; 
+import java.util.TimerTask; 
 
 import java.util.HashMap; 
 import java.util.ArrayList; 
@@ -23,6 +25,9 @@ public class Nanobuilder extends PApplet {
 
  // cam (Camera)
  // robot (Mouse manipulation)
+
+
+
 
 
 
@@ -75,7 +80,11 @@ public void setup() {
     //     // new Atom(0, 500, 0, 300);
     // }
 
-    new Atom(22);
+    for (int i = 0; i < 5; i++) {
+        new Atom();
+    }
+
+    // new Atom(22);
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
     // for (int i = 0; i < 50; i++) {
         // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));
@@ -290,7 +299,7 @@ class Atom extends Particle {
 
     Atom(float x, float y, float z, int electrons) {
         super(x, y, z, AtomHelper.calculateNumberOfShells(electrons) * 200);
-        core = new Proton(x, y, z);
+        core = new Proton(x, y, z, this);
         listProtons.add(core);
 
         // An atom always has one shell, or it's not an atom.
@@ -330,25 +339,22 @@ class Atom extends Particle {
     }
 
     Atom() {
-        this(
-            random(-2000, 2000),
-            random(-2000, 2000),
-            random(-2000, 2000),
-            // round(random(200, 600))
-            1
-        );
+        this(round(random(1, 50)));
     }
     
     public @Override
     void display() {
-        if (PVector.dist(cam.position, pos) < ((r) + 1500)) return;
+        calculateShouldParticlesDraw();
+
+        if (shouldParticlesDraw) return;
+        // if (PVector.dist(cam.position, pos) < ((r) + 1500)) return;
 
         int formattedColor = color(
             red(currentColor),
             green(currentColor),
             blue(currentColor),
-            255
-            // lerp(0, 255, (PVector.dist(cam.position, pos) * 2) / (r + 4000))
+            // 255
+            lerp(0, 255, (PVector.dist(cam.position, pos) * 2) / (r + 4000))
         );
 
         pushStyle();
@@ -356,7 +362,7 @@ class Atom extends Particle {
         shape.setFill(formattedColor);
         popStyle();
 
-        // super.display();
+        super.display();
     }
 
     private class ElectronShell {
@@ -448,6 +454,20 @@ class Atom extends Particle {
 
         if (lastShell.getSize() == 0)
             shells.remove(shells.size() - 1);
+    }
+
+    private boolean shouldParticlesDraw = false;
+
+    private void calculateShouldParticlesDraw() {
+        if (PVector.dist(cam.position, pos) > (r * 2)) {
+            shouldParticlesDraw = false;
+        } else {
+            shouldParticlesDraw = true;
+        }
+    }
+
+    public boolean shouldParticlesDraw() {
+        return shouldParticlesDraw;
     }
 }
 class ButtonUI extends UIElement {
@@ -637,7 +657,7 @@ class ContextMenu extends UIElement {
 }
 class Electron extends Particle {
     // Will add 17 to all powers of 10 for now.
-    Electron(float x, float y, float z, Particle proton) {
+    Electron(float x, float y, float z, Proton proton) {
         // super(x, y, z, random(0.84, 0.87) * 100 / 1000);
         super(x, y, z, random(0.84f, 0.87f) * 100 / 3);
 
@@ -653,7 +673,7 @@ class Electron extends Particle {
             return;
         }
 
-        parent = proton;
+        parent = proton.parent;
 
         setInitialCircularVelocityFromForce(proton, proton.calculateCoulombsLawForceOn(this));
         // velocity = calculateCircularMotionInitialVelocity(proton, proton.calculateCoulombsLawForceOn(this));
@@ -714,6 +734,13 @@ class Electron extends Particle {
         //     }
         //     return;
         // }
+
+        if (!parent.shouldParticlesDraw()) {
+            for (Point point : trail) {
+                trail.remove(point);
+            }
+            return;
+        }
 
         int formattedColor = color(
             red(currentColor),
@@ -818,7 +845,7 @@ class Particle {
     int currentColor;
 
     PShape shape;
-    Particle parent;
+    Atom parent;
 
     Particle(float x, float y, float z, float r) {
         pos = new PVector(x, y, z);
@@ -892,7 +919,7 @@ class Particle {
     public void evaluateElectricalField() {
         for (Particle particle : particleList) {
             if (particle == this) continue;
-            if (particle.parent != this) continue;
+            if (particle.parent != parent) continue;
             applyForce(particle, calculateCoulombsLawForceOn(particle));
         }
     }
@@ -1055,10 +1082,12 @@ class Proton extends Particle {
     
         Radius of a proton: 0.84 * 10^-15 to 0.87 * 10^-15
     */
-    Proton(float x, float y, float z) {
+    Proton(float x, float y, float z, Atom atom) {
         super(x, y, z, random(0.84f, 0.87f) * 100);
         charge = 1.6f * pow(10, -19);
         mass = 1.6726219f * pow(10, -27);
+
+        parent = atom;
 
         baseColor = color(255, 0, 0);
         revertToBaseColor();
@@ -1068,7 +1097,8 @@ class Proton extends Particle {
         this(
             random(-1000, 1000),
             random(-1000, 1000),
-            random(-1000, 1000)
+            random(-1000, 1000),
+            null
         );
     }
 
@@ -1082,7 +1112,13 @@ class Proton extends Particle {
     void display() {
         // if (PVector.dist(cam.position, pos) > (r + 1000))
         //     return;
-        
+
+        if (parent != null) {
+            if (!parent.shouldParticlesDraw()) {
+                return;
+            }
+        }
+
         int formattedColor = color(
             red(currentColor),
             green(currentColor),

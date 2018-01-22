@@ -4,10 +4,12 @@ class Proton extends Particle {
     
         Radius of a proton: 0.84 * 10^-15 to 0.87 * 10^-15
     */
-    Proton(float x, float y, float z) {
+    Proton(float x, float y, float z, Atom atom) {
         super(x, y, z, random(0.84, 0.87) * 100);
         charge = 1.6 * pow(10, -19);
         mass = 1.6726219 * pow(10, -27);
+
+        parent = atom;
 
         baseColor = color(255, 0, 0);
         revertToBaseColor();
@@ -17,7 +19,8 @@ class Proton extends Particle {
         this(
             random(-1000, 1000),
             random(-1000, 1000),
-            random(-1000, 1000)
+            random(-1000, 1000),
+            null
         );
     }
 
@@ -31,7 +34,13 @@ class Proton extends Particle {
     void display() {
         // if (PVector.dist(cam.position, pos) > (r + 1000))
         //     return;
-        
+
+        if (parent != null) {
+            if (!parent.shouldParticlesDraw()) {
+                return;
+            }
+        }
+
         color formattedColor = color(
             red(currentColor),
             green(currentColor),

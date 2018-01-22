@@ -12,7 +12,7 @@ class Particle {
     color currentColor;
 
     PShape shape;
-    Particle parent;
+    Atom parent;
 
     Particle(float x, float y, float z, float r) {
         pos = new PVector(x, y, z);
@@ -86,7 +86,7 @@ class Particle {
     void evaluateElectricalField() {
         for (Particle particle : particleList) {
             if (particle == this) continue;
-            if (particle.parent != this) continue;
+            if (particle.parent != parent) continue;
             applyForce(particle, calculateCoulombsLawForceOn(particle));
         }
     }

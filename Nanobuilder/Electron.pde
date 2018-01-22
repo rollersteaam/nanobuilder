@@ -1,6 +1,6 @@
 class Electron extends Particle {
     // Will add 17 to all powers of 10 for now.
-    Electron(float x, float y, float z, Particle proton) {
+    Electron(float x, float y, float z, Proton proton) {
         // super(x, y, z, random(0.84, 0.87) * 100 / 1000);
         super(x, y, z, random(0.84, 0.87) * 100 / 3);
 
@@ -16,7 +16,7 @@ class Electron extends Particle {
             return;
         }
 
-        parent = proton;
+        parent = proton.parent;
 
         setInitialCircularVelocityFromForce(proton, proton.calculateCoulombsLawForceOn(this));
         // velocity = calculateCircularMotionInitialVelocity(proton, proton.calculateCoulombsLawForceOn(this));
@@ -77,6 +77,13 @@ class Electron extends Particle {
         //     }
         //     return;
         // }
+
+        if (!parent.shouldParticlesDraw()) {
+            for (Point point : trail) {
+                trail.remove(point);
+            }
+            return;
+        }
 
         color formattedColor = color(
             red(currentColor),

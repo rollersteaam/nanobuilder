@@ -6,7 +6,7 @@ class Particle {
     float r;
 
     float charge;
-    double mass = 1;
+    float mass = 1;
 
     color baseColor;
     color currentColor;
@@ -69,6 +69,12 @@ class Particle {
         pos = newPos.copy();
     }
 
+    public void applyForce(PVector direction, float force) {
+        PVector vector = PVector.sub(pos, direction);
+        vector.setMag(force * 100 / mass);
+        acceleration.add(vector);
+    }
+
     public void applyForce(Particle particle, float force) {
         /*
             Acceleration is a vector quantity (has both magnitude and direction),
@@ -79,7 +85,7 @@ class Particle {
             into world space for a scale.
         */
         PVector vector = PVector.sub(particle.pos, pos);
-        vector.setMag(force * 100 / (float) particle.mass);
+        vector.setMag(force * 100 / particle.mass);
         particle.acceleration.add(vector);
     }
 
@@ -92,6 +98,27 @@ class Particle {
     }
 
     void evaluatePhysics() {
+        if (pos.x > 10000 || pos.x < -10000) {
+            pos.x -= velocity.copy().x;
+            // pos.x -= velocity.copy().setMag(r*2).x;
+            velocity.x *= -1;
+            velocity.x /= 2;
+        }
+
+        if (pos.y > 10000 || pos.y < -10000) {
+            pos.y -= velocity.copy().y;
+            // pos.y -= velocity.copy().setMag(r*2).y;
+            velocity.y *= -1;
+            velocity.y /= 2;
+        }
+
+        if (pos.z > 10000 || pos.z < -10000) {
+            pos.z -= velocity.copy().z;
+            // pos.z -= velocity.copy().setMag(r*2).z;
+            velocity.z *= -1;
+            velocity.z /= 2;
+        }
+
         velocity.add(acceleration);
         pos.add(velocity);
         /*
@@ -99,32 +126,44 @@ class Particle {
         This line resets acceleration so we're ready to regather all forces next frame.
         */
         acceleration = new PVector();
+
+        /*
+        Rough collision stuff goes here
+        */
+        // If distance from another atom is less than radius then intersection
+        for (Particle particle : particleList) {
+            // Spherical intersection
+            if (PVector.dist(pos, particle.pos) <= r) {
+                collide(particle);
+            }
+        }
+    }
+
+    public void collide(Particle particle) {
+        // To make a more accurate incident vector, we could also set mag the magnitude to the radius of either atom (probably this one).
+        PVector incidentVector = PVector.sub(pos, particle.pos);
+        // Impulse = change in momentum
+        // p = m1v1 - m2v2
+        float impulse = mass * velocity.mag() - particle.mass * particle.velocity.mag();
+        // Initial kinetic energy
+        // E = 1/2*m1*v1^2 + 1/2*m2*v2^2
+        float energy = 1/2 * mass * pow(velocity.mag(), 2) + 1/2 * particle.mass * pow(particle.velocity.mag(), 2);
+        // This new velocity magnitude should change depending on who calls collide.
+        // After -2 * impulse plus or minus can be used. It's a quadratic equation.
+        float newVelocityMagnitude = -2 * impulse + sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
+        // So we must halve it after we're done.
+        newVelocityMagnitude /= 2;
+        incidentVector.setMag(newVelocityMagnitude);
+        particle.velocity.add(incidentVector);
+        // And now attempt to cancel any attempts to process the collision a second time.
     }
 
     void display() {
-        // if (pos.x > 10000 || pos.x < -10000) {
-        //     pos.x -= velocity.copy().setMag(r*2).x;
-        //     velocity.x *= -1;
-        //     velocity.x *= 0.75;
-        // }
-
-        // if (pos.y > 10000 || pos.y < -10000) {
-        //     pos.y -= velocity.copy().setMag(r*2).y;
-        //     velocity.y *= -1;
-        //     velocity.y *= 0.75;
-        // }
-
-        // if (pos.z > 10000 || pos.z < -10000) {
-        //     pos.z -= velocity.copy().setMag(r*2).z;
-        //     velocity.z *= -1;
-        //     velocity.z *= 0.75;
-        // }
-
-        // Added radius so pop-in limits are more forgiving and less obvious.
+        // // Added radius so pop-in limits are more forgiving and less obvious.
         // float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);
         // float screenY = screenY(pos.x + r, pos.y + r, pos.z - r);
   
-        // Disregard objects outside of camera view, saving GPU cycles and improving performance.
+        // // Disregard objects outside of camera view, saving GPU cycles and improving performance.
         // if ((screenX > width) || (screenY > height) || (screenX < 0) || (screenY < 0)) 
         //     return;
         
@@ -163,7 +202,7 @@ class Particle {
             --
             4*PI*8.85*10^-12*r^2
 
-        where vector.mag() == r
+        where r = vector.mag()
         */
         float topExpression = targetParticle.charge * charge;
         float bottomExpression = 4 * PI * 8.85 * pow(10, -12) * pow(vector.mag(), 2);
@@ -176,9 +215,10 @@ class Particle {
     }
 
     // Enumerations
-    private final int X_DOMINANT = 0;
-    private final int Y_DOMINANT = 1;
-    private final int Z_DOMINANT = 2;
+    // Defined static there is only one copy stored in memory.
+    private static final int X_DOMINANT = 0;
+    private static final int Y_DOMINANT = 1;
+    private static final int Z_DOMINANT = 2;
 
     public void setInitialCircularVelocityFromForce(Particle particle, float force) {
         PVector diff = PVector.sub(pos, particle.pos).normalize();
@@ -237,7 +277,7 @@ class Particle {
             sqrt(
                 // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
                 abs(
-                    force * 100 * PVector.dist(particle.pos, this.pos) / (float) mass
+                    force * 100 * PVector.dist(particle.pos, this.pos) / mass
                 )
             )
         );

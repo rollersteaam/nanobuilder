@@ -87,6 +87,11 @@ class Atom extends Particle {
         private ArrayList<Electron> contents = new ArrayList<Electron>();
         private int max;
         // TODO: Find a way to declare this statically?
+        /*
+        An array of standardised vectors that can be added onto
+        the atom's 'core' position and used to project electrons in a circle
+        around the atom.
+        */
         private final PVector[] projectionVertices = new PVector[] {
             new PVector(-100, 100, 0).normalize(),
             new PVector(0, 100, 0).normalize(),
@@ -176,6 +181,12 @@ class Atom extends Particle {
 
     private boolean shouldParticlesDraw = false;
 
+    /*
+    This approach is used because it a) unifies the conditions all into one
+    function allowing easy changes later if necessary, and b) limits the need
+    to call PVector.dist 1,000 times just because every particle of an Atom wants
+    to know
+    */
     private void calculateShouldParticlesDraw() {
         if (PVector.dist(cam.position, pos) > (r * 2)) {
             shouldParticlesDraw = false;
@@ -184,6 +195,7 @@ class Atom extends Particle {
         }
     }
 
+    // And of course, we don't want write access to this field and so it does not win, good day sir.
     boolean shouldParticlesDraw() {
         return shouldParticlesDraw;
     }

@@ -94,14 +94,14 @@ void draw() {
     drawOriginArrows();
     drawOriginGrid();
 
-    // pushStyle();
-    // // stroke(color(70, 70, 255));
-    // // strokeWeight(8);
-    // // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
-    // // box(2000);
-    // fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));
-    // box(20000);
-    // popStyle();
+    pushStyle();
+    // stroke(color(70, 70, 255));
+    // strokeWeight(8);
+    // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
+    // box(2000);
+    fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));
+    box(20000);
+    popStyle();
 
     /*
         2D drawing beyond here ONLY.

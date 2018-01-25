@@ -44,6 +44,14 @@ class SelectionManager {
             return true;
     }
 
+    public Particle getObjectFromSelection() {
+        if (selectedParticles.size() == 1)
+            return selectedParticles.get(0).getParticle();
+        else
+            // Could improve this functionality with some basic distance checking
+            return selectedParticles.get((int) random(0, selectedParticles.size() - 1)).getParticle();
+    }
+
     public void select(Particle particle) {
         if (particle == null) {
             println("URGENT: SelectionManager was requested to select a null reference.");

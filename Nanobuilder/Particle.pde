@@ -43,7 +43,8 @@ class Particle {
         particleList.remove(this);
     }
 
-    void select() {
+    boolean select() {
+        return true;
         // currentColor = color(135);
         // acceleration.mult(0);
         // velocity.mult(0);
@@ -71,6 +72,7 @@ class Particle {
 
     public void applyForce(PVector direction, float force) {
         PVector vector = PVector.sub(pos, direction);
+        vector.normalize();
         vector.setMag(force * 100 / mass);
         acceleration.add(vector);
     }
@@ -85,6 +87,7 @@ class Particle {
             into world space for a scale.
         */
         PVector vector = PVector.sub(particle.pos, pos);
+        vector.normalize();
         vector.setMag(force * 100 / particle.mass);
         particle.acceleration.add(vector);
     }
@@ -98,25 +101,41 @@ class Particle {
     }
 
     void evaluatePhysics() {
-        if (pos.x > 10000 || pos.x < -10000) {
+        if ((pos.x + r) > 10000 || (pos.x - r) < -10000) {
             pos.x -= velocity.copy().x;
-            // pos.x -= velocity.copy().setMag(r*2).x;
             velocity.x *= -1;
-            velocity.x /= 2;
+            velocity.x /= 4;            
+            // delete();
         }
 
-        if (pos.y > 10000 || pos.y < -10000) {
+        if ((pos.y + r) > 10000 || (pos.y - r) < -10000) {
             pos.y -= velocity.copy().y;
-            // pos.y -= velocity.copy().setMag(r*2).y;
             velocity.y *= -1;
-            velocity.y /= 2;
+            velocity.y /= 4;            
+            // delete();
         }
 
-        if (pos.z > 10000 || pos.z < -10000) {
+        if ((pos.z + r) > 10000 || (pos.z - r) < -10000) {
             pos.z -= velocity.copy().z;
-            // pos.z -= velocity.copy().setMag(r*2).z;
             velocity.z *= -1;
-            velocity.z /= 2;
+            velocity.z /= 4;            
+            // delete();
+        }
+
+        /*
+        Rough collision stuff goes here
+        */
+        // If distance from another atom is less than radius then intersection
+        for (Particle particle : particleList) {
+            // Spherical intersection
+            // Determine the highest radius
+            // float comparedRadius = (r > particle.r) ? r : particle.r;
+            if (particle == this)
+                continue;
+
+            if (PVector.dist(pos, particle.pos) <= r) {
+                collide(particle);
+            }
         }
 
         velocity.add(acceleration);
@@ -126,17 +145,6 @@ class Particle {
         This line resets acceleration so we're ready to regather all forces next frame.
         */
         acceleration = new PVector();
-
-        /*
-        Rough collision stuff goes here
-        */
-        // If distance from another atom is less than radius then intersection
-        for (Particle particle : particleList) {
-            // Spherical intersection
-            if (PVector.dist(pos, particle.pos) <= r) {
-                collide(particle);
-            }
-        }
     }
 
     public void collide(Particle particle) {
@@ -159,12 +167,28 @@ class Particle {
     }
 
     void display() {
-        // // Added radius so pop-in limits are more forgiving and less obvious.
-        // float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);
-        // float screenY = screenY(pos.x + r, pos.y + r, pos.z - r);
+        // Added radius so pop-in limits are more forgiving and less obvious.
+        float screenX = screenX(pos.x - r, pos.y - r, pos.z);
+        float screenY = screenY(pos.x - r, pos.y - r, pos.z);
+        float screenX2 = screenX(pos.x + r, pos.y + r, pos.z);
+        float screenY2 = screenY(pos.x + r, pos.y + r, pos.z);
   
-        // // Disregard objects outside of camera view, saving GPU cycles and improving performance.
-        // if ((screenX > width) || (screenY > height) || (screenX < 0) || (screenY < 0)) 
+        // Disregard objects outside of camera view, saving GPU cycles and improving performance.
+        // If top left and bottom right of object are outside of dimensions, then do not render.
+        // If top left and bottom right are less than 0
+        // If top and left and bottom right are greater than width/height
+        if (
+            (screenX2 < 0 && screenY2 < 0)
+            ||
+            (screenX > width && screenY > height)
+        )
+        return;
+        // if (
+        //     (screenX > width) ||
+        //     (screenY > height) ||
+        //     (screenX < 0) ||
+        //     (screenY < 0)
+        // ) 
         //     return;
         
         /*

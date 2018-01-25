@@ -44,6 +44,13 @@ class SelectionManager {
             return true;
     }
 
+    public void pushAllObjectsFromCamera() {
+        for (Selection selection : selectedParticles) {
+            Particle object = selection.getParticle();
+            object.applyForce(cam.position, object.mass * 2);
+        }
+    }
+
     public Particle getObjectFromSelection() {
         if (selectedParticles.size() == 1)
             return selectedParticles.get(0).getParticle();
@@ -52,15 +59,19 @@ class SelectionManager {
             return selectedParticles.get((int) random(0, selectedParticles.size() - 1)).getParticle();
     }
 
-    public void select(Particle particle) {
+    public boolean select(Particle particle) {
         if (particle == null) {
             println("URGENT: SelectionManager was requested to select a null reference.");
             Thread.dumpStack();
-            return;
+            return false;
         }
 
-        particle.select();
-        selectedParticles.add(new Selection(particle));
+        if (particle.select()) {
+            selectedParticles.add(new Selection(particle));
+            return true;
+        }
+
+        return false;
     }
 
     public void cancel() {
@@ -133,8 +144,8 @@ class SelectionManager {
                 lowerBoundary.y < screenPosYNegativeLimit &&
                 higherBoundary.x > screenPosXNegativeLimit &&
                 higherBoundary.y > screenPosYNegativeLimit) {
-                select(particle);
-                particleFound = true;
+                if (select(particle))
+                    particleFound = true;
             }
             
             // From bottom left to top right
@@ -142,8 +153,8 @@ class SelectionManager {
                 lowerBoundary.y > screenPosYNegativeLimit &&
                 higherBoundary.x > screenPosXNegativeLimit &&
                 higherBoundary.y < screenPosYNegativeLimit) {
-                select(particle);
-                particleFound = true;
+                if (select(particle))
+                    particleFound = true;
             }
 
             // From bottom right to top left
@@ -151,8 +162,8 @@ class SelectionManager {
                 lowerBoundary.y > screenPosYNegativeLimit &&
                 higherBoundary.x < screenPosXNegativeLimit &&
                 higherBoundary.y < screenPosYNegativeLimit) {
-                select(particle);
-                particleFound = true;
+                if (select(particle))
+                    particleFound = true;
             }
 
             // From top right to bottom left
@@ -160,8 +171,8 @@ class SelectionManager {
                 lowerBoundary.y < screenPosYNegativeLimit &&
                 higherBoundary.x < screenPosXNegativeLimit &&
                 higherBoundary.y > screenPosYNegativeLimit) {
-                select(particle);
-                particleFound = true;
+                if (select(particle))
+                    particleFound = true;
             }
 
             // TODO: Investigate if Z values are accounted for in group selection.
@@ -188,23 +199,35 @@ class SelectionManager {
             float screenPosZNegativeLimit = screenZ(particle.pos.x, particle.pos.y, particle.pos.z - particle.r);
             float screenPosZPositiveLimit = screenZ(particle.pos.x, particle.pos.y, particle.pos.z + particle.r);
 
-            if (v1.x >= screenPosXNegativeLimit && v1.x <= screenPosXPositiveLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
-                return particle;
+            if (v1.x >= screenPosXNegativeLimit && v1.x <= screenPosXPositiveLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit) {
+                if (particle.select()) {
+                    return particle;
+                }
+            }
 
             /*
             Allows selection in 'opposite region' camera space, since the limits switch around.
             */
-            if (v1.x >= screenPosXPositiveLimit && v1.x <= screenPosXNegativeLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
-                return particle;
+            if (v1.x >= screenPosXPositiveLimit && v1.x <= screenPosXNegativeLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit) {
+                if (particle.select()) {
+                    return particle;
+                }
+            }
 
-            if (v1.x >= screenPosZNegativeLimit && v1.x <= screenPosZPositiveLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
-                return particle;
+            if (v1.x >= screenPosZNegativeLimit && v1.x <= screenPosZPositiveLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit) {
+                if (particle.select()) {
+                    return particle;
+                }
+            }
 
             /*
             Allows selection in 'opposite region' camera space, since the limits switch around.
             */
-            if (v1.x >= screenPosZPositiveLimit && v1.x <= screenPosZNegativeLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
-                return particle;
+            if (v1.x >= screenPosZPositiveLimit && v1.x <= screenPosZNegativeLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit) {
+                if (particle.select()) {
+                    return particle;
+                }
+            }
         }
 
         return null;

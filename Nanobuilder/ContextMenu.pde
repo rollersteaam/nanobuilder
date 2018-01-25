@@ -5,15 +5,18 @@ class ContextMenu extends UIElement {
 
     Runnable createAtomAtCamera = new Runnable() {
         public void run() {
+            selectionManager.cancel();
             PVector fwd = cam.getForward();
-            new Particle(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 100);
+            Atom newAtom = new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 1);
+            selectionManager.select(newAtom);
         }
     };
 
     Runnable createElectronAtCamera = new Runnable() {
         public void run() {
             PVector fwd = cam.getForward();
-            new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, null);
+            Electron newElectron = new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, null);
+            selectionManager.select(newElectron);
         }
     };
 
@@ -31,8 +34,7 @@ class ContextMenu extends UIElement {
 
     Runnable pushAtom = new Runnable() {
         public void run() {
-            Particle particle = selectionManager.getObjectFromSelection();
-            particle.applyForce(cam.position, particle.mass);
+            selectionManager.pushAllObjectsFromCamera();
         }
     };
 
@@ -46,27 +48,27 @@ class ContextMenu extends UIElement {
         appendChild(mainPanel);
 
         testButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0), createAtomAtCamera);
-        testText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Add Atom");
+        testText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Add Atom");
         testButton.appendChild(testText);
         appendChild(testButton);
 
         UIElement testButton2 = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0), deleteItemsInSelection);
-        UIElement testText2 = uiFactory.createText(32, 8, w - 12, 38, color(70), "Delete");
+        UIElement testText2 = uiFactory.createText(16, 8, w - 12, 38, color(70), "Delete");
         testButton2.appendChild(testText2);
         appendChild(testButton2);
 
         UIElement paint = uiFactory.createButton(5, 5 + 40 + 40 + 4 + 4, w - 8, 40, color(0, 255, 0), paintAtom);
-        UIElement paintText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Paint Red");
+        UIElement paintText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Paint Red");
         paint.appendChild(paintText);
         appendChild(paint);
 
         UIElement electron = uiFactory.createButton(5, 5 + 40 + 40 + 40 + 4 + 4 + 4, w - 8, 40, color(0, 0, 255), createElectronAtCamera);
-        UIElement electronText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Create Electron");
+        UIElement electronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Create Electron");
         electron.appendChild(electronText);
         appendChild(electron);
 
         UIElement push = uiFactory.createButton(5, 173 + 4 + 4, w - 8, 40, color(0, 0, 255), pushAtom);
-        UIElement pushText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Push");
+        UIElement pushText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Push");
         push.appendChild(pushText);
         appendChild(push);
         

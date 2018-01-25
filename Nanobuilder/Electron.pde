@@ -77,6 +77,41 @@ class Electron extends Particle {
         //     }
         //     return;
         // }
+        /*
+        Scales trail size based off of distance from it's 'parent' (what it's orbiting)
+
+        It should be noted that this CAN be expensive, but by limiting the draw distance for
+        seeing particles, it isn't necessarily a problem.
+        */
+        float dist = min(PVector.sub(pos, parent.pos).mag(), 1000);
+        float trailSize = 60 + (60 * ( (dist/200) - 1 ));
+
+        Point lastPoint = null;
+        int counter = 0;
+        for (Point element : trail) {
+            counter++;
+            pushMatrix();
+            pushStyle();
+                fill(0);
+                // stroke(0, map(counter, 0, (trailSize - 1), 255, 0));
+                stroke(
+                    lerpColor(color(187, 0, 255), color(0, 187, 255), (counter * 1.5)/trail.size()),
+                    map(counter, 0, (trailSize - 1), 255, 0)
+                );
+                strokeWeight(4);
+
+                if (lastPoint != null)
+                    line(lastPoint.x, lastPoint.y, lastPoint.z, element.x, element.y, element.z);
+
+                lastPoint = element;
+            popMatrix();
+            popStyle();
+        }
+
+        if (trail.size() > trailSize)
+            trail.removeLast();
+
+        if (shape == null) return;
 
         if (!parent.shouldParticlesDraw()) {
             trail.clear();
@@ -110,38 +145,5 @@ class Electron extends Particle {
         Point point = new Point();
         trail.push(point);
 
-        /*
-        Scales trail size based off of distance from it's 'parent' (what it's orbiting)
-
-        It should be noted that this CAN be expensive, but by limiting the draw distance for
-        seeing particles, it isn't necessarily a problem.
-        */
-        float dist = PVector.sub(pos, parent.pos).mag();
-        float trailSize = 60 + (60 * ( (dist/200) - 1 ));
-
-        Point lastPoint = null;
-        int counter = 0;
-        for (Point element : trail) {
-            counter++;
-            pushMatrix();
-            pushStyle();
-                fill(0);
-                // stroke(0, map(counter, 0, (trailSize - 1), 255, 0));
-                stroke(
-                    lerpColor(color(187, 0, 255), color(0, 187, 255), (counter * 1.5)/trail.size()),
-                    map(counter, 0, (trailSize - 1), 255, 0)
-                );
-                strokeWeight(4);
-
-                if (lastPoint != null)
-                    line(lastPoint.x, lastPoint.y, lastPoint.z, element.x, element.y, element.z);
-
-                lastPoint = element;
-            popMatrix();
-            popStyle();
-        }
-
-        if (trail.size() > trailSize)
-            trail.removeLast();
     }
 }

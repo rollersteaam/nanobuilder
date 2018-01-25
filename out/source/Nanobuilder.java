@@ -61,7 +61,7 @@ public void setup() {
 
     cam = new Camera(this);
     // cam.speed = 7.5;              // default is 3
-    cam.speed = 7.5f;              // default is 3
+    cam.speed = 15;              // default is 3
     cam.sensitivity = 0;      // default is 2
     cam.controllable = true;
     cam.position = new PVector(-width, height/2, 0);
@@ -80,11 +80,11 @@ public void setup() {
     //     // new Atom(0, 500, 0, 300);
     // }
 
-    // for (int i = 0; i < 5; i++) {
-    //     new Atom();
-    // }
+    for (int i = 0; i < 15; i++) {
+        new Atom();
+    }
 
-    new Atom(50);
+    // new Atom(50);
 
     // new Atom(22);
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
@@ -108,7 +108,8 @@ public void draw() {
 
     float biggestDistance = 0;
 
-    for (Particle particle : particleList) {
+    for (int i = 0; i < particleList.size(); i++) {
+        Particle particle = particleList.get(i);
         particle.evaluatePhysics();
         particle.display();
 
@@ -118,6 +119,9 @@ public void draw() {
             biggestDistance = dist;
         }
     }
+
+    // for (Particle particle : particleList) {
+    // }
 
     drawOriginArrows();
     drawOriginGrid();
@@ -332,6 +336,15 @@ class Atom extends Particle {
         }
     }
     
+    Atom(float x, float y, float z) {
+        this(
+            x,
+            y,
+            z,
+            (int) random(1, 20)
+        );
+    }
+    
     Atom(int electrons) {
         this(
             random(-2000, 2000),
@@ -345,8 +358,17 @@ class Atom extends Particle {
         this(round(random(1, 50)));
     }
     
+    @Override
+    public boolean select() {
+        if (!shouldParticlesDraw) return true;
+        
+        return false;
+    }
+
     public @Override
     void display() {
+        if (shape == null) return;
+
         calculateShouldParticlesDraw();
 
         if (shouldParticlesDraw) return;
@@ -608,15 +630,18 @@ class ContextMenu extends UIElement {
 
     Runnable createAtomAtCamera = new Runnable() {
         public void run() {
+            selectionManager.cancel();
             PVector fwd = cam.getForward();
-            new Particle(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 100);
+            Atom newAtom = new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 1);
+            selectionManager.select(newAtom);
         }
     };
 
     Runnable createElectronAtCamera = new Runnable() {
         public void run() {
             PVector fwd = cam.getForward();
-            new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, null);
+            Electron newElectron = new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, null);
+            selectionManager.select(newElectron);
         }
     };
 
@@ -634,8 +659,7 @@ class ContextMenu extends UIElement {
 
     Runnable pushAtom = new Runnable() {
         public void run() {
-            Particle particle = selectionManager.getObjectFromSelection();
-            particle.applyForce(cam.position, particle.mass);
+            selectionManager.pushAllObjectsFromCamera();
         }
     };
 
@@ -649,27 +673,27 @@ class ContextMenu extends UIElement {
         appendChild(mainPanel);
 
         testButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0), createAtomAtCamera);
-        testText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Add Atom");
+        testText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Add Atom");
         testButton.appendChild(testText);
         appendChild(testButton);
 
         UIElement testButton2 = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0), deleteItemsInSelection);
-        UIElement testText2 = uiFactory.createText(32, 8, w - 12, 38, color(70), "Delete");
+        UIElement testText2 = uiFactory.createText(16, 8, w - 12, 38, color(70), "Delete");
         testButton2.appendChild(testText2);
         appendChild(testButton2);
 
         UIElement paint = uiFactory.createButton(5, 5 + 40 + 40 + 4 + 4, w - 8, 40, color(0, 255, 0), paintAtom);
-        UIElement paintText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Paint Red");
+        UIElement paintText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Paint Red");
         paint.appendChild(paintText);
         appendChild(paint);
 
         UIElement electron = uiFactory.createButton(5, 5 + 40 + 40 + 40 + 4 + 4 + 4, w - 8, 40, color(0, 0, 255), createElectronAtCamera);
-        UIElement electronText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Create Electron");
+        UIElement electronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Create Electron");
         electron.appendChild(electronText);
         appendChild(electron);
 
         UIElement push = uiFactory.createButton(5, 173 + 4 + 4, w - 8, 40, color(0, 0, 255), pushAtom);
-        UIElement pushText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Push");
+        UIElement pushText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Push");
         push.appendChild(pushText);
         appendChild(push);
         
@@ -762,6 +786,41 @@ class Electron extends Particle {
         //     }
         //     return;
         // }
+        /*
+        Scales trail size based off of distance from it's 'parent' (what it's orbiting)
+
+        It should be noted that this CAN be expensive, but by limiting the draw distance for
+        seeing particles, it isn't necessarily a problem.
+        */
+        float dist = min(PVector.sub(pos, parent.pos).mag(), 1000);
+        float trailSize = 60 + (60 * ( (dist/200) - 1 ));
+
+        Point lastPoint = null;
+        int counter = 0;
+        for (Point element : trail) {
+            counter++;
+            pushMatrix();
+            pushStyle();
+                fill(0);
+                // stroke(0, map(counter, 0, (trailSize - 1), 255, 0));
+                stroke(
+                    lerpColor(color(187, 0, 255), color(0, 187, 255), (counter * 1.5f)/trail.size()),
+                    map(counter, 0, (trailSize - 1), 255, 0)
+                );
+                strokeWeight(4);
+
+                if (lastPoint != null)
+                    line(lastPoint.x, lastPoint.y, lastPoint.z, element.x, element.y, element.z);
+
+                lastPoint = element;
+            popMatrix();
+            popStyle();
+        }
+
+        if (trail.size() > trailSize)
+            trail.removeLast();
+
+        if (shape == null) return;
 
         if (!parent.shouldParticlesDraw()) {
             trail.clear();
@@ -795,39 +854,6 @@ class Electron extends Particle {
         Point point = new Point();
         trail.push(point);
 
-        /*
-        Scales trail size based off of distance from it's 'parent' (what it's orbiting)
-
-        It should be noted that this CAN be expensive, but by limiting the draw distance for
-        seeing particles, it isn't necessarily a problem.
-        */
-        float dist = PVector.sub(pos, parent.pos).mag();
-        float trailSize = 60 + (60 * ( (dist/200) - 1 ));
-
-        Point lastPoint = null;
-        int counter = 0;
-        for (Point element : trail) {
-            counter++;
-            pushMatrix();
-            pushStyle();
-                fill(0);
-                // stroke(0, map(counter, 0, (trailSize - 1), 255, 0));
-                stroke(
-                    lerpColor(color(187, 0, 255), color(0, 187, 255), (counter * 1.5f)/trail.size()),
-                    map(counter, 0, (trailSize - 1), 255, 0)
-                );
-                strokeWeight(4);
-
-                if (lastPoint != null)
-                    line(lastPoint.x, lastPoint.y, lastPoint.z, element.x, element.y, element.z);
-
-                lastPoint = element;
-            popMatrix();
-            popStyle();
-        }
-
-        if (trail.size() > trailSize)
-            trail.removeLast();
     }
 }
 class Menu extends UIElement {
@@ -902,7 +928,8 @@ class Particle {
         particleList.remove(this);
     }
 
-    public void select() {
+    public boolean select() {
+        return true;
         // currentColor = color(135);
         // acceleration.mult(0);
         // velocity.mult(0);
@@ -930,6 +957,7 @@ class Particle {
 
     public void applyForce(PVector direction, float force) {
         PVector vector = PVector.sub(pos, direction);
+        vector.normalize();
         vector.setMag(force * 100 / mass);
         acceleration.add(vector);
     }
@@ -944,6 +972,7 @@ class Particle {
             into world space for a scale.
         */
         PVector vector = PVector.sub(particle.pos, pos);
+        vector.normalize();
         vector.setMag(force * 100 / particle.mass);
         particle.acceleration.add(vector);
     }
@@ -957,25 +986,41 @@ class Particle {
     }
 
     public void evaluatePhysics() {
-        if (pos.x > 10000 || pos.x < -10000) {
+        if ((pos.x + r) > 10000 || (pos.x - r) < -10000) {
             pos.x -= velocity.copy().x;
-            // pos.x -= velocity.copy().setMag(r*2).x;
             velocity.x *= -1;
-            velocity.x /= 2;
+            velocity.x /= 4;            
+            // delete();
         }
 
-        if (pos.y > 10000 || pos.y < -10000) {
+        if ((pos.y + r) > 10000 || (pos.y - r) < -10000) {
             pos.y -= velocity.copy().y;
-            // pos.y -= velocity.copy().setMag(r*2).y;
             velocity.y *= -1;
-            velocity.y /= 2;
+            velocity.y /= 4;            
+            // delete();
         }
 
-        if (pos.z > 10000 || pos.z < -10000) {
+        if ((pos.z + r) > 10000 || (pos.z - r) < -10000) {
             pos.z -= velocity.copy().z;
-            // pos.z -= velocity.copy().setMag(r*2).z;
             velocity.z *= -1;
-            velocity.z /= 2;
+            velocity.z /= 4;            
+            // delete();
+        }
+
+        /*
+        Rough collision stuff goes here
+        */
+        // If distance from another atom is less than radius then intersection
+        for (Particle particle : particleList) {
+            // Spherical intersection
+            // Determine the highest radius
+            // float comparedRadius = (r > particle.r) ? r : particle.r;
+            if (particle == this)
+                continue;
+
+            if (PVector.dist(pos, particle.pos) <= r) {
+                collide(particle);
+            }
         }
 
         velocity.add(acceleration);
@@ -985,17 +1030,6 @@ class Particle {
         This line resets acceleration so we're ready to regather all forces next frame.
         */
         acceleration = new PVector();
-
-        /*
-        Rough collision stuff goes here
-        */
-        // If distance from another atom is less than radius then intersection
-        for (Particle particle : particleList) {
-            // Spherical intersection
-            if (PVector.dist(pos, particle.pos) <= r) {
-                collide(particle);
-            }
-        }
     }
 
     public void collide(Particle particle) {
@@ -1018,12 +1052,28 @@ class Particle {
     }
 
     public void display() {
-        // // Added radius so pop-in limits are more forgiving and less obvious.
-        // float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);
-        // float screenY = screenY(pos.x + r, pos.y + r, pos.z - r);
+        // Added radius so pop-in limits are more forgiving and less obvious.
+        float screenX = screenX(pos.x - r, pos.y - r, pos.z);
+        float screenY = screenY(pos.x - r, pos.y - r, pos.z);
+        float screenX2 = screenX(pos.x + r, pos.y + r, pos.z);
+        float screenY2 = screenY(pos.x + r, pos.y + r, pos.z);
   
-        // // Disregard objects outside of camera view, saving GPU cycles and improving performance.
-        // if ((screenX > width) || (screenY > height) || (screenX < 0) || (screenY < 0)) 
+        // Disregard objects outside of camera view, saving GPU cycles and improving performance.
+        // If top left and bottom right of object are outside of dimensions, then do not render.
+        // If top left and bottom right are less than 0
+        // If top and left and bottom right are greater than width/height
+        if (
+            (screenX2 < 0 && screenY2 < 0)
+            ||
+            (screenX > width && screenY > height)
+        )
+        return;
+        // if (
+        //     (screenX > width) ||
+        //     (screenY > height) ||
+        //     (screenX < 0) ||
+        //     (screenY < 0)
+        // ) 
         //     return;
         
         /*
@@ -1179,6 +1229,8 @@ class Proton extends Particle {
         // if (PVector.dist(cam.position, pos) > (r + 1000))
         //     return;
 
+        if (shape == null) return;
+
         if (parent != null) {
             if (!parent.shouldParticlesDraw()) {
                 return;
@@ -1261,6 +1313,13 @@ class SelectionManager {
             return true;
     }
 
+    public void pushAllObjectsFromCamera() {
+        for (Selection selection : selectedParticles) {
+            Particle object = selection.getParticle();
+            object.applyForce(cam.position, object.mass * 2);
+        }
+    }
+
     public Particle getObjectFromSelection() {
         if (selectedParticles.size() == 1)
             return selectedParticles.get(0).getParticle();
@@ -1269,15 +1328,19 @@ class SelectionManager {
             return selectedParticles.get((int) random(0, selectedParticles.size() - 1)).getParticle();
     }
 
-    public void select(Particle particle) {
+    public boolean select(Particle particle) {
         if (particle == null) {
             println("URGENT: SelectionManager was requested to select a null reference.");
             Thread.dumpStack();
-            return;
+            return false;
         }
 
-        particle.select();
-        selectedParticles.add(new Selection(particle));
+        if (particle.select()) {
+            selectedParticles.add(new Selection(particle));
+            return true;
+        }
+
+        return false;
     }
 
     public void cancel() {
@@ -1350,8 +1413,8 @@ class SelectionManager {
                 lowerBoundary.y < screenPosYNegativeLimit &&
                 higherBoundary.x > screenPosXNegativeLimit &&
                 higherBoundary.y > screenPosYNegativeLimit) {
-                select(particle);
-                particleFound = true;
+                if (select(particle))
+                    particleFound = true;
             }
             
             // From bottom left to top right
@@ -1359,8 +1422,8 @@ class SelectionManager {
                 lowerBoundary.y > screenPosYNegativeLimit &&
                 higherBoundary.x > screenPosXNegativeLimit &&
                 higherBoundary.y < screenPosYNegativeLimit) {
-                select(particle);
-                particleFound = true;
+                if (select(particle))
+                    particleFound = true;
             }
 
             // From bottom right to top left
@@ -1368,8 +1431,8 @@ class SelectionManager {
                 lowerBoundary.y > screenPosYNegativeLimit &&
                 higherBoundary.x < screenPosXNegativeLimit &&
                 higherBoundary.y < screenPosYNegativeLimit) {
-                select(particle);
-                particleFound = true;
+                if (select(particle))
+                    particleFound = true;
             }
 
             // From top right to bottom left
@@ -1377,8 +1440,8 @@ class SelectionManager {
                 lowerBoundary.y < screenPosYNegativeLimit &&
                 higherBoundary.x < screenPosXNegativeLimit &&
                 higherBoundary.y > screenPosYNegativeLimit) {
-                select(particle);
-                particleFound = true;
+                if (select(particle))
+                    particleFound = true;
             }
 
             // TODO: Investigate if Z values are accounted for in group selection.
@@ -1405,23 +1468,35 @@ class SelectionManager {
             float screenPosZNegativeLimit = screenZ(particle.pos.x, particle.pos.y, particle.pos.z - particle.r);
             float screenPosZPositiveLimit = screenZ(particle.pos.x, particle.pos.y, particle.pos.z + particle.r);
 
-            if (v1.x >= screenPosXNegativeLimit && v1.x <= screenPosXPositiveLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
-                return particle;
+            if (v1.x >= screenPosXNegativeLimit && v1.x <= screenPosXPositiveLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit) {
+                if (particle.select()) {
+                    return particle;
+                }
+            }
 
             /*
             Allows selection in 'opposite region' camera space, since the limits switch around.
             */
-            if (v1.x >= screenPosXPositiveLimit && v1.x <= screenPosXNegativeLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
-                return particle;
+            if (v1.x >= screenPosXPositiveLimit && v1.x <= screenPosXNegativeLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit) {
+                if (particle.select()) {
+                    return particle;
+                }
+            }
 
-            if (v1.x >= screenPosZNegativeLimit && v1.x <= screenPosZPositiveLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
-                return particle;
+            if (v1.x >= screenPosZNegativeLimit && v1.x <= screenPosZPositiveLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit) {
+                if (particle.select()) {
+                    return particle;
+                }
+            }
 
             /*
             Allows selection in 'opposite region' camera space, since the limits switch around.
             */
-            if (v1.x >= screenPosZPositiveLimit && v1.x <= screenPosZNegativeLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit)
-                return particle;
+            if (v1.x >= screenPosZPositiveLimit && v1.x <= screenPosZNegativeLimit && v1.y >= screenPosYNegativeLimit && v1.y <= screenPosYPositiveLimit) {
+                if (particle.select()) {
+                    return particle;
+                }
+            }
         }
 
         return null;

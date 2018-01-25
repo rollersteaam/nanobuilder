@@ -35,6 +35,8 @@ class Proton extends Particle {
         // if (PVector.dist(cam.position, pos) > (r + 1000))
         //     return;
 
+        if (shape == null) return;
+
         if (parent != null) {
             if (!parent.shouldParticlesDraw()) {
                 return;

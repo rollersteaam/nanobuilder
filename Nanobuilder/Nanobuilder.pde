@@ -36,7 +36,7 @@ void setup() {
 
     cam = new Camera(this);
     // cam.speed = 7.5;              // default is 3
-    cam.speed = 7.5;              // default is 3
+    cam.speed = 15;              // default is 3
     cam.sensitivity = 0;      // default is 2
     cam.controllable = true;
     cam.position = new PVector(-width, height/2, 0);
@@ -55,11 +55,11 @@ void setup() {
     //     // new Atom(0, 500, 0, 300);
     // }
 
-    // for (int i = 0; i < 5; i++) {
-    //     new Atom();
-    // }
+    for (int i = 0; i < 15; i++) {
+        new Atom();
+    }
 
-    new Atom(50);
+    // new Atom(50);
 
     // new Atom(22);
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
@@ -83,7 +83,8 @@ void draw() {
 
     float biggestDistance = 0;
 
-    for (Particle particle : particleList) {
+    for (int i = 0; i < particleList.size(); i++) {
+        Particle particle = particleList.get(i);
         particle.evaluatePhysics();
         particle.display();
 
@@ -93,6 +94,9 @@ void draw() {
             biggestDistance = dist;
         }
     }
+
+    // for (Particle particle : particleList) {
+    // }
 
     drawOriginArrows();
     drawOriginGrid();

@@ -47,6 +47,15 @@ class Atom extends Particle {
         }
     }
     
+    Atom(float x, float y, float z) {
+        this(
+            x,
+            y,
+            z,
+            (int) random(1, 20)
+        );
+    }
+    
     Atom(int electrons) {
         this(
             random(-2000, 2000),
@@ -61,7 +70,16 @@ class Atom extends Particle {
     }
     
     @Override
+    public boolean select() {
+        if (!shouldParticlesDraw) return true;
+        
+        return false;
+    }
+
+    @Override
     void display() {
+        if (shape == null) return;
+
         calculateShouldParticlesDraw();
 
         if (shouldParticlesDraw) return;

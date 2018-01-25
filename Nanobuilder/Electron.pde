@@ -79,9 +79,7 @@ class Electron extends Particle {
         // }
 
         if (!parent.shouldParticlesDraw()) {
-            for (Point point : trail) {
-                trail.remove(point);
-            }
+            trail.clear();
             return;
         }
 

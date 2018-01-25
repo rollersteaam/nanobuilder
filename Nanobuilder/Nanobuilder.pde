@@ -55,9 +55,11 @@ void setup() {
     //     // new Atom(0, 500, 0, 300);
     // }
 
-    for (int i = 0; i < 5; i++) {
-        new Atom();
-    }
+    // for (int i = 0; i < 5; i++) {
+    //     new Atom();
+    // }
+
+    new Atom(50);
 
     // new Atom(22);
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
@@ -74,6 +76,7 @@ void draw() {
     // Undoes the use of DISABLE_DEPTH_TEST so 3D objects act naturally after it was called.
     hint(ENABLE_DEPTH_TEST);
 
+    // background(70);
     background(135, 135, 255);
     lights();
     noStroke();

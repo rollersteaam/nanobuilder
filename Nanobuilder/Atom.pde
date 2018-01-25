@@ -72,7 +72,8 @@ class Atom extends Particle {
             green(currentColor),
             blue(currentColor),
             // 255
-            lerp(0, 255, (PVector.dist(cam.position, pos) * 2) / (r + 4000))
+            // lerp(0, 255, (PVector.dist(cam.position, pos) * 2) / (r + 4000))
+            lerp(0, 255, (PVector.dist(cam.position, pos) / ((r*2) + 100)) )
         );
 
         pushStyle();

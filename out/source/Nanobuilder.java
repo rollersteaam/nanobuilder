@@ -80,9 +80,11 @@ public void setup() {
     //     // new Atom(0, 500, 0, 300);
     // }
 
-    for (int i = 0; i < 5; i++) {
-        new Atom();
-    }
+    // for (int i = 0; i < 5; i++) {
+    //     new Atom();
+    // }
+
+    new Atom(50);
 
     // new Atom(22);
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
@@ -99,6 +101,7 @@ public void draw() {
     // Undoes the use of DISABLE_DEPTH_TEST so 3D objects act naturally after it was called.
     hint(ENABLE_DEPTH_TEST);
 
+    // background(70);
     background(135, 135, 255);
     lights();
     noStroke();
@@ -354,7 +357,8 @@ class Atom extends Particle {
             green(currentColor),
             blue(currentColor),
             // 255
-            lerp(0, 255, (PVector.dist(cam.position, pos) * 2) / (r + 4000))
+            // lerp(0, 255, (PVector.dist(cam.position, pos) * 2) / (r + 4000))
+            lerp(0, 255, (PVector.dist(cam.position, pos) / ((r*2) + 100)) )
         );
 
         pushStyle();
@@ -736,9 +740,7 @@ class Electron extends Particle {
         // }
 
         if (!parent.shouldParticlesDraw()) {
-            for (Point point : trail) {
-                trail.remove(point);
-            }
+            trail.clear();
             return;
         }
 
@@ -1735,13 +1737,13 @@ class UIManager {
         return false;
     }
 }
-    public void settings() {  size(1280, 720, P3D); }
-    static public void main(String[] passedArgs) {
-        String[] appletArgs = new String[] { "Nanobuilder" };
-        if (passedArgs != null) {
-          PApplet.main(concat(appletArgs, passedArgs));
-        } else {
-          PApplet.main(appletArgs);
-        }
+  public void settings() {  size(1280, 720, P3D); }
+  static public void main(String[] passedArgs) {
+    String[] appletArgs = new String[] { "Nanobuilder" };
+    if (passedArgs != null) {
+      PApplet.main(concat(appletArgs, passedArgs));
+    } else {
+      PApplet.main(appletArgs);
     }
+  }
 }

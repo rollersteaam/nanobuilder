@@ -29,37 +29,46 @@ class ContextMenu extends UIElement {
         }
     };
 
+    Runnable pushAtom = new Runnable() {
+        public void run() {
+            Particle particle = selectionManager.getObjectFromSelection();
+            particle.applyForce(cam.position, particle.mass);
+        }
+    };
+
     ContextMenu(float x, float y, float w, float h, color colour) {
         super(x, y, w, h, colour);
 
-        UIElement background = uiFactory.createRect(3, 3, w + 4, h + 4, color(135));
-        mainPanel = uiFactory.createRect(1, 1, w, h, colour);
-
-        testButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0), createAtomAtCamera);
-        testText = uiFactory.createText(w/4, 40/4 + 2.5, w - 12, 38, color(70), "Add Atom");
-        
-        UIElement testButton2 = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0), deleteItemsInSelection);
-        UIElement testText2 = uiFactory.createText(w/4, 40/4 + 2.5 + 40 + 4, w - 12, 38, color(70), "Delete");
-
+        UIElement background = uiFactory.createRect(-3, -3, w + 4 + 3, h + 4 + 3, color(135));
         appendChild(background);
 
+        mainPanel = uiFactory.createRect(1, 1, w, h, colour);
         appendChild(mainPanel);
-        appendChild(testButton);
-        appendChild(testText);
 
+        testButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0), createAtomAtCamera);
+        testText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Add Atom");
+        testButton.appendChild(testText);
+        appendChild(testButton);
+
+        UIElement testButton2 = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0), deleteItemsInSelection);
+        UIElement testText2 = uiFactory.createText(32, 8, w - 12, 38, color(70), "Delete");
+        testButton2.appendChild(testText2);
         appendChild(testButton2);
-        appendChild(testText2);
 
         UIElement paint = uiFactory.createButton(5, 5 + 40 + 40 + 4 + 4, w - 8, 40, color(0, 255, 0), paintAtom);
-        UIElement paintText = uiFactory.createText(34, 8, w - 12, 38, color(70), "Paint Red");
+        UIElement paintText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Paint Red");
         paint.appendChild(paintText);
-
         appendChild(paint);
-        UIElement electron = uiFactory.createButton(5, 5 + 40 + 40 + 40 + 4 + 4, w - 8, 40, color(0, 0, 255), createElectronAtCamera);
+
+        UIElement electron = uiFactory.createButton(5, 5 + 40 + 40 + 40 + 4 + 4 + 4, w - 8, 40, color(0, 0, 255), createElectronAtCamera);
         UIElement electronText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Create Electron");
         electron.appendChild(electronText);
-
         appendChild(electron);
+
+        UIElement push = uiFactory.createButton(5, 173 + 4 + 4, w - 8, 40, color(0, 0, 255), pushAtom);
+        UIElement pushText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Push");
+        push.appendChild(pushText);
+        appendChild(push);
         
         // UI elements start active by default, hiding when construction is finished is standard practice for menus.
         hide();

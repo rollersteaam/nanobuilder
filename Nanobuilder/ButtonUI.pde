@@ -10,9 +10,12 @@ class ButtonUI extends UIElement {
     void display() {
         super.display();
 
+        pushStyle();
+        // stroke(colour);
         stroke(160, 160, 255, 230);
         strokeWeight(2);
         rect(position.x, position.y, size.x, size.y);
+        popStyle();
 
         finishDrawing();
     }

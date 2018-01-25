@@ -122,14 +122,14 @@ public void draw() {
     drawOriginArrows();
     drawOriginGrid();
 
-    // pushStyle();
-    // // stroke(color(70, 70, 255));
-    // // strokeWeight(8);
-    // // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
-    // // box(2000);
-    // fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));
-    // box(20000);
-    // popStyle();
+    pushStyle();
+    // stroke(color(70, 70, 255));
+    // strokeWeight(8);
+    // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
+    // box(2000);
+    fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));
+    box(20000);
+    popStyle();
 
     /*
         2D drawing beyond here ONLY.
@@ -373,6 +373,11 @@ class Atom extends Particle {
         private ArrayList<Electron> contents = new ArrayList<Electron>();
         private int max;
         // TODO: Find a way to declare this statically?
+        /*
+        An array of standardised vectors that can be added onto
+        the atom's 'core' position and used to project electrons in a circle
+        around the atom.
+        */
         private final PVector[] projectionVertices = new PVector[] {
             new PVector(-100, 100, 0).normalize(),
             new PVector(0, 100, 0).normalize(),
@@ -462,6 +467,12 @@ class Atom extends Particle {
 
     private boolean shouldParticlesDraw = false;
 
+    /*
+    This approach is used because it a) unifies the conditions all into one
+    function allowing easy changes later if necessary, and b) limits the need
+    to call PVector.dist 1,000 times just because every particle of an Atom wants
+    to know
+    */
     private void calculateShouldParticlesDraw() {
         if (PVector.dist(cam.position, pos) > (r * 2)) {
             shouldParticlesDraw = false;
@@ -470,6 +481,7 @@ class Atom extends Particle {
         }
     }
 
+    // And of course, we don't want write access to this field and so it does not win, good day sir.
     public boolean shouldParticlesDraw() {
         return shouldParticlesDraw;
     }
@@ -486,9 +498,12 @@ class ButtonUI extends UIElement {
     void display() {
         super.display();
 
+        pushStyle();
+        // stroke(colour);
         stroke(160, 160, 255, 230);
         strokeWeight(2);
         rect(position.x, position.y, size.x, size.y);
+        popStyle();
 
         finishDrawing();
     }
@@ -617,37 +632,46 @@ class ContextMenu extends UIElement {
         }
     };
 
+    Runnable pushAtom = new Runnable() {
+        public void run() {
+            Particle particle = selectionManager.getObjectFromSelection();
+            particle.applyForce(cam.position, particle.mass);
+        }
+    };
+
     ContextMenu(float x, float y, float w, float h, int colour) {
         super(x, y, w, h, colour);
 
-        UIElement background = uiFactory.createRect(3, 3, w + 4, h + 4, color(135));
-        mainPanel = uiFactory.createRect(1, 1, w, h, colour);
-
-        testButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0), createAtomAtCamera);
-        testText = uiFactory.createText(w/4, 40/4 + 2.5f, w - 12, 38, color(70), "Add Atom");
-        
-        UIElement testButton2 = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0), deleteItemsInSelection);
-        UIElement testText2 = uiFactory.createText(w/4, 40/4 + 2.5f + 40 + 4, w - 12, 38, color(70), "Delete");
-
+        UIElement background = uiFactory.createRect(-3, -3, w + 4 + 3, h + 4 + 3, color(135));
         appendChild(background);
 
+        mainPanel = uiFactory.createRect(1, 1, w, h, colour);
         appendChild(mainPanel);
-        appendChild(testButton);
-        appendChild(testText);
 
+        testButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0), createAtomAtCamera);
+        testText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Add Atom");
+        testButton.appendChild(testText);
+        appendChild(testButton);
+
+        UIElement testButton2 = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0), deleteItemsInSelection);
+        UIElement testText2 = uiFactory.createText(32, 8, w - 12, 38, color(70), "Delete");
+        testButton2.appendChild(testText2);
         appendChild(testButton2);
-        appendChild(testText2);
 
         UIElement paint = uiFactory.createButton(5, 5 + 40 + 40 + 4 + 4, w - 8, 40, color(0, 255, 0), paintAtom);
-        UIElement paintText = uiFactory.createText(34, 8, w - 12, 38, color(70), "Paint Red");
+        UIElement paintText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Paint Red");
         paint.appendChild(paintText);
-
         appendChild(paint);
-        UIElement electron = uiFactory.createButton(5, 5 + 40 + 40 + 40 + 4 + 4, w - 8, 40, color(0, 0, 255), createElectronAtCamera);
+
+        UIElement electron = uiFactory.createButton(5, 5 + 40 + 40 + 40 + 4 + 4 + 4, w - 8, 40, color(0, 0, 255), createElectronAtCamera);
         UIElement electronText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Create Electron");
         electron.appendChild(electronText);
-
         appendChild(electron);
+
+        UIElement push = uiFactory.createButton(5, 173 + 4 + 4, w - 8, 40, color(0, 0, 255), pushAtom);
+        UIElement pushText = uiFactory.createText(32, 8, w - 12, 38, color(70), "Push");
+        push.appendChild(pushText);
+        appendChild(push);
         
         // UI elements start active by default, hiding when construction is finished is standard practice for menus.
         hide();
@@ -841,7 +865,7 @@ class Particle {
     float r;
 
     float charge;
-    double mass = 1;
+    float mass = 1;
 
     int baseColor;
     int currentColor;
@@ -904,6 +928,12 @@ class Particle {
         pos = newPos.copy();
     }
 
+    public void applyForce(PVector direction, float force) {
+        PVector vector = PVector.sub(pos, direction);
+        vector.setMag(force * 100 / mass);
+        acceleration.add(vector);
+    }
+
     public void applyForce(Particle particle, float force) {
         /*
             Acceleration is a vector quantity (has both magnitude and direction),
@@ -914,7 +944,7 @@ class Particle {
             into world space for a scale.
         */
         PVector vector = PVector.sub(particle.pos, pos);
-        vector.setMag(force * 100 / (float) particle.mass);
+        vector.setMag(force * 100 / particle.mass);
         particle.acceleration.add(vector);
     }
 
@@ -927,6 +957,27 @@ class Particle {
     }
 
     public void evaluatePhysics() {
+        if (pos.x > 10000 || pos.x < -10000) {
+            pos.x -= velocity.copy().x;
+            // pos.x -= velocity.copy().setMag(r*2).x;
+            velocity.x *= -1;
+            velocity.x /= 2;
+        }
+
+        if (pos.y > 10000 || pos.y < -10000) {
+            pos.y -= velocity.copy().y;
+            // pos.y -= velocity.copy().setMag(r*2).y;
+            velocity.y *= -1;
+            velocity.y /= 2;
+        }
+
+        if (pos.z > 10000 || pos.z < -10000) {
+            pos.z -= velocity.copy().z;
+            // pos.z -= velocity.copy().setMag(r*2).z;
+            velocity.z *= -1;
+            velocity.z /= 2;
+        }
+
         velocity.add(acceleration);
         pos.add(velocity);
         /*
@@ -934,32 +985,44 @@ class Particle {
         This line resets acceleration so we're ready to regather all forces next frame.
         */
         acceleration = new PVector();
+
+        /*
+        Rough collision stuff goes here
+        */
+        // If distance from another atom is less than radius then intersection
+        for (Particle particle : particleList) {
+            // Spherical intersection
+            if (PVector.dist(pos, particle.pos) <= r) {
+                collide(particle);
+            }
+        }
+    }
+
+    public void collide(Particle particle) {
+        // To make a more accurate incident vector, we could also set mag the magnitude to the radius of either atom (probably this one).
+        PVector incidentVector = PVector.sub(pos, particle.pos);
+        // Impulse = change in momentum
+        // p = m1v1 - m2v2
+        float impulse = mass * velocity.mag() - particle.mass * particle.velocity.mag();
+        // Initial kinetic energy
+        // E = 1/2*m1*v1^2 + 1/2*m2*v2^2
+        float energy = 1/2 * mass * pow(velocity.mag(), 2) + 1/2 * particle.mass * pow(particle.velocity.mag(), 2);
+        // This new velocity magnitude should change depending on who calls collide.
+        // After -2 * impulse plus or minus can be used. It's a quadratic equation.
+        float newVelocityMagnitude = -2 * impulse + sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
+        // So we must halve it after we're done.
+        newVelocityMagnitude /= 2;
+        incidentVector.setMag(newVelocityMagnitude);
+        particle.velocity.add(incidentVector);
+        // And now attempt to cancel any attempts to process the collision a second time.
     }
 
     public void display() {
-        // if (pos.x > 10000 || pos.x < -10000) {
-        //     pos.x -= velocity.copy().setMag(r*2).x;
-        //     velocity.x *= -1;
-        //     velocity.x *= 0.75;
-        // }
-
-        // if (pos.y > 10000 || pos.y < -10000) {
-        //     pos.y -= velocity.copy().setMag(r*2).y;
-        //     velocity.y *= -1;
-        //     velocity.y *= 0.75;
-        // }
-
-        // if (pos.z > 10000 || pos.z < -10000) {
-        //     pos.z -= velocity.copy().setMag(r*2).z;
-        //     velocity.z *= -1;
-        //     velocity.z *= 0.75;
-        // }
-
-        // Added radius so pop-in limits are more forgiving and less obvious.
+        // // Added radius so pop-in limits are more forgiving and less obvious.
         // float screenX = screenX(pos.x + r, pos.y + r, pos.z - r);
         // float screenY = screenY(pos.x + r, pos.y + r, pos.z - r);
   
-        // Disregard objects outside of camera view, saving GPU cycles and improving performance.
+        // // Disregard objects outside of camera view, saving GPU cycles and improving performance.
         // if ((screenX > width) || (screenY > height) || (screenX < 0) || (screenY < 0)) 
         //     return;
         
@@ -998,7 +1061,7 @@ class Particle {
             --
             4*PI*8.85*10^-12*r^2
 
-        where vector.mag() == r
+        where r = vector.mag()
         */
         float topExpression = targetParticle.charge * charge;
         float bottomExpression = 4 * PI * 8.85f * pow(10, -12) * pow(vector.mag(), 2);
@@ -1011,9 +1074,10 @@ class Particle {
     }
 
     // Enumerations
-    private final int X_DOMINANT = 0;
-    private final int Y_DOMINANT = 1;
-    private final int Z_DOMINANT = 2;
+    // Defined static there is only one copy stored in memory.
+    private static final int X_DOMINANT = 0;
+    private static final int Y_DOMINANT = 1;
+    private static final int Z_DOMINANT = 2;
 
     public void setInitialCircularVelocityFromForce(Particle particle, float force) {
         PVector diff = PVector.sub(pos, particle.pos).normalize();
@@ -1072,7 +1136,7 @@ class Particle {
             sqrt(
                 // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
                 abs(
-                    force * 100 * PVector.dist(particle.pos, this.pos) / (float) mass
+                    force * 100 * PVector.dist(particle.pos, this.pos) / mass
                 )
             )
         );
@@ -1195,6 +1259,14 @@ class SelectionManager {
             return false;
         else
             return true;
+    }
+
+    public Particle getObjectFromSelection() {
+        if (selectedParticles.size() == 1)
+            return selectedParticles.get(0).getParticle();
+        else
+            // Could improve this functionality with some basic distance checking
+            return selectedParticles.get((int) random(0, selectedParticles.size() - 1)).getParticle();
     }
 
     public void select(Particle particle) {
@@ -1676,7 +1748,7 @@ class UIManager {
     private ContextMenu contextMenu;
 
     public void draw() {
-        if (contextMenu == null) contextMenu = new ContextMenu(0, 0, 180, 200, color(230));
+        if (contextMenu == null) contextMenu = new ContextMenu(0, 0, 180, 224, color(230));
 
         for (UIElement element : screenElements) {
             if (element.getActive()) element.display();

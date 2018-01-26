@@ -47,12 +47,18 @@ class UIManager {
         }
     }
 
-    public void checkClickForButtons() {
+    public boolean checkClickForButtons() {
         PVector mouse = new PVector(mouseX, mouseY);
 
         for (ButtonUI button : buttons) {
-            if (button.checkIntersectionWithPoint(mouse)) button.click();
+            if (button.checkIntersectionWithPoint(mouse)) {
+                button.click();
+                return true;
+            }
         }
+        
+        // Pass an interruption.
+        return false;
     }
 
     boolean checkForFocus() {

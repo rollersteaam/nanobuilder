@@ -10,9 +10,9 @@ class Electron extends Particle {
         baseColor = color(0, 0, 255);
         revertToBaseColor();
 
-        // If no initial proton then spawn with random velocity.
+        // If no initial proton then spawn with random passive velocity.
         if (proton == null) {
-            velocity = PVector.random3D().setMag(3);
+            velocity = PVector.random3D().setMag(2);
             return;
         }
 
@@ -83,7 +83,19 @@ class Electron extends Particle {
         It should be noted that this CAN be expensive, but by limiting the draw distance for
         seeing particles, it isn't necessarily a problem.
         */
-        float dist = min(PVector.sub(pos, parent.pos).mag(), 1000);
+        // Handles null pointer in case electron loses parent or has none.
+        float dist;
+        if (parent != null) {
+            dist = min(PVector.sub(pos, parent.pos).mag(), 1000);
+            
+            if (!parent.shouldParticlesDraw()) {
+                trail.clear();
+                return;
+            }
+        } else {
+            dist = 1000;
+        }
+
         float trailSize = 60 + (60 * ( (dist/200) - 1 ));
 
         Point lastPoint = null;
@@ -112,11 +124,6 @@ class Electron extends Particle {
             trail.removeLast();
 
         if (shape == null) return;
-
-        if (!parent.shouldParticlesDraw()) {
-            trail.clear();
-            return;
-        }
 
         color formattedColor = color(
             red(currentColor),

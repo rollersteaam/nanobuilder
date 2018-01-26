@@ -19,6 +19,7 @@ class Atom extends Particle {
         super(x, y, z, AtomHelper.calculateNumberOfShells(electrons) * 200);
         core = new Proton(x, y, z, this);
         listProtons.add(core);
+        children.add(core);
 
         // An atom always has one shell, or it's not an atom.
         shells.add(new ElectronShell(2));
@@ -136,7 +137,9 @@ class Atom extends Particle {
             if (contents.size() == max) return false;
 
             // Initial position is not important, it will be changed immediately.
-            contents.add(new Electron(0, 0, 0, core));
+            Electron newElectron = new Electron(0, 0, 0, core);
+            children.add(newElectron);
+            contents.add(newElectron);
 
             int availablePosition = 0;
             for (Electron electron : contents) {
@@ -216,6 +219,6 @@ class Atom extends Particle {
 
     // And of course, we don't want write access to this field and so it does not win, good day sir.
     boolean shouldParticlesDraw() {
-        return shouldParticlesDraw;
+        return true;
     }
 }

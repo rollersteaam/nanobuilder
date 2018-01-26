@@ -9,6 +9,7 @@ class ContextMenu extends UIElement {
             PVector fwd = cam.getForward();
             Atom newAtom = new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 1);
             selectionManager.select(newAtom);
+            hide();
         }
     };
 
@@ -17,24 +18,28 @@ class ContextMenu extends UIElement {
             PVector fwd = cam.getForward();
             Electron newElectron = new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, null);
             selectionManager.select(newElectron);
+            hide();
         }
     };
 
     Runnable deleteItemsInSelection = new Runnable() {
         public void run() {
             selectionManager.deleteItemsInSelection();
+            hide();
         }
     };
 
     Runnable paintAtom = new Runnable() {
         public void run() {
             selectionManager.paintParticles();
+            hide();
         }
     };
 
     Runnable pushAtom = new Runnable() {
         public void run() {
             selectionManager.pushAllObjectsFromCamera();
+            hide();
         }
     };
 

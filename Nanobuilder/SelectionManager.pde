@@ -47,7 +47,7 @@ class SelectionManager {
     public void pushAllObjectsFromCamera() {
         for (Selection selection : selectedParticles) {
             Particle object = selection.getParticle();
-            object.applyForce(cam.position, object.mass * 2);
+            object.applyForce(cam.position, object.mass);
         }
     }
 

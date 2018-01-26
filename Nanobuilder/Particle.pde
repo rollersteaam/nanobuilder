@@ -13,6 +13,7 @@ class Particle {
 
     PShape shape;
     Atom parent;
+    ArrayList<Particle> children = new ArrayList<Particle>();
 
     Particle(float x, float y, float z, float r) {
         pos = new PVector(x, y, z);
@@ -66,8 +67,26 @@ class Particle {
         currentColor = baseColor;
     }
 
+    void addPosition(PVector addingPos) {
+        pos.x += addingPos.x;
+        pos.y += addingPos.y;
+        pos.z += addingPos.z;
+
+        for (Particle child : children) {
+            child.addPosition(addingPos);
+        }
+    }
+
     void setPosition(PVector newPos) {
-        pos = newPos.copy();
+        PVector difference = PVector.sub(pos, newPos);
+        // Accessing individual fields is fastest and safest option.
+        pos.x = newPos.x;
+        pos.y = newPos.y;
+        pos.z = newPos.z;
+
+        for (Particle child : children) {
+            child.addPosition(difference);
+        }
     }
 
     public void applyForce(PVector direction, float force) {
@@ -133,13 +152,14 @@ class Particle {
             if (particle == this)
                 continue;
 
-            if (PVector.dist(pos, particle.pos) <= r) {
+            if (PVector.dist(pos, particle.pos) <= r * 2) {
                 collide(particle);
             }
         }
 
         velocity.add(acceleration);
-        pos.add(velocity);
+        // pos.add(velocity);
+        addPosition(velocity);
         /*
         Acceleration once 'dealt' is never kept, since it converts into velocity.
         This line resets acceleration so we're ready to regather all forces next frame.

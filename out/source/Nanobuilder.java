@@ -61,7 +61,7 @@ public void setup() {
 
     cam = new Camera(this);
     // cam.speed = 7.5;              // default is 3
-    cam.speed = 15;              // default is 3
+    cam.speed = 30;              // default is 3
     cam.sensitivity = 0;      // default is 2
     cam.controllable = true;
     cam.position = new PVector(-width, height/2, 0);
@@ -80,11 +80,11 @@ public void setup() {
     //     // new Atom(0, 500, 0, 300);
     // }
 
-    for (int i = 0; i < 15; i++) {
-        new Atom();
-    }
+    // for (int i = 0; i < 15; i++) {
+    //     new Atom();
+    // }
 
-    // new Atom(50);
+    new Atom(50);
 
     // new Atom(22);
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
@@ -164,7 +164,7 @@ public void mousePressed(MouseEvent event) {
 }
 
 public void mouseReleased() {
-    uiManager.checkClickForButtons();
+    if (uiManager.checkClickForButtons()) return;
 
     if (mouseButton == LEFT) {
         uiManager.leftClick();
@@ -308,6 +308,7 @@ class Atom extends Particle {
         super(x, y, z, AtomHelper.calculateNumberOfShells(electrons) * 200);
         core = new Proton(x, y, z, this);
         listProtons.add(core);
+        children.add(core);
 
         // An atom always has one shell, or it's not an atom.
         shells.add(new ElectronShell(2));
@@ -425,7 +426,9 @@ class Atom extends Particle {
             if (contents.size() == max) return false;
 
             // Initial position is not important, it will be changed immediately.
-            contents.add(new Electron(0, 0, 0, core));
+            Electron newElectron = new Electron(0, 0, 0, core);
+            children.add(newElectron);
+            contents.add(newElectron);
 
             int availablePosition = 0;
             for (Electron electron : contents) {
@@ -505,7 +508,7 @@ class Atom extends Particle {
 
     // And of course, we don't want write access to this field and so it does not win, good day sir.
     public boolean shouldParticlesDraw() {
-        return shouldParticlesDraw;
+        return true;
     }
 }
 class ButtonUI extends UIElement {
@@ -634,6 +637,7 @@ class ContextMenu extends UIElement {
             PVector fwd = cam.getForward();
             Atom newAtom = new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 1);
             selectionManager.select(newAtom);
+            hide();
         }
     };
 
@@ -642,24 +646,28 @@ class ContextMenu extends UIElement {
             PVector fwd = cam.getForward();
             Electron newElectron = new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, null);
             selectionManager.select(newElectron);
+            hide();
         }
     };
 
     Runnable deleteItemsInSelection = new Runnable() {
         public void run() {
             selectionManager.deleteItemsInSelection();
+            hide();
         }
     };
 
     Runnable paintAtom = new Runnable() {
         public void run() {
             selectionManager.paintParticles();
+            hide();
         }
     };
 
     Runnable pushAtom = new Runnable() {
         public void run() {
             selectionManager.pushAllObjectsFromCamera();
+            hide();
         }
     };
 
@@ -719,9 +727,9 @@ class Electron extends Particle {
         baseColor = color(0, 0, 255);
         revertToBaseColor();
 
-        // If no initial proton then spawn with random velocity.
+        // If no initial proton then spawn with random passive velocity.
         if (proton == null) {
-            velocity = PVector.random3D().setMag(3);
+            velocity = PVector.random3D().setMag(2);
             return;
         }
 
@@ -792,7 +800,19 @@ class Electron extends Particle {
         It should be noted that this CAN be expensive, but by limiting the draw distance for
         seeing particles, it isn't necessarily a problem.
         */
-        float dist = min(PVector.sub(pos, parent.pos).mag(), 1000);
+        // Handles null pointer in case electron loses parent or has none.
+        float dist;
+        if (parent != null) {
+            dist = min(PVector.sub(pos, parent.pos).mag(), 1000);
+            
+            if (!parent.shouldParticlesDraw()) {
+                trail.clear();
+                return;
+            }
+        } else {
+            dist = 1000;
+        }
+
         float trailSize = 60 + (60 * ( (dist/200) - 1 ));
 
         Point lastPoint = null;
@@ -821,11 +841,6 @@ class Electron extends Particle {
             trail.removeLast();
 
         if (shape == null) return;
-
-        if (!parent.shouldParticlesDraw()) {
-            trail.clear();
-            return;
-        }
 
         int formattedColor = color(
             red(currentColor),
@@ -898,6 +913,7 @@ class Particle {
 
     PShape shape;
     Atom parent;
+    ArrayList<Particle> children = new ArrayList<Particle>();
 
     Particle(float x, float y, float z, float r) {
         pos = new PVector(x, y, z);
@@ -951,8 +967,26 @@ class Particle {
         currentColor = baseColor;
     }
 
+    public void addPosition(PVector addingPos) {
+        pos.x += addingPos.x;
+        pos.y += addingPos.y;
+        pos.z += addingPos.z;
+
+        for (Particle child : children) {
+            child.addPosition(addingPos);
+        }
+    }
+
     public void setPosition(PVector newPos) {
-        pos = newPos.copy();
+        PVector difference = PVector.sub(pos, newPos);
+        // Accessing individual fields is fastest and safest option.
+        pos.x = newPos.x;
+        pos.y = newPos.y;
+        pos.z = newPos.z;
+
+        for (Particle child : children) {
+            child.addPosition(difference);
+        }
     }
 
     public void applyForce(PVector direction, float force) {
@@ -1018,13 +1052,14 @@ class Particle {
             if (particle == this)
                 continue;
 
-            if (PVector.dist(pos, particle.pos) <= r) {
+            if (PVector.dist(pos, particle.pos) <= r * 2) {
                 collide(particle);
             }
         }
 
         velocity.add(acceleration);
-        pos.add(velocity);
+        // pos.add(velocity);
+        addPosition(velocity);
         /*
         Acceleration once 'dealt' is never kept, since it converts into velocity.
         This line resets acceleration so we're ready to regather all forces next frame.
@@ -1043,7 +1078,7 @@ class Particle {
         float energy = 1/2 * mass * pow(velocity.mag(), 2) + 1/2 * particle.mass * pow(particle.velocity.mag(), 2);
         // This new velocity magnitude should change depending on who calls collide.
         // After -2 * impulse plus or minus can be used. It's a quadratic equation.
-        float newVelocityMagnitude = -2 * impulse + sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
+        float newVelocityMagnitude = -2 * impulse - sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
         // So we must halve it after we're done.
         newVelocityMagnitude /= 2;
         incidentVector.setMag(newVelocityMagnitude);
@@ -1316,7 +1351,7 @@ class SelectionManager {
     public void pushAllObjectsFromCamera() {
         for (Selection selection : selectedParticles) {
             Particle object = selection.getParticle();
-            object.applyForce(cam.position, object.mass * 2);
+            object.applyForce(cam.position, object.mass);
         }
     }
 
@@ -1865,12 +1900,18 @@ class UIManager {
         }
     }
 
-    public void checkClickForButtons() {
+    public boolean checkClickForButtons() {
         PVector mouse = new PVector(mouseX, mouseY);
 
         for (ButtonUI button : buttons) {
-            if (button.checkIntersectionWithPoint(mouse)) button.click();
+            if (button.checkIntersectionWithPoint(mouse)) {
+                button.click();
+                return true;
+            }
         }
+        
+        // Pass an interruption.
+        return false;
     }
 
     public boolean checkForFocus() {
@@ -1884,13 +1925,13 @@ class UIManager {
         return false;
     }
 }
-  public void settings() {  size(1280, 720, P3D); }
-  static public void main(String[] passedArgs) {
-    String[] appletArgs = new String[] { "Nanobuilder" };
-    if (passedArgs != null) {
-      PApplet.main(concat(appletArgs, passedArgs));
-    } else {
-      PApplet.main(appletArgs);
+    public void settings() {  size(1280, 720, P3D); }
+    static public void main(String[] passedArgs) {
+        String[] appletArgs = new String[] { "Nanobuilder" };
+        if (passedArgs != null) {
+          PApplet.main(concat(appletArgs, passedArgs));
+        } else {
+          PApplet.main(appletArgs);
+        }
     }
-  }
 }

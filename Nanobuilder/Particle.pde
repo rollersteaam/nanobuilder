@@ -151,8 +151,15 @@ class Particle {
             // float comparedRadius = (r > particle.r) ? r : particle.r;
             if (particle == this)
                 continue;
+            // Atoms are "abstract" but simplified collisions should still allow
+            // atom and particle collisions, e.g. if the target particle doesn't belong to an atom.
+            if (particle.parent != null || particle.parent == this || parent == particle)
+                continue;
 
-            if (PVector.dist(pos, particle.pos) <= r * 2) {
+            // if (PVector.dist(pos, particle.pos) <= r * 2) {
+            //     collide(particle);
+            // }
+            if (PVector.dist(pos, particle.pos) <= (r + particle.r)) {
                 collide(particle);
             }
         }
@@ -172,16 +179,22 @@ class Particle {
         PVector incidentVector = PVector.sub(pos, particle.pos);
         // Impulse = change in momentum
         // p = m1v1 - m2v2
-        float impulse = mass * velocity.mag() - particle.mass * particle.velocity.mag();
+        float impulse = mass * (velocity.mag()/100) - particle.mass * (particle.velocity.mag() / 100);
         // Initial kinetic energy
         // E = 1/2*m1*v1^2 + 1/2*m2*v2^2
-        float energy = 1/2 * mass * pow(velocity.mag(), 2) + 1/2 * particle.mass * pow(particle.velocity.mag(), 2);
+        float energy = 1/2 * mass * pow((velocity.mag()/100), 2) + 1/2 * particle.mass * pow((particle.velocity.mag() / 100), 2);
         // This new velocity magnitude should change depending on who calls collide.
         // After -2 * impulse plus or minus can be used. It's a quadratic equation.
-        float newVelocityMagnitude = -2 * impulse + sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
+        float newVelocityMagnitude = -2 * impulse - sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
         // So we must halve it after we're done.
         newVelocityMagnitude /= 2;
+        // We scale forces down by 
+        // newVelocityMagnitude /= 100;
+        println(newVelocityMagnitude);
         incidentVector.setMag(newVelocityMagnitude);
+        // If resultant velocity direction is negative, flip the direction.
+        if (newVelocityMagnitude < 0) incidentVector.mult(-1);
+        // particle.velocity = incidentVector;
         particle.velocity.add(incidentVector);
         // And now attempt to cancel any attempts to process the collision a second time.
     }

@@ -59,7 +59,7 @@ void setup() {
     //     new Atom();
     // }
 
-    new Atom(50);
+    new Atom(13);
 
     // new Atom(22);
     // new Electron(150, 150, 150, new Proton(0, 0, 0));

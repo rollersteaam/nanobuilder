@@ -52,11 +52,14 @@ class SelectionManager {
     }
 
     public Particle getObjectFromSelection() {
-        if (selectedParticles.size() == 1)
+        int selSize = selectedParticles.size();
+        if (selSize == 0) return null;
+
+        if (selSize == 1)
             return selectedParticles.get(0).getParticle();
         else
             // Could improve this functionality with some basic distance checking
-            return selectedParticles.get((int) random(0, selectedParticles.size() - 1)).getParticle();
+            return selectedParticles.get((int) random(0, selSize - 1)).getParticle();
     }
 
     public boolean select(Particle particle) {

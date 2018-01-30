@@ -1,7 +1,5 @@
 class ContextMenu extends UIElement {
     RectangleUI mainPanel;
-    ButtonUI testButton;
-    TextUI testText;
 
     Runnable createAtomAtCamera = new Runnable() {
         public void run() {
@@ -43,6 +41,26 @@ class ContextMenu extends UIElement {
         }
     };
 
+    Runnable insertElectronAtom = new Runnable() {
+        public void run() {
+            Particle object = selectionManager.getObjectFromSelection();
+            if (!(object instanceof Atom)) return;
+            
+            ((Atom) object).addElectron();
+            hide();
+        }
+    };
+
+    Runnable removeElectronAtom = new Runnable() {
+        public void run() {
+            Particle object = selectionManager.getObjectFromSelection();
+            if (!(object instanceof Atom)) return;
+
+            ((Atom) object).removeElectron();
+            hide();
+        }
+    };
+
     ContextMenu(float x, float y, float w, float h, color colour) {
         super(x, y, w, h, colour);
 
@@ -52,15 +70,15 @@ class ContextMenu extends UIElement {
         mainPanel = uiFactory.createRect(1, 1, w, h, colour);
         appendChild(mainPanel);
 
-        testButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0), createAtomAtCamera);
-        testText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Add Atom");
-        testButton.appendChild(testText);
-        appendChild(testButton);
+        UIElement addAtomButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0), createAtomAtCamera);
+        UIElement addAtomText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Add Atom");
+        addAtomButton.appendChild(addAtomText);
+        appendChild(addAtomButton);
 
-        UIElement testButton2 = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0), deleteItemsInSelection);
-        UIElement testText2 = uiFactory.createText(16, 8, w - 12, 38, color(70), "Delete");
-        testButton2.appendChild(testText2);
-        appendChild(testButton2);
+        UIElement deleteSelectionButton = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0), deleteItemsInSelection);
+        UIElement deleteSelectionText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Delete");
+        deleteSelectionButton.appendChild(deleteSelectionText);
+        appendChild(deleteSelectionButton);
 
         UIElement paint = uiFactory.createButton(5, 5 + 40 + 40 + 4 + 4, w - 8, 40, color(0, 255, 0), paintAtom);
         UIElement paintText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Paint Red");
@@ -76,6 +94,16 @@ class ContextMenu extends UIElement {
         UIElement pushText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Push");
         push.appendChild(pushText);
         appendChild(push);
+
+        UIElement insertElectron = uiFactory.createButton(5, 226, w - 8, 40, color(0, 0, 255), insertElectronAtom);
+        UIElement insertElectronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Insert Electron");
+        insertElectron.appendChild(insertElectronText);
+        appendChild(insertElectron);
+
+        UIElement removeElectron = uiFactory.createButton(5, 271, w - 8, 40, color(0, 0, 255), removeElectronAtom);
+        UIElement removeElectronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Remove Electron");
+        removeElectron.appendChild(removeElectronText);
+        appendChild(removeElectron);
         
         // UI elements start active by default, hiding when construction is finished is standard practice for menus.
         hide();

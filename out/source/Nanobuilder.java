@@ -84,7 +84,7 @@ public void setup() {
     //     new Atom();
     // }
 
-    new Atom(50);
+    new Atom(13);
 
     // new Atom(22);
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
@@ -303,6 +303,7 @@ class Atom extends Particle {
     ArrayList<Neutron> listNeutrons = new ArrayList<Neutron>();
 
     ArrayList<ElectronShell> shells = new ArrayList<ElectronShell>();
+    float orbitDistance;
 
     Atom(float x, float y, float z, int electrons) {
         super(x, y, z, AtomHelper.calculateNumberOfShells(electrons) * 200);
@@ -311,10 +312,10 @@ class Atom extends Particle {
         children.add(core);
 
         // An atom always has one shell, or it's not an atom.
-        shells.add(new ElectronShell(2));
+        shells.add(new ElectronShell(2, 1, orbitDistance));
         
         for (int i = 0; i < (AtomHelper.calculateNumberOfShells(electrons) - 1); i++) {
-            shells.add(new ElectronShell(8));
+            shells.add(new ElectronShell(8, i + 2, orbitDistance));
         }
 
         int remainingElectrons = electrons;
@@ -329,7 +330,7 @@ class Atom extends Particle {
                 Passing in the index + 1 just means the electron is projected at the
                 correct distance based on the shell's 'radius'.
                 */
-                if (!shells.get(i).addElectron(i + 1))
+                if (!shells.get(i).addElectron())
                     break;
                 else
                     remainingElectrons--;
@@ -395,6 +396,9 @@ class Atom extends Particle {
     private class ElectronShell {
         private ArrayList<Electron> contents = new ArrayList<Electron>();
         private int max;
+        private int shellNumber;
+        // Orbit distance is passed in from a property in atoms during shell construction
+        private float orbitDistance;
         // TODO: Find a way to declare this statically?
         /*
         An array of standardised vectors that can be added onto
@@ -402,27 +406,117 @@ class Atom extends Particle {
         around the atom.
         */
         private final PVector[] projectionVertices = new PVector[] {
-            new PVector(-100, 100, 0).normalize(),
-            new PVector(0, 100, 0).normalize(),
-            new PVector(100, 100, 0).normalize(),
-            new PVector(100, 0, 0).normalize(),
-            new PVector(100, -100, 0).normalize(),
-            new PVector(0, -100, 0).normalize(),
-            new PVector(-100, -100, 0).normalize(),
-            new PVector(-100, 0, 0).normalize()
+            new PVector(-100, 100, 0),
+            new PVector(0, 100, 0),
+            new PVector(100, 100, 0),
+            new PVector(100, 0, 0),
+            new PVector(100, -100, 0),
+            new PVector(0, -100, 0),
+            new PVector(-100, -100, 0),
+            new PVector(-100, 0, 0)
         };
+        // private final PVector[] projectionVertices = new PVector[] {
+        //     new PVector(-100, 100, 0).normalize(),
+        //     new PVector(0, 100, 0).normalize(),
+        //     new PVector(100, 100, 0).normalize(),
+        //     new PVector(100, 0, 0).normalize(),
+        //     new PVector(100, -100, 0).normalize(),
+        //     new PVector(0, -100, 0).normalize(),
+        //     new PVector(-100, -100, 0).normalize(),
+        //     new PVector(-100, 0, 0).normalize()
+        // };
 
-        ElectronShell(int max) {
+        ElectronShell(int max, int shellNumber, float orbitDistance) {
             this.max = max;
+            this.shellNumber = shellNumber;
+            this.orbitDistance = orbitDistance;
         }
 
         public int getSize() {
             return contents.size();
         }
 
-        // TODO: Store the shell number as an individual field for shells?
-        public boolean addElectron(int shellNumber) {
-            // This shouldn't happen, but for safety...
+        // void determinePositionAdjustment(float number) {
+        //     int numberValue = (int) number/4;
+        //     int numberRoundedDown = floor(number/4);
+        //     int numberOnEdge = numberRoundedDown;
+        //     if (numberRoundedDown < numberValue) {
+        //         numberOnEdge += 1;
+        //     }
+
+        //     return 200/numberOnEdge;
+        // }
+
+        // Edge ENUMS
+        // Should have same level of accessibility to the function(s) that use them.
+        static final int TOP_EDGE = 1;
+        static final int RIGHT_EDGE = 2;
+        static final int BOTTOM_EDGE = 3;
+        static final int LEFT_EDGE = 4;
+
+        public PVector calculatePositionAlongEdge(int edge, float number, float maxEdgeNumber) {
+            PVector edgePosition;
+            number += 1;
+            maxEdgeNumber += 1;
+            println("---");
+            println(number);
+            println(maxEdgeNumber);
+            println((number/maxEdgeNumber) * 200f);
+            if (edge == TOP_EDGE) {
+                edgePosition = projectionVertices[0].copy();
+                edgePosition.x += (number/maxEdgeNumber) * 200f;
+            } else if (edge == RIGHT_EDGE) {
+                edgePosition = projectionVertices[2].copy();
+                edgePosition.y += (number/maxEdgeNumber) * 200f;
+            } else if (edge == BOTTOM_EDGE) {
+                edgePosition = projectionVertices[4].copy();
+                edgePosition.x -= (number/maxEdgeNumber) * 200f;
+            } else if (edge == LEFT_EDGE) {
+                edgePosition = projectionVertices[6].copy();
+                edgePosition.y -= (number/maxEdgeNumber) * 200f;
+            } else throw new IllegalArgumentException("Provided bad edge number as argument (< 0 or > 4).");
+            return edgePosition.normalize();
+        }
+
+        public PVector calculateElectronProjectionVector(int iterNo, int amountOfElectrons, int surplusAmount) {
+            if (iterNo >= amountOfElectrons) throw new IllegalArgumentException("Iteration number was illegally manipulated.");
+            float edgeBreak = amountOfElectrons / 4f;
+            println("== RIPTIDE ==");
+            println(iterNo);
+            println(amountOfElectrons);
+            println(surplusAmount);
+            println(edgeBreak);
+            println("==");
+            if (iterNo <= edgeBreak) {
+                // Edge 1
+                if (surplusAmount > 0)
+                    return calculatePositionAlongEdge(TOP_EDGE, iterNo, floor(edgeBreak) + 1);
+                else
+                    return calculatePositionAlongEdge(TOP_EDGE, iterNo, floor(edgeBreak));
+            } else if (iterNo >= edgeBreak && iterNo <= edgeBreak * 2) {
+                // Edge 2
+                if (surplusAmount > 1)
+                    return calculatePositionAlongEdge(RIGHT_EDGE, iterNo, floor(edgeBreak) + 1);
+                else
+                    return calculatePositionAlongEdge(RIGHT_EDGE, iterNo, floor(edgeBreak));
+            } else if (iterNo >= edgeBreak * 2 && iterNo <= edgeBreak * 3) {
+                // Edge 3
+                if (surplusAmount > 2)
+                    return calculatePositionAlongEdge(BOTTOM_EDGE, iterNo, floor(edgeBreak) + 1);
+                else
+                    return calculatePositionAlongEdge(BOTTOM_EDGE, iterNo, floor(edgeBreak));
+            } else if (iterNo >= edgeBreak * 3) {
+                // Edge 4
+                /*
+                We don't provide a +1 to the maximum along edge because you cannot have >3 surplus,
+                which would mathematically result in a normal rectangular distribution anyway.
+                */
+                return calculatePositionAlongEdge(LEFT_EDGE, iterNo, floor(edgeBreak));
+            } else throw new IllegalArgumentException("Iteration number was illegally manipulated. " + iterNo + " " + amountOfElectrons + " " + edgeBreak);
+        }
+
+        public boolean addElectron() {
+            // This will probably only be called when a new shell needs creating, but SRP means it's implemented here.
             if (contents.size() == max) return false;
 
             // Initial position is not important, it will be changed immediately.
@@ -430,20 +524,24 @@ class Atom extends Particle {
             children.add(newElectron);
             contents.add(newElectron);
 
-            int availablePosition = 0;
-            for (Electron electron : contents) {
+            int amountOfElectrons = contents.size();
+            // Surplus electrons represent the number of electrons that can't be "divided" along the edges of a rectangle...
+            int surplusElectrons = (int) (( (amountOfElectrons / 4f) - floor(amountOfElectrons / 4f) ) / 0.25f);
+            println("Your surplus for this trip evening is: " + surplusElectrons);
+
+            for (int i = 0; i < contents.size(); i++) {
+                Electron electron = contents.get(i);
+
                 PVector newPosition;
 
                 if (max == 2) {
-                    if (availablePosition == 0)
-                        newPosition = projectionVertices[0].copy().setMag(200);
+                    if (i == 0)
+                        newPosition = projectionVertices[0].copy().setMag(orbitDistance + 200);
                     else
-                        newPosition = projectionVertices[4].copy().setMag(200);
+                        newPosition = projectionVertices[4].copy().setMag(orbitDistance + 200);
                 } else {
-                    newPosition = projectionVertices[availablePosition].copy().setMag(200 * shellNumber);
+                    newPosition = calculateElectronProjectionVector(i, amountOfElectrons, surplusElectrons).setMag(orbitDistance + 200 * shellNumber);
                 }
-
-                availablePosition++;
 
                 electron.pos = PVector.add(pos, newPosition);
                 electron.setInitialCircularVelocityFromForce(core, core.calculateCoulombsLawForceOn(electron));
@@ -472,10 +570,10 @@ class Atom extends Particle {
         int numberOfShells = shells.size();
         ElectronShell lastShell = shells.get(numberOfShells - 1);
 
-        if (!lastShell.addElectron(numberOfShells)) {
-            ElectronShell newShell = new ElectronShell(8);
+        if (!lastShell.addElectron()) {
+            ElectronShell newShell = new ElectronShell(8, numberOfShells + 1, orbitDistance);
             shells.add(newShell);
-            newShell.addElectron(numberOfShells + 1);
+            newShell.addElectron();
         }
     }
 
@@ -499,7 +597,7 @@ class Atom extends Particle {
     to know
     */
     private void calculateShouldParticlesDraw() {
-        if (PVector.dist(cam.position, pos) > (r * 2)) {
+        if (PVector.dist(cam.position, pos) > (r * 2) + 1000) {
             shouldParticlesDraw = false;
         } else {
             shouldParticlesDraw = true;
@@ -628,8 +726,6 @@ class Camera extends QueasyCam {
 }
 class ContextMenu extends UIElement {
     RectangleUI mainPanel;
-    ButtonUI testButton;
-    TextUI testText;
 
     Runnable createAtomAtCamera = new Runnable() {
         public void run() {
@@ -671,6 +767,26 @@ class ContextMenu extends UIElement {
         }
     };
 
+    Runnable insertElectronAtom = new Runnable() {
+        public void run() {
+            Particle object = selectionManager.getObjectFromSelection();
+            if (!(object instanceof Atom)) return;
+            
+            ((Atom) object).addElectron();
+            hide();
+        }
+    };
+
+    Runnable removeElectronAtom = new Runnable() {
+        public void run() {
+            Particle object = selectionManager.getObjectFromSelection();
+            if (!(object instanceof Atom)) return;
+
+            ((Atom) object).removeElectron();
+            hide();
+        }
+    };
+
     ContextMenu(float x, float y, float w, float h, int colour) {
         super(x, y, w, h, colour);
 
@@ -680,15 +796,15 @@ class ContextMenu extends UIElement {
         mainPanel = uiFactory.createRect(1, 1, w, h, colour);
         appendChild(mainPanel);
 
-        testButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0), createAtomAtCamera);
-        testText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Add Atom");
-        testButton.appendChild(testText);
-        appendChild(testButton);
+        UIElement addAtomButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0), createAtomAtCamera);
+        UIElement addAtomText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Add Atom");
+        addAtomButton.appendChild(addAtomText);
+        appendChild(addAtomButton);
 
-        UIElement testButton2 = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0), deleteItemsInSelection);
-        UIElement testText2 = uiFactory.createText(16, 8, w - 12, 38, color(70), "Delete");
-        testButton2.appendChild(testText2);
-        appendChild(testButton2);
+        UIElement deleteSelectionButton = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0), deleteItemsInSelection);
+        UIElement deleteSelectionText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Delete");
+        deleteSelectionButton.appendChild(deleteSelectionText);
+        appendChild(deleteSelectionButton);
 
         UIElement paint = uiFactory.createButton(5, 5 + 40 + 40 + 4 + 4, w - 8, 40, color(0, 255, 0), paintAtom);
         UIElement paintText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Paint Red");
@@ -704,6 +820,16 @@ class ContextMenu extends UIElement {
         UIElement pushText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Push");
         push.appendChild(pushText);
         appendChild(push);
+
+        UIElement insertElectron = uiFactory.createButton(5, 226, w - 8, 40, color(0, 0, 255), insertElectronAtom);
+        UIElement insertElectronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Insert Electron");
+        insertElectron.appendChild(insertElectronText);
+        appendChild(insertElectron);
+
+        UIElement removeElectron = uiFactory.createButton(5, 271, w - 8, 40, color(0, 0, 255), removeElectronAtom);
+        UIElement removeElectronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Remove Electron");
+        removeElectron.appendChild(removeElectronText);
+        appendChild(removeElectron);
         
         // UI elements start active by default, hiding when construction is finished is standard practice for menus.
         hide();
@@ -1051,8 +1177,15 @@ class Particle {
             // float comparedRadius = (r > particle.r) ? r : particle.r;
             if (particle == this)
                 continue;
+            // Atoms are "abstract" but simplified collisions should still allow
+            // atom and particle collisions, e.g. if the target particle doesn't belong to an atom.
+            if (particle.parent != null || particle.parent == this || parent == particle)
+                continue;
 
-            if (PVector.dist(pos, particle.pos) <= r * 2) {
+            // if (PVector.dist(pos, particle.pos) <= r * 2) {
+            //     collide(particle);
+            // }
+            if (PVector.dist(pos, particle.pos) <= (r + particle.r)) {
                 collide(particle);
             }
         }
@@ -1072,16 +1205,22 @@ class Particle {
         PVector incidentVector = PVector.sub(pos, particle.pos);
         // Impulse = change in momentum
         // p = m1v1 - m2v2
-        float impulse = mass * velocity.mag() - particle.mass * particle.velocity.mag();
+        float impulse = mass * (velocity.mag()/100) - particle.mass * (particle.velocity.mag() / 100);
         // Initial kinetic energy
         // E = 1/2*m1*v1^2 + 1/2*m2*v2^2
-        float energy = 1/2 * mass * pow(velocity.mag(), 2) + 1/2 * particle.mass * pow(particle.velocity.mag(), 2);
+        float energy = 1/2 * mass * pow((velocity.mag()/100), 2) + 1/2 * particle.mass * pow((particle.velocity.mag() / 100), 2);
         // This new velocity magnitude should change depending on who calls collide.
         // After -2 * impulse plus or minus can be used. It's a quadratic equation.
         float newVelocityMagnitude = -2 * impulse - sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
         // So we must halve it after we're done.
         newVelocityMagnitude /= 2;
+        // We scale forces down by 
+        // newVelocityMagnitude /= 100;
+        println(newVelocityMagnitude);
         incidentVector.setMag(newVelocityMagnitude);
+        // If resultant velocity direction is negative, flip the direction.
+        if (newVelocityMagnitude < 0) incidentVector.mult(-1);
+        // particle.velocity = incidentVector;
         particle.velocity.add(incidentVector);
         // And now attempt to cancel any attempts to process the collision a second time.
     }
@@ -1356,11 +1495,14 @@ class SelectionManager {
     }
 
     public Particle getObjectFromSelection() {
-        if (selectedParticles.size() == 1)
+        int selSize = selectedParticles.size();
+        if (selSize == 0) return null;
+
+        if (selSize == 1)
             return selectedParticles.get(0).getParticle();
         else
             // Could improve this functionality with some basic distance checking
-            return selectedParticles.get((int) random(0, selectedParticles.size() - 1)).getParticle();
+            return selectedParticles.get((int) random(0, selSize - 1)).getParticle();
     }
 
     public boolean select(Particle particle) {
@@ -1858,7 +2000,7 @@ class UIManager {
     private ContextMenu contextMenu;
 
     public void draw() {
-        if (contextMenu == null) contextMenu = new ContextMenu(0, 0, 180, 224, color(230));
+        if (contextMenu == null) contextMenu = new ContextMenu(0, 0, 180, 224 + 90, color(230));
 
         for (UIElement element : screenElements) {
             if (element.getActive()) element.display();

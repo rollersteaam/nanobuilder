@@ -59,9 +59,8 @@ void setup() {
     //     new Atom();
     // }
 
-    new Atom(13);
-
-    // new Atom(22);
+    new Atom(22);
+    
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
     // for (int i = 0; i < 50; i++) {
         // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));
@@ -103,7 +102,7 @@ void draw() {
 
     pushStyle();
     // stroke(color(70, 70, 255));
-    // strokeWeight(8);
+// strokeWeight(8);
     // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
     // box(2000);
     fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));

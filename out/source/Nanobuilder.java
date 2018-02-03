@@ -84,9 +84,8 @@ public void setup() {
     //     new Atom();
     // }
 
-    new Atom(13);
-
-    // new Atom(22);
+    new Atom(22);
+    
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
     // for (int i = 0; i < 50; i++) {
         // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));
@@ -128,7 +127,7 @@ public void draw() {
 
     pushStyle();
     // stroke(color(70, 70, 255));
-    // strokeWeight(8);
+// strokeWeight(8);
     // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
     // box(2000);
     fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));
@@ -287,14 +286,7 @@ public void drawOriginGrid() {
         }
     } 
 }
-protected static class AtomHelper {
-    protected static int calculateNumberOfShells(int electrons) {
-        if (electrons == 0)
-            throw new IllegalStateException("An atom can't have 0 electrons.");
-        
-        return ceil((electrons - 2) / 8) + 1;
-    }
-}
+
 
 class Atom extends Particle {
     Proton core;
@@ -306,36 +298,19 @@ class Atom extends Particle {
     float orbitDistance;
 
     Atom(float x, float y, float z, int electrons) {
-        super(x, y, z, AtomHelper.calculateNumberOfShells(electrons) * 200);
+        super(x, y, z, 200);
         core = new Proton(x, y, z, this);
         listProtons.add(core);
         children.add(core);
 
-        // An atom always has one shell, or it's not an atom.
+        // An atom always has one shell, or it's not an atom and should throw an exception before this anyway.
         shells.add(new ElectronShell(2, 1, orbitDistance));
-        
-        for (int i = 0; i < (AtomHelper.calculateNumberOfShells(electrons) - 1); i++) {
-            shells.add(new ElectronShell(8, i + 2, orbitDistance));
+
+        for (int remainingElectrons = electrons; remainingElectrons > 0; remainingElectrons--) {
+            addElectron();
         }
 
-        int remainingElectrons = electrons;
-        // For every shell the atom has...
-        for (int i = 0; i < shells.size(); i++) {
-            // Begin to add all electrons needed to each shell.
-            while (remainingElectrons > 0) {
-                /*
-                For every shell, add an electron, passing in i, the shell iterator.
-                This shows the size of the list, and so the position if we + 1.
-
-                Passing in the index + 1 just means the electron is projected at the
-                correct distance based on the shell's 'radius'.
-                */
-                if (!shells.get(i).addElectron())
-                    break;
-                else
-                    remainingElectrons--;
-            }
-        }
+        recalculateRadius();
     }
     
     Atom(float x, float y, float z) {
@@ -358,6 +333,11 @@ class Atom extends Particle {
 
     Atom() {
         this(round(random(1, 50)));
+    }
+
+    public void recalculateRadius() {
+        r = shells.size() * 200;
+        shape.scale(shells.size());
     }
     
     @Override
@@ -399,32 +379,6 @@ class Atom extends Particle {
         private int shellNumber;
         // Orbit distance is passed in from a property in atoms during shell construction
         private float orbitDistance;
-        // TODO: Find a way to declare this statically?
-        /*
-        An array of standardised vectors that can be added onto
-        the atom's 'core' position and used to project electrons in a circle
-        around the atom.
-        */
-        private final PVector[] projectionVertices = new PVector[] {
-            new PVector(-100, 100, 0),
-            new PVector(0, 100, 0),
-            new PVector(100, 100, 0),
-            new PVector(100, 0, 0),
-            new PVector(100, -100, 0),
-            new PVector(0, -100, 0),
-            new PVector(-100, -100, 0),
-            new PVector(-100, 0, 0)
-        };
-        // private final PVector[] projectionVertices = new PVector[] {
-        //     new PVector(-100, 100, 0).normalize(),
-        //     new PVector(0, 100, 0).normalize(),
-        //     new PVector(100, 100, 0).normalize(),
-        //     new PVector(100, 0, 0).normalize(),
-        //     new PVector(100, -100, 0).normalize(),
-        //     new PVector(0, -100, 0).normalize(),
-        //     new PVector(-100, -100, 0).normalize(),
-        //     new PVector(-100, 0, 0).normalize()
-        // };
 
         ElectronShell(int max, int shellNumber, float orbitDistance) {
             this.max = max;
@@ -436,87 +390,8 @@ class Atom extends Particle {
             return contents.size();
         }
 
-        // void determinePositionAdjustment(float number) {
-        //     int numberValue = (int) number/4;
-        //     int numberRoundedDown = floor(number/4);
-        //     int numberOnEdge = numberRoundedDown;
-        //     if (numberRoundedDown < numberValue) {
-        //         numberOnEdge += 1;
-        //     }
-
-        //     return 200/numberOnEdge;
-        // }
-
-        // Edge ENUMS
-        // Should have same level of accessibility to the function(s) that use them.
-        static final int TOP_EDGE = 1;
-        static final int RIGHT_EDGE = 2;
-        static final int BOTTOM_EDGE = 3;
-        static final int LEFT_EDGE = 4;
-
-        public PVector calculatePositionAlongEdge(int edge, float number, float maxEdgeNumber) {
-            PVector edgePosition;
-            number += 1;
-            maxEdgeNumber += 1;
-            println("---");
-            println(number);
-            println(maxEdgeNumber);
-            println((number/maxEdgeNumber) * 200f);
-            if (edge == TOP_EDGE) {
-                edgePosition = projectionVertices[0].copy();
-                edgePosition.x += (number/maxEdgeNumber) * 200f;
-            } else if (edge == RIGHT_EDGE) {
-                edgePosition = projectionVertices[2].copy();
-                edgePosition.y += (number/maxEdgeNumber) * 200f;
-            } else if (edge == BOTTOM_EDGE) {
-                edgePosition = projectionVertices[4].copy();
-                edgePosition.x -= (number/maxEdgeNumber) * 200f;
-            } else if (edge == LEFT_EDGE) {
-                edgePosition = projectionVertices[6].copy();
-                edgePosition.y -= (number/maxEdgeNumber) * 200f;
-            } else throw new IllegalArgumentException("Provided bad edge number as argument (< 0 or > 4).");
-            return edgePosition.normalize();
-        }
-
-        public PVector calculateElectronProjectionVector(int iterNo, int amountOfElectrons, int surplusAmount) {
-            if (iterNo >= amountOfElectrons) throw new IllegalArgumentException("Iteration number was illegally manipulated.");
-            float edgeBreak = amountOfElectrons / 4f;
-            println("== RIPTIDE ==");
-            println(iterNo);
-            println(amountOfElectrons);
-            println(surplusAmount);
-            println(edgeBreak);
-            println("==");
-            if (iterNo <= edgeBreak) {
-                // Edge 1
-                if (surplusAmount > 0)
-                    return calculatePositionAlongEdge(TOP_EDGE, iterNo, floor(edgeBreak) + 1);
-                else
-                    return calculatePositionAlongEdge(TOP_EDGE, iterNo, floor(edgeBreak));
-            } else if (iterNo >= edgeBreak && iterNo <= edgeBreak * 2) {
-                // Edge 2
-                if (surplusAmount > 1)
-                    return calculatePositionAlongEdge(RIGHT_EDGE, iterNo, floor(edgeBreak) + 1);
-                else
-                    return calculatePositionAlongEdge(RIGHT_EDGE, iterNo, floor(edgeBreak));
-            } else if (iterNo >= edgeBreak * 2 && iterNo <= edgeBreak * 3) {
-                // Edge 3
-                if (surplusAmount > 2)
-                    return calculatePositionAlongEdge(BOTTOM_EDGE, iterNo, floor(edgeBreak) + 1);
-                else
-                    return calculatePositionAlongEdge(BOTTOM_EDGE, iterNo, floor(edgeBreak));
-            } else if (iterNo >= edgeBreak * 3) {
-                // Edge 4
-                /*
-                We don't provide a +1 to the maximum along edge because you cannot have >3 surplus,
-                which would mathematically result in a normal rectangular distribution anyway.
-                */
-                return calculatePositionAlongEdge(LEFT_EDGE, iterNo, floor(edgeBreak));
-            } else throw new IllegalArgumentException("Iteration number was illegally manipulated. " + iterNo + " " + amountOfElectrons + " " + edgeBreak);
-        }
-
         public boolean addElectron() {
-            // This will probably only be called when a new shell needs creating, but SRP means it's implemented here.
+            // This will probably only occur when a new shell needs creating, but SRP means it's implemented here.
             if (contents.size() == max) return false;
 
             // Initial position is not important, it will be changed immediately.
@@ -524,26 +399,19 @@ class Atom extends Particle {
             children.add(newElectron);
             contents.add(newElectron);
 
-            int amountOfElectrons = contents.size();
-            // Surplus electrons represent the number of electrons that can't be "divided" along the edges of a rectangle...
-            int surplusElectrons = (int) (( (amountOfElectrons / 4f) - floor(amountOfElectrons / 4f) ) / 0.25f);
-            println("Your surplus for this trip evening is: " + surplusElectrons);
+            int totalElectrons = contents.size();
+            float angularSeperation = (2 * PI) / totalElectrons;
 
-            for (int i = 0; i < contents.size(); i++) {
+            for (int i = 0; i < totalElectrons; i++) {
                 Electron electron = contents.get(i);
 
-                PVector newPosition;
+                float angle = angularSeperation * i;
 
-                if (max == 2) {
-                    if (i == 0)
-                        newPosition = projectionVertices[0].copy().setMag(orbitDistance + 200);
-                    else
-                        newPosition = projectionVertices[4].copy().setMag(orbitDistance + 200);
-                } else {
-                    newPosition = calculateElectronProjectionVector(i, amountOfElectrons, surplusElectrons).setMag(orbitDistance + 200 * shellNumber);
-                }
-
-                electron.pos = PVector.add(pos, newPosition);
+                if (shellNumber % 2 == 1)
+                    electron.pos = PVector.add(pos, new PVector(sin(angle), cos(angle), 0).setMag(orbitDistance + 200 * shellNumber) );
+                else
+                    electron.pos = PVector.add(pos, new PVector(sin(angle), 0, cos(angle)).setMag(orbitDistance + 200 * shellNumber) );
+                    
                 electron.setInitialCircularVelocityFromForce(core, core.calculateCoulombsLawForceOn(electron));
             }
 
@@ -571,7 +439,7 @@ class Atom extends Particle {
         ElectronShell lastShell = shells.get(numberOfShells - 1);
 
         if (!lastShell.addElectron()) {
-            ElectronShell newShell = new ElectronShell(8, numberOfShells + 1, orbitDistance);
+            ElectronShell newShell = new ElectronShell((int) (2 * pow(numberOfShells + 1, 2)), numberOfShells + 1, orbitDistance);
             shells.add(newShell);
             newShell.addElectron();
         }
@@ -579,7 +447,8 @@ class Atom extends Particle {
 
     public void removeElectron() {
         if (shells.size() == 0)
-            throw new IllegalStateException("An atom has no electron shells.");
+            println("Warning: Tried to remove an electron when there are no electron shells.");
+            // throw new IllegalStateException("An atom has no electron shells.");
             
         ElectronShell lastShell = shells.get(shells.size() - 1);
         lastShell.removeElectron();
@@ -883,21 +752,6 @@ class Electron extends Particle {
         );
     }
 
-    class TrailElement {
-        PVector position;
-        PShape shape;
-
-        TrailElement() {
-            position = pos.copy();
-
-            pushStyle();
-            fill(0);
-            shape = createShape(SPHERE, 10);
-            shape.setFill(color(0));
-            popStyle();
-        }
-    }
-
     private class Point {
         float x;
         float y;
@@ -939,7 +793,7 @@ class Electron extends Particle {
             dist = 1000;
         }
 
-        float trailSize = 60 + (60 * ( (dist/200) - 1 ));
+        float trailSize = 60 + (60 * ( (500/dist) - 1 ));
 
         Point lastPoint = null;
         int counter = 0;
@@ -994,7 +848,6 @@ class Electron extends Particle {
 
         Point point = new Point();
         trail.push(point);
-
     }
 }
 class Menu extends UIElement {
@@ -1068,6 +921,18 @@ class Particle {
     public void delete() {
         shape = null;
         particleList.remove(this);
+
+        // TODO: Change this direct access to method based access.
+        if (parent != null) {
+            parent.children.remove(this);
+            parent = null;
+        }
+
+        for (Particle child : children) {
+            child.parent = null;
+        }
+
+        children.clear();
     }
 
     public boolean select() {
@@ -1205,23 +1070,29 @@ class Particle {
         PVector incidentVector = PVector.sub(pos, particle.pos);
         // Impulse = change in momentum
         // p = m1v1 - m2v2
-        float impulse = mass * (velocity.mag()/100) - particle.mass * (particle.velocity.mag() / 100);
+        float impulse = mass * (velocity.mag()) - particle.mass * (particle.velocity.mag());
         // Initial kinetic energy
         // E = 1/2*m1*v1^2 + 1/2*m2*v2^2
-        float energy = 1/2 * mass * pow((velocity.mag()/100), 2) + 1/2 * particle.mass * pow((particle.velocity.mag() / 100), 2);
+        float energy = 1/2 * mass * pow((velocity.mag()), 2) + 1/2 * particle.mass * pow((particle.velocity.mag()), 2);
         // This new velocity magnitude should change depending on who calls collide.
         // After -2 * impulse plus or minus can be used. It's a quadratic equation.
         float newVelocityMagnitude = -2 * impulse - sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
         // So we must halve it after we're done.
         newVelocityMagnitude /= 2;
         // We scale forces down by 
-        // newVelocityMagnitude /= 100;
         println(newVelocityMagnitude);
         incidentVector.setMag(newVelocityMagnitude);
         // If resultant velocity direction is negative, flip the direction.
         if (newVelocityMagnitude < 0) incidentVector.mult(-1);
         // particle.velocity = incidentVector;
+        println("---" + newVelocityMagnitude + " - " + this);
+        println(particle.velocity.mag());
         particle.velocity.add(incidentVector);
+        println(particle.velocity.mag());
+        println();
+        println();
+        println();
+
         // And now attempt to cancel any attempts to process the collision a second time.
     }
 
@@ -1304,25 +1175,22 @@ class Particle {
     private static final int Z_DOMINANT = 2;
 
     public void setInitialCircularVelocityFromForce(Particle particle, float force) {
-        PVector diff = PVector.sub(pos, particle.pos).normalize();
+        PVector diff = PVector.sub(pos, particle.pos);
         PVector diffMag = new PVector(
             abs(diff.x),
             abs(diff.y),
             abs(diff.z)
         );
-        int magRecordCoordinate = -1;
-        float magRecord = 0;
-        if (diffMag.x < magRecord || magRecord == 0) {
-            magRecord = diffMag.x;
-            magRecordCoordinate = X_DOMINANT;
-        }
+        
+        int magRecordCoordinate = X_DOMINANT;
+        float magRecord = diffMag.x;
 
-        if (diffMag.y < magRecord) {
+        if (diffMag.y <= magRecord) {
             magRecord = diffMag.y;
             magRecordCoordinate = Y_DOMINANT;
         }
 
-        if (diffMag.z < magRecord) {
+        if (diffMag.z <= magRecord) {
             magRecord = diffMag.z;
             magRecordCoordinate = Z_DOMINANT;
         }

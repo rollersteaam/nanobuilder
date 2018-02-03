@@ -40,21 +40,6 @@ class Electron extends Particle {
         );
     }
 
-    class TrailElement {
-        PVector position;
-        PShape shape;
-
-        TrailElement() {
-            position = pos.copy();
-
-            pushStyle();
-            fill(0);
-            shape = createShape(SPHERE, 10);
-            shape.setFill(color(0));
-            popStyle();
-        }
-    }
-
     private class Point {
         float x;
         float y;
@@ -96,7 +81,7 @@ class Electron extends Particle {
             dist = 1000;
         }
 
-        float trailSize = 60 + (60 * ( (dist/200) - 1 ));
+        float trailSize = 60 + (60 * ( (500/dist) - 1 ));
 
         Point lastPoint = null;
         int counter = 0;
@@ -151,6 +136,5 @@ class Electron extends Particle {
 
         Point point = new Point();
         trail.push(point);
-
     }
 }

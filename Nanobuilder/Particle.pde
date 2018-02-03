@@ -42,6 +42,18 @@ class Particle {
     void delete() {
         shape = null;
         particleList.remove(this);
+
+        // TODO: Change this direct access to method based access.
+        if (parent != null) {
+            parent.children.remove(this);
+            parent = null;
+        }
+
+        for (Particle child : children) {
+            child.parent = null;
+        }
+
+        children.clear();
     }
 
     boolean select() {
@@ -179,23 +191,29 @@ class Particle {
         PVector incidentVector = PVector.sub(pos, particle.pos);
         // Impulse = change in momentum
         // p = m1v1 - m2v2
-        float impulse = mass * (velocity.mag()/100) - particle.mass * (particle.velocity.mag() / 100);
+        float impulse = mass * (velocity.mag()) - particle.mass * (particle.velocity.mag());
         // Initial kinetic energy
         // E = 1/2*m1*v1^2 + 1/2*m2*v2^2
-        float energy = 1/2 * mass * pow((velocity.mag()/100), 2) + 1/2 * particle.mass * pow((particle.velocity.mag() / 100), 2);
+        float energy = 1/2 * mass * pow((velocity.mag()), 2) + 1/2 * particle.mass * pow((particle.velocity.mag()), 2);
         // This new velocity magnitude should change depending on who calls collide.
         // After -2 * impulse plus or minus can be used. It's a quadratic equation.
         float newVelocityMagnitude = -2 * impulse - sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
         // So we must halve it after we're done.
         newVelocityMagnitude /= 2;
         // We scale forces down by 
-        // newVelocityMagnitude /= 100;
         println(newVelocityMagnitude);
         incidentVector.setMag(newVelocityMagnitude);
         // If resultant velocity direction is negative, flip the direction.
         if (newVelocityMagnitude < 0) incidentVector.mult(-1);
         // particle.velocity = incidentVector;
+        println("---" + newVelocityMagnitude + " - " + this);
+        println(particle.velocity.mag());
         particle.velocity.add(incidentVector);
+        println(particle.velocity.mag());
+        println();
+        println();
+        println();
+
         // And now attempt to cancel any attempts to process the collision a second time.
     }
 
@@ -278,25 +296,22 @@ class Particle {
     private static final int Z_DOMINANT = 2;
 
     public void setInitialCircularVelocityFromForce(Particle particle, float force) {
-        PVector diff = PVector.sub(pos, particle.pos).normalize();
+        PVector diff = PVector.sub(pos, particle.pos);
         PVector diffMag = new PVector(
             abs(diff.x),
             abs(diff.y),
             abs(diff.z)
         );
-        int magRecordCoordinate = -1;
-        float magRecord = 0;
-        if (diffMag.x < magRecord || magRecord == 0) {
-            magRecord = diffMag.x;
-            magRecordCoordinate = X_DOMINANT;
-        }
+        
+        int magRecordCoordinate = X_DOMINANT;
+        float magRecord = diffMag.x;
 
-        if (diffMag.y < magRecord) {
+        if (diffMag.y <= magRecord) {
             magRecord = diffMag.y;
             magRecordCoordinate = Y_DOMINANT;
         }
 
-        if (diffMag.z < magRecord) {
+        if (diffMag.z <= magRecord) {
             magRecord = diffMag.z;
             magRecordCoordinate = Z_DOMINANT;
         }

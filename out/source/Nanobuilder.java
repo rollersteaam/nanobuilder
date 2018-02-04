@@ -35,11 +35,12 @@ public class Nanobuilder extends PApplet {
 
 Camera cam;
 Robot robot;
+WorldManager worldManager;
 SelectionManager selectionManager;
 UIManager uiManager;
 UIFactory uiFactory;
 
-ArrayList<Particle> particleList = new ArrayList<Particle>();
+// ArrayList<Particle> particleList = new ArrayList<Particle>();
 
 /*
 MAIN FILE
@@ -70,6 +71,7 @@ public void setup() {
     float cameraZ = (height/2.0f) / tan(fov/2.0f);
     perspective(fov, PApplet.parseFloat(width)/PApplet.parseFloat(height), cameraZ/10.0f / 300, cameraZ*10.0f * 300);
     
+    worldManager = new WorldManager();
     selectionManager = new SelectionManager();
     uiManager = new UIManager();
     uiFactory = new UIFactory();
@@ -105,34 +107,46 @@ public void draw() {
     lights();
     noStroke();
 
-    float biggestDistance = 0;
+    worldManager.update();
 
-    for (int i = 0; i < particleList.size(); i++) {
-        Particle particle = particleList.get(i);
-        particle.evaluatePhysics();
-        particle.display();
+    // float biggestDistance = 0;
 
-        float dist = PVector.dist(particle.pos, new PVector(0, 0, 0));
+    // for (int i = 0; i < particleList.size(); i++) {
+    //     Particle particle = particleList.get(i);
+    //     particle.evaluatePhysics();
+    //     particle.display();
 
-        if ((dist > biggestDistance) || (biggestDistance == 0)) {
-            biggestDistance = dist;
-        }
-    }
+    //     float dist = PVector.dist(particle.pos, new PVector(0, 0, 0));
+
+    //     if ((dist > biggestDistance) || (biggestDistance == 0)) {
+    //         biggestDistance = dist;
+    //     }
+    // }
 
     // for (Particle particle : particleList) {
     // }
 
-    drawOriginArrows();
-    drawOriginGrid();
+    // drawOriginArrows();
+    // drawOriginGrid();
 
-    pushStyle();
-    // stroke(color(70, 70, 255));
-// strokeWeight(8);
-    // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
-    // box(2000);
-    fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));
-    box(20000);
-    popStyle();
+//     pushStyle();
+//     // stroke(color(70, 70, 255));
+// // strokeWeight(8);
+//     // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
+//     // box(2000);
+//     fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));
+//     box(20000);
+//     popStyle();
+
+    pushMatrix();
+    drawCylinder(8, 100, 500);
+    popMatrix();
+
+    pushMatrix();
+    rotateY(PI/2);
+    rotateX(PI/4);
+    drawCylinder(8, 100, 500);
+    popMatrix();
 
     /*
         2D drawing beyond here ONLY.
@@ -154,9 +168,37 @@ public void draw() {
     if (keys.containsKey(16) && keys.get(16)) cam.velocity.add(PVector.mult(cam.getUp(), cam.speed));
 }
 
+public void drawCylinder(int sides, int r, int h) {
+    float angle = 360 / sides;
+    float halfHeight = h/2;
+    beginShape();
+    for (int i = 0; i < sides; i++) {
+        float x = cos(radians(i * angle)) * r;
+        float y = sin(radians(i * angle)) * r;
+        vertex(x, y, -halfHeight);
+    }
+    endShape(CLOSE);
+    beginShape();
+    for (int i = 0; i < sides; i++) {
+        float x = cos(radians(i * angle)) * r;
+        float y = sin(radians(i * angle)) * r;
+        vertex(x, y, halfHeight);
+    }
+    endShape(CLOSE);
+    beginShape(TRIANGLE_STRIP);
+    for (int i = 0; i < sides + 1; i++) {
+        float x = cos(radians(i * angle)) * r;
+        float y = sin(radians(i * angle)) * r;
+        vertex(x, y, halfHeight);
+        vertex(x, y, -halfHeight);
+    }
+    endShape(CLOSE);
+}
+
 public void mousePressed(MouseEvent event) {
     // If selection agent's events have been triggered, then we are finished for this mouse event.
     if (mouseButton == LEFT) {
+        if (cam.fireAtom()) return;
         if (uiManager.checkForFocus()) return;
         if (selectionManager.mousePressed()) return;
     }
@@ -209,85 +251,6 @@ public void keyEvent(KeyEvent event){
             break;
     }
 }
-
-// Draws a lattice (structured cube) of particles.
-public void drawParticleLattice() {
-    for (int y = 0; y < 5; y++) {
-        for (int z = 0; z < 5; z++) {
-            for (int x = 0; x < 5; x++) {
-                new Particle(200 * x, 200 * y, 200 * z, 100); 
-            }
-        }
-    }   
-}
-
-// Draws arrows pointing out from the origin point of the scene.
-public void drawOriginArrows() {
-    pushStyle();
-    fill(color(0, 0, 255));
-    box(20, 20, 300);
-    
-    fill(color(0, 255, 0));
-    box(20, 300, 20);
-
-    fill(color(255, 0, 0));
-    box(300, 20, 20);
-    popStyle(); 
-}
-
-// Draws squares around an area on the origin point of the scene.
-public void drawOriginGrid() {
-    for (int y = 0; y < 5; y ++) {
-        for (int x = 0; x < 5; x ++) {
-            pushStyle();
-            pushMatrix();
-            rotateX(PI/2);
-            stroke(255, 180);
-            noFill();
-            rect(100 * x, 100 * y, 100, 100);
-            popMatrix();
-            popStyle();
-        }
-    }
-    for (int y = -5; y < 0; y ++) {
-        for (int x = 0; x < 5; x ++) {
-            pushStyle();
-            pushMatrix();
-            rotateX(PI/2);
-            stroke(255, 180);
-            noFill();
-            rect(100 * x, 100 * y, 100, 100);
-            popMatrix();
-            popStyle();
-        }
-    }
-    for (int y = 0; y < 5; y ++) {
-        for (int x = -5; x < 0; x ++) {
-            pushStyle();
-            pushMatrix();
-            rotateX(PI/2);
-            stroke(255, 180);
-            noFill();
-            rect(100 * x, 100 * y, 100, 100);
-            popMatrix();
-            popStyle();
-        }
-    }
-    for (int y = -5; y < 0; y ++) {
-        for (int x = -5; x < 0; x ++) {
-            pushStyle();
-            pushMatrix();
-            rotateX(PI/2);
-            stroke(255, 180);
-            noFill();
-            rect(100 * x, 100 * y, 100, 100);
-            popMatrix();
-            popStyle();
-        }
-    } 
-}
-
-
 class Atom extends Particle {
     Proton core;
     ArrayList<Proton> listProtons = new ArrayList<Proton>();
@@ -597,51 +560,56 @@ class Camera extends QueasyCam {
         else
             pilot();
     }
+
+    public boolean fireAtom() {
+        if (piloting) return false;
+
+        Atom newAtom = worldManager.createAtom();
+        newAtom.applyForce(cam.position, newAtom.mass);
+        return true;
+    }
 }
 class ContextMenu extends UIElement {
     RectangleUI mainPanel;
 
-    Runnable createAtomAtCamera = new Runnable() {
+    Runnable createAtom = new Runnable() {
         public void run() {
             selectionManager.cancel();
-            PVector fwd = cam.getForward();
-            Atom newAtom = new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 1);
-            selectionManager.select(newAtom);
+            selectionManager.select(worldManager.createAtom());
             hide();
         }
     };
 
-    Runnable createElectronAtCamera = new Runnable() {
+    Runnable createElectron = new Runnable() {
         public void run() {
-            PVector fwd = cam.getForward();
-            Electron newElectron = new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, null);
-            selectionManager.select(newElectron);
+            selectionManager.cancel();
+            selectionManager.select(worldManager.createElectron());
             hide();
         }
     };
 
-    Runnable deleteItemsInSelection = new Runnable() {
+    Runnable delete = new Runnable() {
         public void run() {
-            selectionManager.deleteItemsInSelection();
+            selectionManager.delete();
             hide();
         }
     };
 
-    Runnable paintAtom = new Runnable() {
+    Runnable paint = new Runnable() {
         public void run() {
-            selectionManager.paintParticles();
+            selectionManager.paint();
             hide();
         }
     };
 
-    Runnable pushAtom = new Runnable() {
+    Runnable push = new Runnable() {
         public void run() {
-            selectionManager.pushAllObjectsFromCamera();
+            selectionManager.push();
             hide();
         }
     };
 
-    Runnable insertElectronAtom = new Runnable() {
+    Runnable insertAtomElectron = new Runnable() {
         public void run() {
             Particle object = selectionManager.getObjectFromSelection();
             if (!(object instanceof Atom)) return;
@@ -651,7 +619,7 @@ class ContextMenu extends UIElement {
         }
     };
 
-    Runnable removeElectronAtom = new Runnable() {
+    Runnable removeAtomElectron = new Runnable() {
         public void run() {
             Particle object = selectionManager.getObjectFromSelection();
             if (!(object instanceof Atom)) return;
@@ -670,40 +638,40 @@ class ContextMenu extends UIElement {
         mainPanel = uiFactory.createRect(1, 1, w, h, colour);
         appendChild(mainPanel);
 
-        UIElement addAtomButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0), createAtomAtCamera);
-        UIElement addAtomText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Add Atom");
-        addAtomButton.appendChild(addAtomText);
-        appendChild(addAtomButton);
+        UIElement createAtomButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0), createAtom);
+        UIElement createAtomText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Create Atom");
+        createAtomButton.appendChild(createAtomText);
+        appendChild(createAtomButton);
 
-        UIElement deleteSelectionButton = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0), deleteItemsInSelection);
+        UIElement deleteSelectionButton = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0), delete);
         UIElement deleteSelectionText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Delete");
         deleteSelectionButton.appendChild(deleteSelectionText);
         appendChild(deleteSelectionButton);
 
-        UIElement paint = uiFactory.createButton(5, 5 + 40 + 40 + 4 + 4, w - 8, 40, color(0, 255, 0), paintAtom);
+        UIElement paintButton = uiFactory.createButton(5, 5 + 40 + 40 + 4 + 4, w - 8, 40, color(0, 255, 0), paint);
         UIElement paintText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Paint Red");
-        paint.appendChild(paintText);
-        appendChild(paint);
+        paintButton.appendChild(paintText);
+        appendChild(paintButton);
 
-        UIElement electron = uiFactory.createButton(5, 5 + 40 + 40 + 40 + 4 + 4 + 4, w - 8, 40, color(0, 0, 255), createElectronAtCamera);
-        UIElement electronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Create Electron");
-        electron.appendChild(electronText);
-        appendChild(electron);
+        UIElement createElectronButton = uiFactory.createButton(5, 5 + 40 + 40 + 40 + 4 + 4 + 4, w - 8, 40, color(0, 0, 255), createElectron);
+        UIElement createElectronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Create Electron");
+        createElectronButton.appendChild(createElectronText);
+        appendChild(createElectronButton);
 
-        UIElement push = uiFactory.createButton(5, 173 + 4 + 4, w - 8, 40, color(0, 0, 255), pushAtom);
+        UIElement pushButton = uiFactory.createButton(5, 173 + 4 + 4, w - 8, 40, color(0, 0, 255), push);
         UIElement pushText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Push");
-        push.appendChild(pushText);
-        appendChild(push);
+        pushButton.appendChild(pushText);
+        appendChild(pushButton);
 
-        UIElement insertElectron = uiFactory.createButton(5, 226, w - 8, 40, color(0, 0, 255), insertElectronAtom);
+        UIElement insertElectronButton = uiFactory.createButton(5, 226, w - 8, 40, color(0, 0, 255), insertAtomElectron);
         UIElement insertElectronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Insert Electron");
-        insertElectron.appendChild(insertElectronText);
-        appendChild(insertElectron);
+        insertElectronButton.appendChild(insertElectronText);
+        appendChild(insertElectronButton);
 
-        UIElement removeElectron = uiFactory.createButton(5, 271, w - 8, 40, color(0, 0, 255), removeElectronAtom);
+        UIElement removeElectronButton = uiFactory.createButton(5, 271, w - 8, 40, color(0, 0, 255), removeAtomElectron);
         UIElement removeElectronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Remove Electron");
-        removeElectron.appendChild(removeElectronText);
-        appendChild(removeElectron);
+        removeElectronButton.appendChild(removeElectronText);
+        appendChild(removeElectronButton);
         
         // UI elements start active by default, hiding when construction is finished is standard practice for menus.
         hide();
@@ -896,6 +864,7 @@ class Particle {
     int currentColor;
 
     PShape shape;
+
     Atom parent;
     ArrayList<Particle> children = new ArrayList<Particle>();
 
@@ -911,7 +880,8 @@ class Particle {
         shape.setFill(currentColor);
 
         // velocity = velocity.random3D().mult(10);
-        particleList.add(this);
+        // worldManager.particleList.add(this);
+        worldManager.registerParticle(this);
     }
 
     Particle() {
@@ -925,7 +895,8 @@ class Particle {
 
     public void delete() {
         shape = null;
-        particleList.remove(this);
+        worldManager.unregisterParticle(this);
+        // worldManager.particleList.remove(this);
 
         // TODO: Change this direct access to method based access.
         if (parent != null) {
@@ -1008,7 +979,7 @@ class Particle {
     }
 
     public void evaluateElectricalField() {
-        for (Particle particle : particleList) {
+        for (Particle particle : worldManager.particleList) {
             if (particle == this) continue;
             if (particle.parent != parent) continue;
             applyForce(particle, calculateCoulombsLawForceOn(particle));
@@ -1041,7 +1012,7 @@ class Particle {
         Rough collision stuff goes here
         */
         // If distance from another atom is less than radius then intersection
-        for (Particle particle : particleList) {
+        for (Particle particle : worldManager.particleList) {
             // Spherical intersection
             // Determine the highest radius
             // float comparedRadius = (r > particle.r) ? r : particle.r;
@@ -1365,7 +1336,7 @@ class SelectionManager {
             return true;
     }
 
-    public void pushAllObjectsFromCamera() {
+    public void push() {
         for (Selection selection : selectedParticles) {
             Particle object = selection.getParticle();
             object.applyForce(cam.position, object.mass);
@@ -1409,7 +1380,7 @@ class SelectionManager {
         hoveringDistanceMult = 1;
     }
 
-    public void deleteItemsInSelection() {
+    public void delete() {
         if (!hasActiveSelection()) return;
 
         for (Selection selection : selectedParticles) {
@@ -1419,7 +1390,7 @@ class SelectionManager {
         cancel();
     }
 
-    public void paintParticles() {
+    public void paint() {
         if (!hasActiveSelection()) return;
 
         for (Selection selection : selectedParticles) {
@@ -1450,7 +1421,7 @@ class SelectionManager {
         to the selected screen area for all 4 cases, selecting all particles that
         intersect with the area.
         */
-        for (Particle particle : particleList) {
+        for (Particle particle : worldManager.particleList) {
             float screenPosX = screenX(particle.pos.x, particle.pos.y, particle.pos.z);
             float screenPosXNegativeLimit = screenX(particle.pos.x - particle.r, particle.pos.y, particle.pos.z);
             float screenPosXPositiveLimit = screenX(particle.pos.x + particle.r, particle.pos.y, particle.pos.z);
@@ -1510,7 +1481,7 @@ class SelectionManager {
     }
 
     public Particle checkPointAgainstParticleIntersection(PVector v1) {
-        for (Particle particle : particleList) {
+        for (Particle particle : worldManager.particleList) {
             float screenPosX = screenX(particle.pos.x, particle.pos.y, particle.pos.z);
             float screenPosXNegativeLimit = screenX(particle.pos.x - particle.r, particle.pos.y, particle.pos.z);
             float screenPosXPositiveLimit = screenX(particle.pos.x + particle.r, particle.pos.y, particle.pos.z);
@@ -1962,6 +1933,179 @@ class UIManager {
         }
 
         return false;
+    }
+}
+class WorldManager {
+    ArrayList<Particle> particleList = new ArrayList<Particle>();
+
+    public void registerParticle(Particle particle) {
+        particleList.add(particle);
+    }
+
+    public void unregisterParticle(Particle particle) {
+        particleList.remove(particle);
+    }
+
+    public Atom createAtom(PVector position) {
+        return new Atom(position.x, position.y, position.z, 1);
+    }
+
+    public Atom createAtom() {
+        PVector fwd = cam.getForward();
+        return new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 1);
+    }
+
+    public Electron createElectron(PVector position) {
+        return new Electron(position.x, position.y, position.z, null);
+    }
+
+    public Electron createElectron() {
+        PVector fwd = cam.getForward();
+        return new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, null);
+    }
+
+    // public void delete(Particle particle) {
+    //     particle.delete();
+    // }
+
+    // Delete from selection.
+    // public void delete() {
+    //     particle.delete();
+    // }
+
+    // public void paint(Particle particle, color colour) {
+    //     particle.setColour(colour);
+    // }
+
+    // Colour selection.
+    // public void paint(color colour)
+
+    // public void push(Particle particle, PVector position) {
+    //     particle.applyForce(position, particle.mass);
+    // }
+
+    // // Push from camera.
+    // public void push(Particle particle) {
+    //     particle.applyForce(cam.position, particle.mass);
+    // }
+
+    // Push selection from camera.
+    // public void push()
+
+    public void createLattice(Particle particle, PVector position, int radius) {
+        for (int y = 0; y < 5; y++) {
+            for (int z = 0; z < 5; z++) {
+                for (int x = 0; x < 5; x++) {
+                    new Particle(200 * x, 200 * y, 200 * z, 100); 
+                }
+            }
+        }
+    }
+
+    public void createBoundingBox(PVector position, float radius) {
+
+    }
+
+    public void edit(Particle particle) {
+
+    }
+
+    public void moveByMouse(Particle particle) {
+        
+    }
+
+    public void stopMoveByMouse(Particle particle) {
+
+    }
+
+    public void update() {
+        drawOriginGrid();
+        drawOriginArrows();
+
+        drawParticles();
+    }
+
+    private void drawParticles() {
+        float biggestDistance = 0;
+
+        for (int i = 0; i < particleList.size(); i++) {
+            Particle particle = particleList.get(i);
+            particle.evaluatePhysics();
+            particle.display();
+
+            float dist = PVector.dist(particle.pos, new PVector(0, 0, 0));
+
+            if ((dist > biggestDistance) || (biggestDistance == 0)) {
+                biggestDistance = dist;
+            }
+        }
+    }
+
+    private void drawOriginGrid() {
+        pushStyle();
+        fill(color(0, 0, 255));
+        box(20, 20, 300);
+        
+        fill(color(0, 255, 0));
+        box(20, 300, 20);
+
+        fill(color(255, 0, 0));
+        box(300, 20, 20);
+        popStyle();
+    }
+
+    private void drawOriginArrows() {
+        for (int y = 0; y < 5; y ++) {
+            for (int x = 0; x < 5; x ++) {
+                pushStyle();
+                pushMatrix();
+                rotateX(PI/2);
+                stroke(255, 180);
+                noFill();
+                rect(100 * x, 100 * y, 100, 100);
+                popMatrix();
+                popStyle();
+            }
+        }
+
+        for (int y = -5; y < 0; y ++) {
+            for (int x = 0; x < 5; x ++) {
+                pushStyle();
+                pushMatrix();
+                rotateX(PI/2);
+                stroke(255, 180);
+                noFill();
+                rect(100 * x, 100 * y, 100, 100);
+                popMatrix();
+                popStyle();
+            }
+        }
+
+        for (int y = 0; y < 5; y ++) {
+            for (int x = -5; x < 0; x ++) {
+                pushStyle();
+                pushMatrix();
+                rotateX(PI/2);
+                stroke(255, 180);
+                noFill();
+                rect(100 * x, 100 * y, 100, 100);
+                popMatrix();
+                popStyle();
+            }
+        }
+
+        for (int y = -5; y < 0; y ++) {
+            for (int x = -5; x < 0; x ++) {
+                pushStyle();
+                pushMatrix();
+                rotateX(PI/2);
+                stroke(255, 180);
+                noFill();
+                rect(100 * x, 100 * y, 100, 100);
+                popMatrix();
+                popStyle();
+            }
+        }
     }
 }
     public void settings() {  size(1280, 720, P3D); }

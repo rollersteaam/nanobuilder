@@ -10,11 +10,12 @@ import java.util.TimerTask;
 
 Camera cam;
 Robot robot;
+WorldManager worldManager;
 SelectionManager selectionManager;
 UIManager uiManager;
 UIFactory uiFactory;
 
-ArrayList<Particle> particleList = new ArrayList<Particle>();
+// ArrayList<Particle> particleList = new ArrayList<Particle>();
 
 /*
 MAIN FILE
@@ -45,6 +46,7 @@ void setup() {
     float cameraZ = (height/2.0) / tan(fov/2.0);
     perspective(fov, float(width)/float(height), cameraZ/10.0 / 300, cameraZ*10.0 * 300);
     
+    worldManager = new WorldManager();
     selectionManager = new SelectionManager();
     uiManager = new UIManager();
     uiFactory = new UIFactory();
@@ -80,34 +82,46 @@ void draw() {
     lights();
     noStroke();
 
-    float biggestDistance = 0;
+    worldManager.update();
 
-    for (int i = 0; i < particleList.size(); i++) {
-        Particle particle = particleList.get(i);
-        particle.evaluatePhysics();
-        particle.display();
+    // float biggestDistance = 0;
 
-        float dist = PVector.dist(particle.pos, new PVector(0, 0, 0));
+    // for (int i = 0; i < particleList.size(); i++) {
+    //     Particle particle = particleList.get(i);
+    //     particle.evaluatePhysics();
+    //     particle.display();
 
-        if ((dist > biggestDistance) || (biggestDistance == 0)) {
-            biggestDistance = dist;
-        }
-    }
+    //     float dist = PVector.dist(particle.pos, new PVector(0, 0, 0));
+
+    //     if ((dist > biggestDistance) || (biggestDistance == 0)) {
+    //         biggestDistance = dist;
+    //     }
+    // }
 
     // for (Particle particle : particleList) {
     // }
 
-    drawOriginArrows();
-    drawOriginGrid();
+    // drawOriginArrows();
+    // drawOriginGrid();
 
-    pushStyle();
-    // stroke(color(70, 70, 255));
-// strokeWeight(8);
-    // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
-    // box(2000);
-    fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));
-    box(20000);
-    popStyle();
+//     pushStyle();
+//     // stroke(color(70, 70, 255));
+// // strokeWeight(8);
+//     // fill(255, 0, 0, map(biggestDistance, 900, 1000, 0, 25));
+//     // box(2000);
+//     fill(255, 0, 0, map(biggestDistance, 9000, 10000, 0, 25));
+//     box(20000);
+//     popStyle();
+
+    pushMatrix();
+    drawCylinder(8, 100, 500);
+    popMatrix();
+
+    pushMatrix();
+    rotateY(PI/2);
+    rotateX(PI/4);
+    drawCylinder(8, 100, 500);
+    popMatrix();
 
     /*
         2D drawing beyond here ONLY.
@@ -129,9 +143,37 @@ void draw() {
     if (keys.containsKey(16) && keys.get(16)) cam.velocity.add(PVector.mult(cam.getUp(), cam.speed));
 }
 
+void drawCylinder(int sides, int r, int h) {
+    float angle = 360 / sides;
+    float halfHeight = h/2;
+    beginShape();
+    for (int i = 0; i < sides; i++) {
+        float x = cos(radians(i * angle)) * r;
+        float y = sin(radians(i * angle)) * r;
+        vertex(x, y, -halfHeight);
+    }
+    endShape(CLOSE);
+    beginShape();
+    for (int i = 0; i < sides; i++) {
+        float x = cos(radians(i * angle)) * r;
+        float y = sin(radians(i * angle)) * r;
+        vertex(x, y, halfHeight);
+    }
+    endShape(CLOSE);
+    beginShape(TRIANGLE_STRIP);
+    for (int i = 0; i < sides + 1; i++) {
+        float x = cos(radians(i * angle)) * r;
+        float y = sin(radians(i * angle)) * r;
+        vertex(x, y, halfHeight);
+        vertex(x, y, -halfHeight);
+    }
+    endShape(CLOSE);
+}
+
 void mousePressed(MouseEvent event) {
     // If selection agent's events have been triggered, then we are finished for this mouse event.
     if (mouseButton == LEFT) {
+        if (cam.fireAtom()) return;
         if (uiManager.checkForFocus()) return;
         if (selectionManager.mousePressed()) return;
     }
@@ -183,81 +225,4 @@ public void keyEvent(KeyEvent event){
             keys.put(key, false);
             break;
     }
-}
-
-// Draws a lattice (structured cube) of particles.
-void drawParticleLattice() {
-    for (int y = 0; y < 5; y++) {
-        for (int z = 0; z < 5; z++) {
-            for (int x = 0; x < 5; x++) {
-                new Particle(200 * x, 200 * y, 200 * z, 100); 
-            }
-        }
-    }   
-}
-
-// Draws arrows pointing out from the origin point of the scene.
-void drawOriginArrows() {
-    pushStyle();
-    fill(color(0, 0, 255));
-    box(20, 20, 300);
-    
-    fill(color(0, 255, 0));
-    box(20, 300, 20);
-
-    fill(color(255, 0, 0));
-    box(300, 20, 20);
-    popStyle(); 
-}
-
-// Draws squares around an area on the origin point of the scene.
-void drawOriginGrid() {
-    for (int y = 0; y < 5; y ++) {
-        for (int x = 0; x < 5; x ++) {
-            pushStyle();
-            pushMatrix();
-            rotateX(PI/2);
-            stroke(255, 180);
-            noFill();
-            rect(100 * x, 100 * y, 100, 100);
-            popMatrix();
-            popStyle();
-        }
-    }
-    for (int y = -5; y < 0; y ++) {
-        for (int x = 0; x < 5; x ++) {
-            pushStyle();
-            pushMatrix();
-            rotateX(PI/2);
-            stroke(255, 180);
-            noFill();
-            rect(100 * x, 100 * y, 100, 100);
-            popMatrix();
-            popStyle();
-        }
-    }
-    for (int y = 0; y < 5; y ++) {
-        for (int x = -5; x < 0; x ++) {
-            pushStyle();
-            pushMatrix();
-            rotateX(PI/2);
-            stroke(255, 180);
-            noFill();
-            rect(100 * x, 100 * y, 100, 100);
-            popMatrix();
-            popStyle();
-        }
-    }
-    for (int y = -5; y < 0; y ++) {
-        for (int x = -5; x < 0; x ++) {
-            pushStyle();
-            pushMatrix();
-            rotateX(PI/2);
-            stroke(255, 180);
-            noFill();
-            rect(100 * x, 100 * y, 100, 100);
-            popMatrix();
-            popStyle();
-        }
-    } 
 }

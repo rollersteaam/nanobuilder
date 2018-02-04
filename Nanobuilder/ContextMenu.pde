@@ -1,47 +1,44 @@
 class ContextMenu extends UIElement {
     RectangleUI mainPanel;
 
-    Runnable createAtomAtCamera = new Runnable() {
+    Runnable createAtom = new Runnable() {
         public void run() {
             selectionManager.cancel();
-            PVector fwd = cam.getForward();
-            Atom newAtom = new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 1);
-            selectionManager.select(newAtom);
+            selectionManager.select(worldManager.createAtom());
             hide();
         }
     };
 
-    Runnable createElectronAtCamera = new Runnable() {
+    Runnable createElectron = new Runnable() {
         public void run() {
-            PVector fwd = cam.getForward();
-            Electron newElectron = new Electron(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, null);
-            selectionManager.select(newElectron);
+            selectionManager.cancel();
+            selectionManager.select(worldManager.createElectron());
             hide();
         }
     };
 
-    Runnable deleteItemsInSelection = new Runnable() {
+    Runnable delete = new Runnable() {
         public void run() {
-            selectionManager.deleteItemsInSelection();
+            selectionManager.delete();
             hide();
         }
     };
 
-    Runnable paintAtom = new Runnable() {
+    Runnable paint = new Runnable() {
         public void run() {
-            selectionManager.paintParticles();
+            selectionManager.paint();
             hide();
         }
     };
 
-    Runnable pushAtom = new Runnable() {
+    Runnable push = new Runnable() {
         public void run() {
-            selectionManager.pushAllObjectsFromCamera();
+            selectionManager.push();
             hide();
         }
     };
 
-    Runnable insertElectronAtom = new Runnable() {
+    Runnable insertAtomElectron = new Runnable() {
         public void run() {
             Particle object = selectionManager.getObjectFromSelection();
             if (!(object instanceof Atom)) return;
@@ -51,7 +48,7 @@ class ContextMenu extends UIElement {
         }
     };
 
-    Runnable removeElectronAtom = new Runnable() {
+    Runnable removeAtomElectron = new Runnable() {
         public void run() {
             Particle object = selectionManager.getObjectFromSelection();
             if (!(object instanceof Atom)) return;
@@ -70,40 +67,40 @@ class ContextMenu extends UIElement {
         mainPanel = uiFactory.createRect(1, 1, w, h, colour);
         appendChild(mainPanel);
 
-        UIElement addAtomButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0), createAtomAtCamera);
-        UIElement addAtomText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Add Atom");
-        addAtomButton.appendChild(addAtomText);
-        appendChild(addAtomButton);
+        UIElement createAtomButton = uiFactory.createButton(5, 5, w - 8, 40, color(255, 0, 0), createAtom);
+        UIElement createAtomText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Create Atom");
+        createAtomButton.appendChild(createAtomText);
+        appendChild(createAtomButton);
 
-        UIElement deleteSelectionButton = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0), deleteItemsInSelection);
+        UIElement deleteSelectionButton = uiFactory.createButton(5, 5 + 40 + 4, w - 8, 40, color(255, 0, 0), delete);
         UIElement deleteSelectionText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Delete");
         deleteSelectionButton.appendChild(deleteSelectionText);
         appendChild(deleteSelectionButton);
 
-        UIElement paint = uiFactory.createButton(5, 5 + 40 + 40 + 4 + 4, w - 8, 40, color(0, 255, 0), paintAtom);
+        UIElement paintButton = uiFactory.createButton(5, 5 + 40 + 40 + 4 + 4, w - 8, 40, color(0, 255, 0), paint);
         UIElement paintText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Paint Red");
-        paint.appendChild(paintText);
-        appendChild(paint);
+        paintButton.appendChild(paintText);
+        appendChild(paintButton);
 
-        UIElement electron = uiFactory.createButton(5, 5 + 40 + 40 + 40 + 4 + 4 + 4, w - 8, 40, color(0, 0, 255), createElectronAtCamera);
-        UIElement electronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Create Electron");
-        electron.appendChild(electronText);
-        appendChild(electron);
+        UIElement createElectronButton = uiFactory.createButton(5, 5 + 40 + 40 + 40 + 4 + 4 + 4, w - 8, 40, color(0, 0, 255), createElectron);
+        UIElement createElectronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Create Electron");
+        createElectronButton.appendChild(createElectronText);
+        appendChild(createElectronButton);
 
-        UIElement push = uiFactory.createButton(5, 173 + 4 + 4, w - 8, 40, color(0, 0, 255), pushAtom);
+        UIElement pushButton = uiFactory.createButton(5, 173 + 4 + 4, w - 8, 40, color(0, 0, 255), push);
         UIElement pushText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Push");
-        push.appendChild(pushText);
-        appendChild(push);
+        pushButton.appendChild(pushText);
+        appendChild(pushButton);
 
-        UIElement insertElectron = uiFactory.createButton(5, 226, w - 8, 40, color(0, 0, 255), insertElectronAtom);
+        UIElement insertElectronButton = uiFactory.createButton(5, 226, w - 8, 40, color(0, 0, 255), insertAtomElectron);
         UIElement insertElectronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Insert Electron");
-        insertElectron.appendChild(insertElectronText);
-        appendChild(insertElectron);
+        insertElectronButton.appendChild(insertElectronText);
+        appendChild(insertElectronButton);
 
-        UIElement removeElectron = uiFactory.createButton(5, 271, w - 8, 40, color(0, 0, 255), removeElectronAtom);
+        UIElement removeElectronButton = uiFactory.createButton(5, 271, w - 8, 40, color(0, 0, 255), removeAtomElectron);
         UIElement removeElectronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Remove Electron");
-        removeElectron.appendChild(removeElectronText);
-        appendChild(removeElectron);
+        removeElectronButton.appendChild(removeElectronText);
+        appendChild(removeElectronButton);
         
         // UI elements start active by default, hiding when construction is finished is standard practice for menus.
         hide();

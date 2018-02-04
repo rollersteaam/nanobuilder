@@ -12,6 +12,7 @@ class Particle {
     color currentColor;
 
     PShape shape;
+
     Atom parent;
     ArrayList<Particle> children = new ArrayList<Particle>();
 
@@ -27,7 +28,8 @@ class Particle {
         shape.setFill(currentColor);
 
         // velocity = velocity.random3D().mult(10);
-        particleList.add(this);
+        // worldManager.particleList.add(this);
+        worldManager.registerParticle(this);
     }
 
     Particle() {
@@ -41,7 +43,8 @@ class Particle {
 
     void delete() {
         shape = null;
-        particleList.remove(this);
+        worldManager.unregisterParticle(this);
+        // worldManager.particleList.remove(this);
 
         // TODO: Change this direct access to method based access.
         if (parent != null) {
@@ -124,7 +127,7 @@ class Particle {
     }
 
     void evaluateElectricalField() {
-        for (Particle particle : particleList) {
+        for (Particle particle : worldManager.particleList) {
             if (particle == this) continue;
             if (particle.parent != parent) continue;
             applyForce(particle, calculateCoulombsLawForceOn(particle));
@@ -157,7 +160,7 @@ class Particle {
         Rough collision stuff goes here
         */
         // If distance from another atom is less than radius then intersection
-        for (Particle particle : particleList) {
+        for (Particle particle : worldManager.particleList) {
             // Spherical intersection
             // Determine the highest radius
             // float comparedRadius = (r > particle.r) ? r : particle.r;

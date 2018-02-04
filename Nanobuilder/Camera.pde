@@ -76,4 +76,12 @@ class Camera extends QueasyCam {
         else
             pilot();
     }
+
+    public boolean fireAtom() {
+        if (piloting) return false;
+
+        Atom newAtom = worldManager.createAtom();
+        newAtom.applyForce(cam.position, newAtom.mass);
+        return true;
+    }
 }

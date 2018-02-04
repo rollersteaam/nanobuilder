@@ -1,5 +1,3 @@
-
-
 class Atom extends Particle {
     Proton core;
     ArrayList<Proton> listProtons = new ArrayList<Proton>();

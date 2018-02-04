@@ -44,7 +44,7 @@ class SelectionManager {
             return true;
     }
 
-    public void pushAllObjectsFromCamera() {
+    public void push() {
         for (Selection selection : selectedParticles) {
             Particle object = selection.getParticle();
             object.applyForce(cam.position, object.mass);
@@ -88,7 +88,7 @@ class SelectionManager {
         hoveringDistanceMult = 1;
     }
 
-    public void deleteItemsInSelection() {
+    public void delete() {
         if (!hasActiveSelection()) return;
 
         for (Selection selection : selectedParticles) {
@@ -98,7 +98,7 @@ class SelectionManager {
         cancel();
     }
 
-    public void paintParticles() {
+    public void paint() {
         if (!hasActiveSelection()) return;
 
         for (Selection selection : selectedParticles) {
@@ -129,7 +129,7 @@ class SelectionManager {
         to the selected screen area for all 4 cases, selecting all particles that
         intersect with the area.
         */
-        for (Particle particle : particleList) {
+        for (Particle particle : worldManager.particleList) {
             float screenPosX = screenX(particle.pos.x, particle.pos.y, particle.pos.z);
             float screenPosXNegativeLimit = screenX(particle.pos.x - particle.r, particle.pos.y, particle.pos.z);
             float screenPosXPositiveLimit = screenX(particle.pos.x + particle.r, particle.pos.y, particle.pos.z);
@@ -189,7 +189,7 @@ class SelectionManager {
     }
 
     Particle checkPointAgainstParticleIntersection(PVector v1) {
-        for (Particle particle : particleList) {
+        for (Particle particle : worldManager.particleList) {
             float screenPosX = screenX(particle.pos.x, particle.pos.y, particle.pos.z);
             float screenPosXNegativeLimit = screenX(particle.pos.x - particle.r, particle.pos.y, particle.pos.z);
             float screenPosXPositiveLimit = screenX(particle.pos.x + particle.r, particle.pos.y, particle.pos.z);

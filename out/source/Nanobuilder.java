@@ -486,16 +486,21 @@ class ButtonUI extends UIElement {
         this.function = function;
     }
 
+    ButtonUI(float x, float y, float w, float h, int colour, Runnable function, int strokeColour, float strokeWeight) {
+        super(x, y, w, h, colour, strokeColour, strokeWeight);
+        this.function = function;
+    }
+
     public @Override
     void display() {
         super.display();
 
-        pushStyle();
+        // pushStyle();
         // stroke(colour);
-        stroke(160, 160, 255, 230);
-        strokeWeight(2);
+        // stroke(160, 160, 255, 230);
+        // strokeWeight(2);
         rect(position.x, position.y, size.x, size.y);
-        popStyle();
+        // popStyle();
 
         finishDrawing();
     }
@@ -1079,11 +1084,12 @@ class Particle {
         float newVelocityMagnitude = -2 * impulse - sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
         // So we must halve it after we're done.
         newVelocityMagnitude /= 2;
+        newVelocityMagnitude /= 100;
         // We scale forces down by 
         println(newVelocityMagnitude);
         incidentVector.setMag(newVelocityMagnitude);
         // If resultant velocity direction is negative, flip the direction.
-        if (newVelocityMagnitude < 0) incidentVector.mult(-1);
+        // if (newVelocityMagnitude < 0) incidentVector.mult(-1);
         // particle.velocity = incidentVector;
         println("---" + newVelocityMagnitude + " - " + this);
         println(particle.velocity.mag());
@@ -1300,10 +1306,14 @@ class RectangleUI extends UIElement {
         super(x, y, w, h, colour);
     }
 
+    RectangleUI(float x, float y, float w, float h, int colour, int strokeColour, float strokeWeight) {
+        super(x, y, w, h, colour, strokeColour, strokeWeight);
+    }
+
     public @Override
     void display() {
         super.display();
-        // stroke(255, 160);
+
         rect(position.x, position.y, size.x, size.y);
 
         finishDrawing();
@@ -1425,7 +1435,7 @@ class SelectionManager {
     public void startSelecting() {
         cancel();
         selectingStartPos = new PVector(mouseX, mouseY);
-        groupSelection = uiFactory.createRect(selectingStartPos.x, selectingStartPos.y, 1, 1, color(30, 30, 90, 80));
+        groupSelection = uiFactory.createRectOutlined(selectingStartPos.x, selectingStartPos.y, 1, 1, color(30, 30, 90, 80), color(10, 10, 40, 80), 4);
     }
 
     public boolean stopSelecting() {
@@ -1548,38 +1558,29 @@ class SelectionManager {
     }
 
     public boolean mousePressed() {
-        // Case 3: Begin an area selection.
-        startSelecting();
+        // Pass 1
+        Particle attemptedSelection = checkPointAgainstParticleIntersection(new PVector(mouseX, mouseY));
+        if (attemptedSelection != null) {
+            cancel();
+            select(attemptedSelection);
+        } else {
+            startSelecting();
+        }
 
         // No interrupts passed, return and continue on the main calling routine.
         return false;
     }
 
     public boolean mouseReleased() {
-        boolean selectionWasAttempted = false;
-
         // Pass 1
-        Particle attemptedSelection = checkPointAgainstParticleIntersection(new PVector(mouseX, mouseY));
-        if (attemptedSelection != null) {
-            select(attemptedSelection);
-            selectionWasAttempted = true;
-            // return true;
-        }
-
-        // Pass 2
         /*
         If a click selection was processed before, then we don't want to cancel the
         selection this frame, regardless of if a group selection had returned no particles.
         */
-        if (!selectionWasAttempted)
-            selectionWasAttempted = stopSelecting();
-        else
-            stopSelecting();
+        stopSelecting();
 
         // If active selection, cancel, but only if mouseX is not over an existing particle.
-        if (hasActiveSelection() && !selectionWasAttempted) {
-            cancel();
-        }
+        // if (!selectionWasAttempted) cancel();
 
         return false;
     }
@@ -1628,11 +1629,11 @@ class SelectionManager {
             //     map(mouseX, 0, width, -1, 1)
             // );
 
-            // particle.setPosition( PVector.add(cam.position, new PVector(
-                // Fine tune mode
-                // (600 * hoveringDistanceMult) * forward.x,
-                // (600 * hoveringDistanceMult) * forward.y,
-                // (600 * hoveringDistanceMult) * forward.z )) );
+            // particle.addPosition( PVector.add(cam.position, new PVector(
+            //     // Fine tune mode
+            //     (600 * hoveringDistanceMult) * forward.x,
+            //     (600 * hoveringDistanceMult) * forward.y,
+            //     (600 * hoveringDistanceMult) * forward.z )) );
                 // (hoveringDistanceMult) * selection.getFromCameraVector().x,
                 // (hoveringDistanceMult) * selection.getFromCameraVector().y,
                 // (hoveringDistanceMult) * selection.getFromCameraVector().z )) );
@@ -1648,6 +1649,7 @@ class SelectionManager {
             for (int y = 0; y < 5; y ++) {
                 for (int x = 0; x < 5; x ++) {
                     pushMatrix();
+                    pushStyle();
                     
                     translate(particle.pos.x - 250, particle.pos.y, particle.pos.z - 250);
                     rotateX(PI/2);
@@ -1655,6 +1657,7 @@ class SelectionManager {
                     noFill();
                     
                     rect(100 * x, 100 * y, 100, 100);
+                    popStyle();
                     popMatrix();
                 }
             }
@@ -1662,6 +1665,7 @@ class SelectionManager {
             for (int y = 0; y < 5; y ++) {
                 for (int x = 0; x < 5; x ++) {
                     pushMatrix();
+                    pushStyle();
                     
                     translate(particle.pos.x, particle.pos.y - 250, particle.pos.z + 250);
                     rotateY(PI/2);
@@ -1669,6 +1673,7 @@ class SelectionManager {
                     noFill();
                     
                     rect(100 * x, 100 * y, 100, 100);
+                    popStyle();
                     popMatrix();
                 }
             }
@@ -1711,10 +1716,19 @@ abstract class UIElement {
     protected UIElement parent;
     protected ArrayList<UIElement> children = new ArrayList<UIElement>();
 
+    int strokeColour = color(0, 0);
+    float strokeWeight = 0;
+
     UIElement(float x, float y, float w, float h, int colour) {
         position = new PVector(x, y);
         size = new PVector(w, h);
         this.colour = colour;
+    }
+
+    UIElement(float x, float y, float w, float h, int colour, int strokeColour, float strokeWeight) {
+        this(x, y, w, h, colour);
+        this.strokeColour = strokeColour;
+        this.strokeWeight = strokeWeight;
     }
 
     public void display() {
@@ -1722,6 +1736,8 @@ abstract class UIElement {
         pushMatrix();
         noLights();
 
+        strokeWeight(strokeWeight);
+        stroke(strokeColour);
         fill(colour);
         /*
         Get camera's forward pointing vector and begin to draw 2D element
@@ -1756,6 +1772,7 @@ abstract class UIElement {
     }
 
     public boolean checkIntersectionWithPoint(PVector v) {
+        if (!active) return false;
         if(
             v.x > position.x &&
             v.x < (position.x + size.x) &&
@@ -1848,6 +1865,12 @@ class UIFactory {
         uiManager.addElement(element);
         return element;
     }
+    
+    public RectangleUI createRectOutlined(float x, float y, float w, float h, int colour, int strokeColour, float strokeWeight) {
+        RectangleUI element = new RectangleUI(x, y, w, h, colour, strokeColour, strokeWeight);
+        uiManager.addElement(element);
+        return element;
+    }
 
     public TextUI createText(float x, float y, float w, float h, int colour, String text) {
         TextUI element = new TextUI(x, y, w, h, colour, text);
@@ -1857,6 +1880,12 @@ class UIFactory {
 
     public ButtonUI createButton(float x, float y, float w, float h, int colour, Runnable function) {
         ButtonUI element = new ButtonUI(x, y, w, h, colour, function);
+        uiManager.addElement(element);
+        return element;
+    }
+
+    public ButtonUI createButtonOutlined(float x, float y, float w, float h, int colour, Runnable function, int strokeColour, int strokeWeight) {
+        ButtonUI element = new ButtonUI(x, y, w, h, colour, function, strokeColour, strokeWeight);
         uiManager.addElement(element);
         return element;
     }

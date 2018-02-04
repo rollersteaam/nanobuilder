@@ -114,7 +114,7 @@ class SelectionManager {
     void startSelecting() {
         cancel();
         selectingStartPos = new PVector(mouseX, mouseY);
-        groupSelection = uiFactory.createRect(selectingStartPos.x, selectingStartPos.y, 1, 1, color(30, 30, 90, 80));
+        groupSelection = uiFactory.createRectOutlined(selectingStartPos.x, selectingStartPos.y, 1, 1, color(30, 30, 90, 80), color(10, 10, 40, 80), 4);
     }
 
     boolean stopSelecting() {
@@ -237,38 +237,29 @@ class SelectionManager {
     }
 
     boolean mousePressed() {
-        // Case 3: Begin an area selection.
-        startSelecting();
+        // Pass 1
+        Particle attemptedSelection = checkPointAgainstParticleIntersection(new PVector(mouseX, mouseY));
+        if (attemptedSelection != null) {
+            cancel();
+            select(attemptedSelection);
+        } else {
+            startSelecting();
+        }
 
         // No interrupts passed, return and continue on the main calling routine.
         return false;
     }
 
     boolean mouseReleased() {
-        boolean selectionWasAttempted = false;
-
         // Pass 1
-        Particle attemptedSelection = checkPointAgainstParticleIntersection(new PVector(mouseX, mouseY));
-        if (attemptedSelection != null) {
-            select(attemptedSelection);
-            selectionWasAttempted = true;
-            // return true;
-        }
-
-        // Pass 2
         /*
         If a click selection was processed before, then we don't want to cancel the
         selection this frame, regardless of if a group selection had returned no particles.
         */
-        if (!selectionWasAttempted)
-            selectionWasAttempted = stopSelecting();
-        else
-            stopSelecting();
+        stopSelecting();
 
         // If active selection, cancel, but only if mouseX is not over an existing particle.
-        if (hasActiveSelection() && !selectionWasAttempted) {
-            cancel();
-        }
+        // if (!selectionWasAttempted) cancel();
 
         return false;
     }
@@ -317,11 +308,11 @@ class SelectionManager {
             //     map(mouseX, 0, width, -1, 1)
             // );
 
-            // particle.setPosition( PVector.add(cam.position, new PVector(
-                // Fine tune mode
-                // (600 * hoveringDistanceMult) * forward.x,
-                // (600 * hoveringDistanceMult) * forward.y,
-                // (600 * hoveringDistanceMult) * forward.z )) );
+            // particle.addPosition( PVector.add(cam.position, new PVector(
+            //     // Fine tune mode
+            //     (600 * hoveringDistanceMult) * forward.x,
+            //     (600 * hoveringDistanceMult) * forward.y,
+            //     (600 * hoveringDistanceMult) * forward.z )) );
                 // (hoveringDistanceMult) * selection.getFromCameraVector().x,
                 // (hoveringDistanceMult) * selection.getFromCameraVector().y,
                 // (hoveringDistanceMult) * selection.getFromCameraVector().z )) );
@@ -337,6 +328,7 @@ class SelectionManager {
             for (int y = 0; y < 5; y ++) {
                 for (int x = 0; x < 5; x ++) {
                     pushMatrix();
+                    pushStyle();
                     
                     translate(particle.pos.x - 250, particle.pos.y, particle.pos.z - 250);
                     rotateX(PI/2);
@@ -344,6 +336,7 @@ class SelectionManager {
                     noFill();
                     
                     rect(100 * x, 100 * y, 100, 100);
+                    popStyle();
                     popMatrix();
                 }
             }
@@ -351,6 +344,7 @@ class SelectionManager {
             for (int y = 0; y < 5; y ++) {
                 for (int x = 0; x < 5; x ++) {
                     pushMatrix();
+                    pushStyle();
                     
                     translate(particle.pos.x, particle.pos.y - 250, particle.pos.z + 250);
                     rotateY(PI/2);
@@ -358,6 +352,7 @@ class SelectionManager {
                     noFill();
                     
                     rect(100 * x, 100 * y, 100, 100);
+                    popStyle();
                     popMatrix();
                 }
             }

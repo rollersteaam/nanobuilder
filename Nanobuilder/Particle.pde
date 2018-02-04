@@ -200,11 +200,12 @@ class Particle {
         float newVelocityMagnitude = -2 * impulse - sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
         // So we must halve it after we're done.
         newVelocityMagnitude /= 2;
+        newVelocityMagnitude /= 100;
         // We scale forces down by 
         println(newVelocityMagnitude);
         incidentVector.setMag(newVelocityMagnitude);
         // If resultant velocity direction is negative, flip the direction.
-        if (newVelocityMagnitude < 0) incidentVector.mult(-1);
+        // if (newVelocityMagnitude < 0) incidentVector.mult(-1);
         // particle.velocity = incidentVector;
         println("---" + newVelocityMagnitude + " - " + this);
         println(particle.velocity.mag());

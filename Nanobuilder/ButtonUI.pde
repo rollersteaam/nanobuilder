@@ -6,16 +6,21 @@ class ButtonUI extends UIElement {
         this.function = function;
     }
 
+    ButtonUI(float x, float y, float w, float h, color colour, Runnable function, color strokeColour, float strokeWeight) {
+        super(x, y, w, h, colour, strokeColour, strokeWeight);
+        this.function = function;
+    }
+
     @Override
     void display() {
         super.display();
 
-        pushStyle();
+        // pushStyle();
         // stroke(colour);
-        stroke(160, 160, 255, 230);
-        strokeWeight(2);
+        // stroke(160, 160, 255, 230);
+        // strokeWeight(2);
         rect(position.x, position.y, size.x, size.y);
-        popStyle();
+        // popStyle();
 
         finishDrawing();
     }

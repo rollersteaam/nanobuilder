@@ -16,10 +16,19 @@ abstract class UIElement {
     protected UIElement parent;
     protected ArrayList<UIElement> children = new ArrayList<UIElement>();
 
+    color strokeColour = color(0, 0);
+    float strokeWeight = 0;
+
     UIElement(float x, float y, float w, float h, color colour) {
         position = new PVector(x, y);
         size = new PVector(w, h);
         this.colour = colour;
+    }
+
+    UIElement(float x, float y, float w, float h, color colour, color strokeColour, float strokeWeight) {
+        this(x, y, w, h, colour);
+        this.strokeColour = strokeColour;
+        this.strokeWeight = strokeWeight;
     }
 
     void display() {
@@ -27,6 +36,8 @@ abstract class UIElement {
         pushMatrix();
         noLights();
 
+        strokeWeight(strokeWeight);
+        stroke(strokeColour);
         fill(colour);
         /*
         Get camera's forward pointing vector and begin to draw 2D element
@@ -61,6 +72,7 @@ abstract class UIElement {
     }
 
     public boolean checkIntersectionWithPoint(PVector v) {
+        if (!active) return false;
         if(
             v.x > position.x &&
             v.x < (position.x + size.x) &&

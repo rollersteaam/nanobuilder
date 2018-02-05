@@ -62,6 +62,18 @@ class SelectionManager {
             return selectedParticles.get((int) random(0, selSize - 1)).getParticle();
     }
 
+    public ArrayList<Particle> getObjectsFromSelection() {
+        if (selectedParticles.size() == 0) return null;
+
+        ArrayList<Particle> list = new ArrayList<Particle>();
+
+        for (Selection selection : selectedParticles) {
+            list.add(selection.getParticle());
+        }
+
+        return list;
+    }
+
     public boolean select(Particle particle) {
         if (particle == null) {
             println("URGENT: SelectionManager was requested to select a null reference.");

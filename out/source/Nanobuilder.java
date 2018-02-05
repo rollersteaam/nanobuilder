@@ -86,8 +86,10 @@ public void setup() {
     //     new Atom();
     // }
 
-    new Atom(22);
-    
+    Atom atom1 = new Atom(22);
+    Atom atom2 = new Atom(10);
+    AtomBond testBond = new AtomBond(atom1, atom2);
+
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
     // for (int i = 0; i < 50; i++) {
         // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));
@@ -138,15 +140,15 @@ public void draw() {
 //     box(20000);
 //     popStyle();
 
-    pushMatrix();
-    drawCylinder(8, 100, 500);
-    popMatrix();
+    // pushMatrix();
+    // drawCylinder(8, 100, 500);
+    // popMatrix();
 
-    pushMatrix();
-    rotateY(PI/2);
-    rotateX(PI/4);
-    drawCylinder(8, 100, 500);
-    popMatrix();
+    // pushMatrix();
+    // rotateY(PI/2);
+    // rotateX(PI/4);
+    // drawCylinder(8, 100, 500);
+    // popMatrix();
 
     /*
         2D drawing beyond here ONLY.
@@ -441,6 +443,93 @@ class Atom extends Particle {
         return true;
     }
 }
+class AtomBond {
+    Atom first;
+    Atom second;
+
+    PVector position = new PVector();
+    PVector rotation = new PVector();
+
+    PShape shape, top, bottom, body;
+
+    private final static float RADIUS = 50;
+    private final static float SIDES = 8;
+
+    float height;
+
+    AtomBond(Atom first, Atom second) {
+        this.first = first;
+        this.second = second;
+
+        shape = createShape(GROUP);
+        
+        float angle = 360 / SIDES;
+        height = PVector.dist(first.pos, second.pos);
+        float halfHeight = height/2;
+
+        top = createShape();
+        top.beginShape();
+        for (int i = 0; i < SIDES; i++) {
+            float x = cos(radians(i * angle)) * RADIUS;
+            float y = sin(radians(i * angle)) * RADIUS;
+            top.vertex(x, y, halfHeight);
+        }
+        top.endShape(CLOSE);
+
+        bottom = createShape();
+        bottom.beginShape();
+        for (int i = 0; i < SIDES; i++) {
+            float x = cos(radians(i * angle)) * RADIUS;
+            float y = sin(radians(i * angle)) * RADIUS;
+            bottom.vertex(x, y, -halfHeight);
+        }
+        bottom.endShape(CLOSE);
+
+        body = createShape();
+        body.beginShape(TRIANGLE_STRIP);
+        for (int i = 0; i < SIDES + 1; i++) {
+            float x = cos(radians(i * angle)) * RADIUS;
+            float y = sin(radians(i * angle)) * RADIUS;
+            body.vertex(x, y, halfHeight);
+            body.vertex(x, y, -halfHeight);
+        }
+        body.endShape(CLOSE);
+
+        shape.addChild(top);
+        shape.addChild(bottom);
+        shape.addChild(body);
+
+        worldManager.registerBond(this);
+        // position = PVector.sub(first.pos, second.pos).div(2);
+    }
+
+    // Updates the shape's proportions to its two parents.
+    public void updateShape() {
+
+    }
+
+    public void display() {
+        pushMatrix();
+        pushStyle();
+
+        PVector dPos = PVector.sub(second.pos, first.pos);
+        position = PVector.add(first.pos, dPos.copy().div(2));
+        rotation.y = atan2(dPos.y, dPos.x);
+        rotation.x = atan2(dPos.z, dPos.x);
+        translate(position.x, position.y, position.z);
+        rotateX(rotation.y);
+        rotateZ(rotation.x);
+        // shape.scale(1, 1, PVector.dist(first.pos, second.pos) / height / 100);
+        shape(shape);
+
+        popStyle();
+        popMatrix();
+    }
+
+    public void delete() {
+
+    }
+}
 class ButtonUI extends UIElement {
     Runnable function;
     
@@ -629,6 +718,26 @@ class ContextMenu extends UIElement {
         }
     };
 
+    Runnable bondAtoms = new Runnable() {
+        public void run() {
+            ArrayList<Particle> list = selectionManager.getObjectsFromSelection();
+            if (list == null) return;
+
+            Atom lastAtom = null;
+            for (Particle particle : list) {
+                if (!(particle instanceof Atom)) continue;
+
+                if (lastAtom != null) {
+                    new AtomBond(lastAtom, (Atom) particle);
+                }
+
+                lastAtom = (Atom) particle;
+            }
+
+            hide();
+        }
+    };
+
     ContextMenu(float x, float y, float w, float h, int colour) {
         super(x, y, w, h, colour);
 
@@ -672,6 +781,11 @@ class ContextMenu extends UIElement {
         UIElement removeElectronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Remove Electron");
         removeElectronButton.appendChild(removeElectronText);
         appendChild(removeElectronButton);
+
+        UIElement bondAtomsButton = uiFactory.createButton(5, 316, w - 8, 40, color(0, 0, 255), bondAtoms);
+        UIElement bondAtomsText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Bond Atoms");
+        bondAtomsButton.appendChild(bondAtomsText);
+        appendChild(bondAtomsButton);
         
         // UI elements start active by default, hiding when construction is finished is standard practice for menus.
         hide();
@@ -1354,6 +1468,18 @@ class SelectionManager {
             return selectedParticles.get((int) random(0, selSize - 1)).getParticle();
     }
 
+    public ArrayList<Particle> getObjectsFromSelection() {
+        if (selectedParticles.size() == 0) return null;
+
+        ArrayList<Particle> list = new ArrayList<Particle>();
+
+        for (Selection selection : selectedParticles) {
+            list.add(selection.getParticle());
+        }
+
+        return list;
+    }
+
     public boolean select(Particle particle) {
         if (particle == null) {
             println("URGENT: SelectionManager was requested to select a null reference.");
@@ -1868,7 +1994,7 @@ class UIManager {
     private ContextMenu contextMenu;
 
     public void draw() {
-        if (contextMenu == null) contextMenu = new ContextMenu(0, 0, 180, 224 + 90, color(230));
+        if (contextMenu == null) contextMenu = new ContextMenu(0, 0, 180, 224 + 90 + 50, color(230));
 
         for (UIElement element : screenElements) {
             if (element.getActive()) element.display();
@@ -1937,6 +2063,7 @@ class UIManager {
 }
 class WorldManager {
     ArrayList<Particle> particleList = new ArrayList<Particle>();
+    ArrayList<AtomBond> bondList = new ArrayList<AtomBond>();
 
     public void registerParticle(Particle particle) {
         particleList.add(particle);
@@ -1944,6 +2071,14 @@ class WorldManager {
 
     public void unregisterParticle(Particle particle) {
         particleList.remove(particle);
+    }
+
+    public void registerBond(AtomBond bond) {
+        bondList.add(bond);
+    }
+
+    public void unregisterBond(AtomBond bond) {
+        bondList.remove(bond);
     }
 
     public Atom createAtom(PVector position) {
@@ -2023,6 +2158,14 @@ class WorldManager {
         drawOriginArrows();
 
         drawParticles();
+        drawBonds();
+    }
+
+    private void drawBonds() {
+        for (int i = 0; i < bondList.size(); i++) {
+            AtomBond bond = bondList.get(i);
+            bond.display();
+        }
     }
 
     private void drawParticles() {

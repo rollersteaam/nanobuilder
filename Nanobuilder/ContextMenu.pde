@@ -58,6 +58,26 @@ class ContextMenu extends UIElement {
         }
     };
 
+    Runnable bondAtoms = new Runnable() {
+        public void run() {
+            ArrayList<Particle> list = selectionManager.getObjectsFromSelection();
+            if (list == null) return;
+
+            Atom lastAtom = null;
+            for (Particle particle : list) {
+                if (!(particle instanceof Atom)) continue;
+
+                if (lastAtom != null) {
+                    new AtomBond(lastAtom, (Atom) particle);
+                }
+
+                lastAtom = (Atom) particle;
+            }
+
+            hide();
+        }
+    };
+
     ContextMenu(float x, float y, float w, float h, color colour) {
         super(x, y, w, h, colour);
 
@@ -101,6 +121,11 @@ class ContextMenu extends UIElement {
         UIElement removeElectronText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Remove Electron");
         removeElectronButton.appendChild(removeElectronText);
         appendChild(removeElectronButton);
+
+        UIElement bondAtomsButton = uiFactory.createButton(5, 316, w - 8, 40, color(0, 0, 255), bondAtoms);
+        UIElement bondAtomsText = uiFactory.createText(16, 8, w - 12, 38, color(70), "Bond Atoms");
+        bondAtomsButton.appendChild(bondAtomsText);
+        appendChild(bondAtomsButton);
         
         // UI elements start active by default, hiding when construction is finished is standard practice for menus.
         hide();

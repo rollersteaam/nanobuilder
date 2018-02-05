@@ -61,8 +61,10 @@ void setup() {
     //     new Atom();
     // }
 
-    new Atom(22);
-    
+    Atom atom1 = new Atom(22);
+    Atom atom2 = new Atom(10);
+    AtomBond testBond = new AtomBond(atom1, atom2);
+
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
     // for (int i = 0; i < 50; i++) {
         // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));
@@ -113,15 +115,15 @@ void draw() {
 //     box(20000);
 //     popStyle();
 
-    pushMatrix();
-    drawCylinder(8, 100, 500);
-    popMatrix();
+    // pushMatrix();
+    // drawCylinder(8, 100, 500);
+    // popMatrix();
 
-    pushMatrix();
-    rotateY(PI/2);
-    rotateX(PI/4);
-    drawCylinder(8, 100, 500);
-    popMatrix();
+    // pushMatrix();
+    // rotateY(PI/2);
+    // rotateX(PI/4);
+    // drawCylinder(8, 100, 500);
+    // popMatrix();
 
     /*
         2D drawing beyond here ONLY.

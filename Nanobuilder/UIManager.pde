@@ -5,7 +5,7 @@ class UIManager {
     private ContextMenu contextMenu;
 
     void draw() {
-        if (contextMenu == null) contextMenu = new ContextMenu(0, 0, 180, 224 + 90, color(230));
+        if (contextMenu == null) contextMenu = new ContextMenu(0, 0, 180, 224 + 90 + 50, color(230));
 
         for (UIElement element : screenElements) {
             if (element.getActive()) element.display();

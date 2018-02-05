@@ -1,12 +1,21 @@
 class WorldManager {
     ArrayList<Particle> particleList = new ArrayList<Particle>();
+    ArrayList<AtomBond> bondList = new ArrayList<AtomBond>();
 
-    public void registerParticle(Particle particle) {
+    void registerParticle(Particle particle) {
         particleList.add(particle);
     }
 
-    public void unregisterParticle(Particle particle) {
+    void unregisterParticle(Particle particle) {
         particleList.remove(particle);
+    }
+
+    void registerBond(AtomBond bond) {
+        bondList.add(bond);
+    }
+
+    void unregisterBond(AtomBond bond) {
+        bondList.remove(bond);
     }
 
     public Atom createAtom(PVector position) {
@@ -86,6 +95,14 @@ class WorldManager {
         drawOriginArrows();
 
         drawParticles();
+        drawBonds();
+    }
+
+    private void drawBonds() {
+        for (int i = 0; i < bondList.size(); i++) {
+            AtomBond bond = bondList.get(i);
+            bond.display();
+        }
     }
 
     private void drawParticles() {

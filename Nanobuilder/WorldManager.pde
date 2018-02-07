@@ -1,6 +1,7 @@
 class WorldManager {
     ArrayList<Particle> particleList = new ArrayList<Particle>();
     ArrayList<AtomBond> bondList = new ArrayList<AtomBond>();
+    ArrayList<Atom> atomList = new ArrayList<Atom>();
 
     void registerParticle(Particle particle) {
         particleList.add(particle);
@@ -92,10 +93,11 @@ class WorldManager {
 
     void update() {
         drawOriginGrid();
-        drawOriginArrows();
 
         drawParticles();
         drawBonds();
+
+        drawOriginArrows();
     }
 
     private void drawBonds() {
@@ -110,6 +112,7 @@ class WorldManager {
 
         for (int i = 0; i < particleList.size(); i++) {
             Particle particle = particleList.get(i);
+            if (particle instanceof Atom) continue;
             particle.evaluatePhysics();
             particle.display();
 
@@ -118,6 +121,12 @@ class WorldManager {
             if ((dist > biggestDistance) || (biggestDistance == 0)) {
                 biggestDistance = dist;
             }
+        }
+
+        for (int i = 0; i < atomList.size(); i++) {
+            Atom atom = atomList.get(i);
+            atom.evaluatePhysics();
+            atom.display();
         }
     }
 
@@ -135,6 +144,43 @@ class WorldManager {
     }
 
     private void drawOriginArrows() {
+        // Region boxes
+        // pushStyle();
+        // pushMatrix();
+
+        // fill(255, 0, 0, 130);
+        // rect(0, -5000, 10000, 10000);
+
+        // popMatrix();
+        // popStyle();
+        // pushStyle();
+        // pushMatrix();
+
+        // rotateY(PI/2);
+        // fill(0, 0, 255, 130);
+        // rect(0, -5000, 10000, 10000);
+
+        // popMatrix();
+        // popStyle();
+        // pushStyle();
+        // pushMatrix();
+
+        // rotateY(PI);
+        // fill(255, 0, 0, 130);
+        // rect(0, -5000, 10000, 10000);
+
+        // popMatrix();
+        // popStyle();
+        // pushStyle();
+        // pushMatrix();
+
+        // rotateY(3*PI/2);
+        // fill(0, 0, 255, 130);
+        // rect(0, -5000, 10000, 10000);
+
+        // popMatrix();
+        // popStyle();
+
         for (int y = 0; y < 5; y ++) {
             for (int x = 0; x < 5; x ++) {
                 pushStyle();
@@ -187,4 +233,22 @@ class WorldManager {
             }
         }
     }
+
+    // public static final int FIRST_QUADRANT = 1;
+    // public static final int SECOND_QUADRANT = 2;
+    // public static final int THIRD_QUADRANT = 3;
+    // public static final int FOURTH_QUADRANT = 4;
+
+    // public int getQuadrant(float radAng) {
+    //     radAng = abs(radAng);
+    //     if (radAng >= 0 && radAng < 90 || radAng == 360) {
+    //         return FIRST_QUADRANT;
+    //     } else if (radAng >= 90 && radAng < 180) {
+    //         return SECOND_QUADRANT;
+    //     } else if (radAng >= 180 && radAng < 270) {
+    //         return THIRD_QUADRANT;
+    //     } else if (radAng >= 270 && radAng < 360) {
+    //         return FOURTH_QUADRANT;
+    //     } else throw new IllegalArgumentException("Attempted to find quadrant with illegal angle argument.");
+    // }
 }

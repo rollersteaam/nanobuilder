@@ -61,9 +61,11 @@ void setup() {
     //     new Atom();
     // }
 
-    Atom atom1 = new Atom(22);
-    Atom atom2 = new Atom(10);
+    Atom atom1 = new Atom(100, 200, -700, 5);
+    Atom atom2 = new Atom(100, -2000, -700, 5);
     AtomBond testBond = new AtomBond(atom1, atom2);
+
+    // new Atom(1000);
 
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
     // for (int i = 0; i < 50; i++) {
@@ -143,33 +145,6 @@ void draw() {
     if (keys.containsKey(32) && keys.get(32)) cam.velocity.sub(PVector.mult(cam.getUp(), cam.speed));
     // SHIFT
     if (keys.containsKey(16) && keys.get(16)) cam.velocity.add(PVector.mult(cam.getUp(), cam.speed));
-}
-
-void drawCylinder(int sides, int r, int h) {
-    float angle = 360 / sides;
-    float halfHeight = h/2;
-    beginShape();
-    for (int i = 0; i < sides; i++) {
-        float x = cos(radians(i * angle)) * r;
-        float y = sin(radians(i * angle)) * r;
-        vertex(x, y, -halfHeight);
-    }
-    endShape(CLOSE);
-    beginShape();
-    for (int i = 0; i < sides; i++) {
-        float x = cos(radians(i * angle)) * r;
-        float y = sin(radians(i * angle)) * r;
-        vertex(x, y, halfHeight);
-    }
-    endShape(CLOSE);
-    beginShape(TRIANGLE_STRIP);
-    for (int i = 0; i < sides + 1; i++) {
-        float x = cos(radians(i * angle)) * r;
-        float y = sin(radians(i * angle)) * r;
-        vertex(x, y, halfHeight);
-        vertex(x, y, -halfHeight);
-    }
-    endShape(CLOSE);
 }
 
 void mousePressed(MouseEvent event) {

@@ -94,6 +94,7 @@ class Electron extends Particle {
                 stroke(
                     lerpColor(color(187, 0, 255), color(0, 187, 255), (counter * 1.5)/trail.size()),
                     map(counter, 0, (trailSize - 1), 255, 0)
+                    // 255
                 );
                 strokeWeight(4);
 

@@ -60,7 +60,8 @@ class Particle {
     }
 
     boolean select() {
-        return true;
+        if (parent == null) return true;
+        return parent.shouldParticlesDraw();
         // currentColor = color(135);
         // acceleration.mult(0);
         // velocity.mult(0);

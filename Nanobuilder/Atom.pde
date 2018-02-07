@@ -5,13 +5,14 @@ class Atom extends Particle {
     ArrayList<Neutron> listNeutrons = new ArrayList<Neutron>();
 
     ArrayList<ElectronShell> shells = new ArrayList<ElectronShell>();
-    float orbitDistance;
+    float orbitDistance = 10;
 
     Atom(float x, float y, float z, int electrons) {
-        super(x, y, z, 200);
+        super(x, y, z, 100);
         core = new Proton(x, y, z, this);
         listProtons.add(core);
         children.add(core);
+        worldManager.atomList.add(this);
 
         // An atom always has one shell, or it's not an atom and should throw an exception before this anyway.
         shells.add(new ElectronShell(2, 1, orbitDistance));
@@ -46,7 +47,7 @@ class Atom extends Particle {
     }
 
     void recalculateRadius() {
-        r = shells.size() * 200;
+        r = shells.size() * 100;
         shape.scale(shells.size());
     }
     
@@ -63,7 +64,7 @@ class Atom extends Particle {
 
         calculateShouldParticlesDraw();
 
-        if (shouldParticlesDraw) return;
+        // if (shouldParticlesDraw) return;
         // if (PVector.dist(cam.position, pos) < ((r) + 1500)) return;
 
         color formattedColor = color(
@@ -72,7 +73,8 @@ class Atom extends Particle {
             blue(currentColor),
             // 255
             // lerp(0, 255, (PVector.dist(cam.position, pos) * 2) / (r + 4000))
-            lerp(0, 255, (PVector.dist(cam.position, pos) / ((r*2) + 100)) )
+            // lerp(0, 255, (PVector.dist(cam.position, pos) / ((r*2) + 100)) )
+            lerp(0, 255, (PVector.dist(cam.position, pos) - r*2) / (r*6) )
         );
 
         pushStyle();
@@ -152,6 +154,7 @@ class Atom extends Particle {
             ElectronShell newShell = new ElectronShell((int) (2 * pow(numberOfShells + 1, 2)), numberOfShells + 1, orbitDistance);
             shells.add(newShell);
             newShell.addElectron();
+            recalculateRadius();
         }
     }
 
@@ -163,8 +166,10 @@ class Atom extends Particle {
         ElectronShell lastShell = shells.get(shells.size() - 1);
         lastShell.removeElectron();
 
-        if (lastShell.getSize() == 0)
+        if (lastShell.getSize() == 0) {
             shells.remove(shells.size() - 1);
+            recalculateRadius();
+        }
     }
 
     private boolean shouldParticlesDraw = false;
@@ -176,7 +181,7 @@ class Atom extends Particle {
     to know
     */
     private void calculateShouldParticlesDraw() {
-        if (PVector.dist(cam.position, pos) > (r * 2) + 1000) {
+        if ((PVector.dist(cam.position, pos) - r*2) / (r*6) > 1) {
             shouldParticlesDraw = false;
         } else {
             shouldParticlesDraw = true;
@@ -185,6 +190,6 @@ class Atom extends Particle {
 
     // And of course, we don't want write access to this field and so it does not win, good day sir.
     boolean shouldParticlesDraw() {
-        return true;
+        return shouldParticlesDraw;
     }
 }

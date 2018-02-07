@@ -86,9 +86,11 @@ public void setup() {
     //     new Atom();
     // }
 
-    Atom atom1 = new Atom(22);
-    Atom atom2 = new Atom(10);
+    Atom atom1 = new Atom(100, 200, -700, 5);
+    Atom atom2 = new Atom(100, -2000, -700, 5);
     AtomBond testBond = new AtomBond(atom1, atom2);
+
+    // new Atom(1000);
 
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
     // for (int i = 0; i < 50; i++) {
@@ -170,33 +172,6 @@ public void draw() {
     if (keys.containsKey(16) && keys.get(16)) cam.velocity.add(PVector.mult(cam.getUp(), cam.speed));
 }
 
-public void drawCylinder(int sides, int r, int h) {
-    float angle = 360 / sides;
-    float halfHeight = h/2;
-    beginShape();
-    for (int i = 0; i < sides; i++) {
-        float x = cos(radians(i * angle)) * r;
-        float y = sin(radians(i * angle)) * r;
-        vertex(x, y, -halfHeight);
-    }
-    endShape(CLOSE);
-    beginShape();
-    for (int i = 0; i < sides; i++) {
-        float x = cos(radians(i * angle)) * r;
-        float y = sin(radians(i * angle)) * r;
-        vertex(x, y, halfHeight);
-    }
-    endShape(CLOSE);
-    beginShape(TRIANGLE_STRIP);
-    for (int i = 0; i < sides + 1; i++) {
-        float x = cos(radians(i * angle)) * r;
-        float y = sin(radians(i * angle)) * r;
-        vertex(x, y, halfHeight);
-        vertex(x, y, -halfHeight);
-    }
-    endShape(CLOSE);
-}
-
 public void mousePressed(MouseEvent event) {
     // If selection agent's events have been triggered, then we are finished for this mouse event.
     if (mouseButton == LEFT) {
@@ -260,13 +235,14 @@ class Atom extends Particle {
     ArrayList<Neutron> listNeutrons = new ArrayList<Neutron>();
 
     ArrayList<ElectronShell> shells = new ArrayList<ElectronShell>();
-    float orbitDistance;
+    float orbitDistance = 10;
 
     Atom(float x, float y, float z, int electrons) {
-        super(x, y, z, 200);
+        super(x, y, z, 100);
         core = new Proton(x, y, z, this);
         listProtons.add(core);
         children.add(core);
+        worldManager.atomList.add(this);
 
         // An atom always has one shell, or it's not an atom and should throw an exception before this anyway.
         shells.add(new ElectronShell(2, 1, orbitDistance));
@@ -301,7 +277,7 @@ class Atom extends Particle {
     }
 
     public void recalculateRadius() {
-        r = shells.size() * 200;
+        r = shells.size() * 100;
         shape.scale(shells.size());
     }
     
@@ -318,7 +294,7 @@ class Atom extends Particle {
 
         calculateShouldParticlesDraw();
 
-        if (shouldParticlesDraw) return;
+        // if (shouldParticlesDraw) return;
         // if (PVector.dist(cam.position, pos) < ((r) + 1500)) return;
 
         int formattedColor = color(
@@ -327,7 +303,8 @@ class Atom extends Particle {
             blue(currentColor),
             // 255
             // lerp(0, 255, (PVector.dist(cam.position, pos) * 2) / (r + 4000))
-            lerp(0, 255, (PVector.dist(cam.position, pos) / ((r*2) + 100)) )
+            // lerp(0, 255, (PVector.dist(cam.position, pos) / ((r*2) + 100)) )
+            lerp(0, 255, (PVector.dist(cam.position, pos) - r*2) / (r*6) )
         );
 
         pushStyle();
@@ -407,6 +384,7 @@ class Atom extends Particle {
             ElectronShell newShell = new ElectronShell((int) (2 * pow(numberOfShells + 1, 2)), numberOfShells + 1, orbitDistance);
             shells.add(newShell);
             newShell.addElectron();
+            recalculateRadius();
         }
     }
 
@@ -418,8 +396,10 @@ class Atom extends Particle {
         ElectronShell lastShell = shells.get(shells.size() - 1);
         lastShell.removeElectron();
 
-        if (lastShell.getSize() == 0)
+        if (lastShell.getSize() == 0) {
             shells.remove(shells.size() - 1);
+            recalculateRadius();
+        }
     }
 
     private boolean shouldParticlesDraw = false;
@@ -431,7 +411,7 @@ class Atom extends Particle {
     to know
     */
     private void calculateShouldParticlesDraw() {
-        if (PVector.dist(cam.position, pos) > (r * 2) + 1000) {
+        if ((PVector.dist(cam.position, pos) - r*2) / (r*6) > 1) {
             shouldParticlesDraw = false;
         } else {
             shouldParticlesDraw = true;
@@ -440,7 +420,7 @@ class Atom extends Particle {
 
     // And of course, we don't want write access to this field and so it does not win, good day sir.
     public boolean shouldParticlesDraw() {
-        return true;
+        return shouldParticlesDraw;
     }
 }
 class AtomBond {
@@ -452,7 +432,7 @@ class AtomBond {
 
     PShape shape, top, bottom, body;
 
-    private final static float RADIUS = 50;
+    private final static float RADIUS = 32;
     private final static float SIDES = 8;
 
     float height;
@@ -460,6 +440,11 @@ class AtomBond {
     AtomBond(Atom first, Atom second) {
         this.first = first;
         this.second = second;
+
+        pushStyle();
+
+        fill(255, 200, 0);
+        stroke(0, 0);
 
         shape = createShape(GROUP);
         
@@ -499,13 +484,33 @@ class AtomBond {
         shape.addChild(bottom);
         shape.addChild(body);
 
+        popStyle();
+
         worldManager.registerBond(this);
-        // position = PVector.sub(first.pos, second.pos).div(2);
     }
 
     // Updates the shape's proportions to its two parents.
-    public void updateShape() {
+    private void updateShape(float distance) {
+        height = distance;
+        float halfHeight = height/2;
 
+        for (int i = 0; i < SIDES; i++) {
+            PVector v = top.getVertex(i);
+            top.setVertex(i, v.x, v.y, halfHeight);
+        }
+
+        for (int i = 0; i < SIDES; i++) {
+            PVector v = bottom.getVertex(i);
+            bottom.setVertex(i, v.x, v.y, -halfHeight);
+        }
+
+        for (int i = 0; i < (SIDES + 1) * 2; i++) {
+            PVector v = body.getVertex(i);
+            body.setVertex(i, v.x, v.y, halfHeight);
+            body.setVertex(i + 1, v.x, v.y, -halfHeight);
+            // Iterate twice to skip to the next pair.
+            i++;
+        }
     }
 
     public void display() {
@@ -513,13 +518,18 @@ class AtomBond {
         pushStyle();
 
         PVector dPos = PVector.sub(second.pos, first.pos);
+        float distance = dPos.mag();
         position = PVector.add(first.pos, dPos.copy().div(2));
-        rotation.y = atan2(dPos.y, dPos.x);
+
+        rotation.y = asin(dPos.y/distance);
         rotation.x = atan2(dPos.z, dPos.x);
+
+        updateShape(distance);
+
         translate(position.x, position.y, position.z);
+        rotateY(-rotation.x - radians(90));
         rotateX(rotation.y);
-        rotateZ(rotation.x);
-        // shape.scale(1, 1, PVector.dist(first.pos, second.pos) / height / 100);
+
         shape(shape);
 
         popStyle();
@@ -893,6 +903,7 @@ class Electron extends Particle {
                 stroke(
                     lerpColor(color(187, 0, 255), color(0, 187, 255), (counter * 1.5f)/trail.size()),
                     map(counter, 0, (trailSize - 1), 255, 0)
+                    // 255
                 );
                 strokeWeight(4);
 
@@ -1026,7 +1037,8 @@ class Particle {
     }
 
     public boolean select() {
-        return true;
+        if (parent == null) return true;
+        return parent.shouldParticlesDraw();
         // currentColor = color(135);
         // acceleration.mult(0);
         // velocity.mult(0);
@@ -2064,6 +2076,7 @@ class UIManager {
 class WorldManager {
     ArrayList<Particle> particleList = new ArrayList<Particle>();
     ArrayList<AtomBond> bondList = new ArrayList<AtomBond>();
+    ArrayList<Atom> atomList = new ArrayList<Atom>();
 
     public void registerParticle(Particle particle) {
         particleList.add(particle);
@@ -2155,10 +2168,11 @@ class WorldManager {
 
     public void update() {
         drawOriginGrid();
-        drawOriginArrows();
 
         drawParticles();
         drawBonds();
+
+        drawOriginArrows();
     }
 
     private void drawBonds() {
@@ -2173,6 +2187,7 @@ class WorldManager {
 
         for (int i = 0; i < particleList.size(); i++) {
             Particle particle = particleList.get(i);
+            if (particle instanceof Atom) continue;
             particle.evaluatePhysics();
             particle.display();
 
@@ -2181,6 +2196,12 @@ class WorldManager {
             if ((dist > biggestDistance) || (biggestDistance == 0)) {
                 biggestDistance = dist;
             }
+        }
+
+        for (int i = 0; i < atomList.size(); i++) {
+            Atom atom = atomList.get(i);
+            atom.evaluatePhysics();
+            atom.display();
         }
     }
 
@@ -2198,6 +2219,43 @@ class WorldManager {
     }
 
     private void drawOriginArrows() {
+        // Region boxes
+        // pushStyle();
+        // pushMatrix();
+
+        // fill(255, 0, 0, 130);
+        // rect(0, -5000, 10000, 10000);
+
+        // popMatrix();
+        // popStyle();
+        // pushStyle();
+        // pushMatrix();
+
+        // rotateY(PI/2);
+        // fill(0, 0, 255, 130);
+        // rect(0, -5000, 10000, 10000);
+
+        // popMatrix();
+        // popStyle();
+        // pushStyle();
+        // pushMatrix();
+
+        // rotateY(PI);
+        // fill(255, 0, 0, 130);
+        // rect(0, -5000, 10000, 10000);
+
+        // popMatrix();
+        // popStyle();
+        // pushStyle();
+        // pushMatrix();
+
+        // rotateY(3*PI/2);
+        // fill(0, 0, 255, 130);
+        // rect(0, -5000, 10000, 10000);
+
+        // popMatrix();
+        // popStyle();
+
         for (int y = 0; y < 5; y ++) {
             for (int x = 0; x < 5; x ++) {
                 pushStyle();
@@ -2250,6 +2308,24 @@ class WorldManager {
             }
         }
     }
+
+    // public static final int FIRST_QUADRANT = 1;
+    // public static final int SECOND_QUADRANT = 2;
+    // public static final int THIRD_QUADRANT = 3;
+    // public static final int FOURTH_QUADRANT = 4;
+
+    // public int getQuadrant(float radAng) {
+    //     radAng = abs(radAng);
+    //     if (radAng >= 0 && radAng < 90 || radAng == 360) {
+    //         return FIRST_QUADRANT;
+    //     } else if (radAng >= 90 && radAng < 180) {
+    //         return SECOND_QUADRANT;
+    //     } else if (radAng >= 180 && radAng < 270) {
+    //         return THIRD_QUADRANT;
+    //     } else if (radAng >= 270 && radAng < 360) {
+    //         return FOURTH_QUADRANT;
+    //     } else throw new IllegalArgumentException("Attempted to find quadrant with illegal angle argument.");
+    // }
 }
     public void settings() {  size(1280, 720, P3D); }
     static public void main(String[] passedArgs) {

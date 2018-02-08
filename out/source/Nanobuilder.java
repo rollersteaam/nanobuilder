@@ -11,6 +11,7 @@ import java.util.Deque;
 import java.util.ArrayDeque; 
 import java.util.Timer; 
 import java.util.TimerTask; 
+import java.util.Collections; 
 
 import java.util.HashMap; 
 import java.util.ArrayList; 
@@ -33,14 +34,13 @@ public class Nanobuilder extends PApplet {
 
 
 
+
 Camera cam;
 Robot robot;
 WorldManager worldManager;
 SelectionManager selectionManager;
 UIManager uiManager;
 UIFactory uiFactory;
-
-// ArrayList<Particle> particleList = new ArrayList<Particle>();
 
 /*
 MAIN FILE
@@ -86,9 +86,14 @@ public void setup() {
     //     new Atom();
     // }
 
-    Atom atom1 = new Atom(100, 200, -700, 5);
-    Atom atom2 = new Atom(100, -2000, -700, 5);
-    AtomBond testBond = new AtomBond(atom1, atom2);
+    // Atom atom1 = new Atom(100, 200, -700, 5);
+    // Atom atom2 = new Atom(100, -2000, -700, 5);
+    // AtomBond testBond = new AtomBond(atom1, atom2);
+
+    Atom testAtom = new Atom(10);
+    testAtom.addNeutron();
+    testAtom.addNeutron();
+    testAtom.addNeutron();
 
     // new Atom(1000);
 
@@ -230,18 +235,93 @@ public void keyEvent(KeyEvent event){
 }
 class Atom extends Particle {
     Proton core;
-    ArrayList<Proton> listProtons = new ArrayList<Proton>();
-    ArrayList<Electron> listElectrons = new ArrayList<Electron>();
+    // ArrayList<Proton> listProtons = new ArrayList<Proton>();
+    // ArrayList<Electron> listElectrons = new ArrayList<Electron>();
     ArrayList<Neutron> listNeutrons = new ArrayList<Neutron>();
+    ArrayList<Particle> nucleus = new ArrayList<Particle>();
 
     ArrayList<ElectronShell> shells = new ArrayList<ElectronShell>();
     float orbitDistance = 10;
 
+    public void addNeutron() {
+        nucleus.add(new Neutron(500, 500, 500, this));
+        distributeNucleus();
+    }
+
+    public void addProton() {
+        nucleus.add(new Proton(500, 500, 500, this));
+        distributeNucleus();
+    }
+
+    /*
+    Using the equation for a sphere, I make a pass every 156 units in the Z axis to determine the magnitude limit
+    for the circular project of the nucleus' contents. As the list is run in normal order, the core proton should
+    always be the first one projected.
+    */
+    private void distributeNucleus() {
+        int nucleusNum = nucleus.size();
+        println("Number in nucleus: " + nucleusNum);
+        /*
+        (2 * nucleon radius)^3 results in a volume for a cube occupying the same space. <-- subject to change
+        sphereRadius = cubed root of [3*number of nucleons*(2 * nucleon radius)^3 / 4 * PI]
+        */
+        float minNucleusRadius = pow( (3*nucleusNum*pow(156, 3)) / (4*PI) , 1f/3f);
+        // for (int z = 0; z * 156 < minNucleusRadius; z++) {
+        float z = -minNucleusRadius;
+        println("Minimum radius of nucleus: " + minNucleusRadius);
+        while (z < minNucleusRadius) {
+            // squared root of [sphere radius squared - the difference in X/Z sphere traversal squared] is equal to dY.
+            // This difference in Y becomes the limit that our projection method uses for all given passes.
+            float planeLimit = sqrt( pow(minNucleusRadius, 2) - pow(pos.z - (pos.z + z), 2) );
+            println("2D plane limit: " + planeLimit);
+
+            int projectionLevel = 0;
+            int projectionLevelLimit = 1;
+            int projectionLevelCounter = 0;
+            float projectionLevelMagnitude = 0;
+            float projectionLevelAngSep = 0;
+
+            // for (nucleusNum > 0; nucleusNum--) {
+            int i = 0;
+            while (nucleusNum > 0) {
+                Particle nucleon = nucleus.get(i);
+                
+                nucleon.pos = PVector.add(pos, new PVector(
+                        sin(projectionLevelAngSep * projectionLevelCounter) * projectionLevelMagnitude,
+                        cos(projectionLevelAngSep * projectionLevelCounter) * projectionLevelMagnitude,
+                        z
+                    )
+                );
+
+                projectionLevelCounter++;
+                nucleusNum--;
+                i++;
+
+                if (projectionLevelCounter == projectionLevelLimit) {
+                    projectionLevel++;
+                    projectionLevelMagnitude = projectionLevel * 156;
+
+                    if (projectionLevelMagnitude > planeLimit) {
+                        break;
+                    }
+
+                    projectionLevelLimit = ceil((2*PI*projectionLevelMagnitude)/156);
+                    projectionLevelAngSep = 2*PI/projectionLevelLimit;
+                    projectionLevelCounter = 0;
+                }
+            }
+
+            z += 156;
+        }
+    }
+
+
     Atom(float x, float y, float z, int electrons) {
-        super(x, y, z, 100);
+        super(x, y, z, 200);
+        
         core = new Proton(x, y, z, this);
-        listProtons.add(core);
-        children.add(core);
+        nucleus.add(core);
+
         worldManager.atomList.add(this);
 
         // An atom always has one shell, or it's not an atom and should throw an exception before this anyway.
@@ -277,7 +357,8 @@ class Atom extends Particle {
     }
 
     public void recalculateRadius() {
-        r = shells.size() * 100;
+        shape.scale(1 / (r / 200));
+        r = shells.size() * 200;
         shape.scale(shells.size());
     }
     
@@ -811,7 +892,8 @@ class Electron extends Particle {
     // Will add 17 to all powers of 10 for now.
     Electron(float x, float y, float z, Proton proton) {
         // super(x, y, z, random(0.84, 0.87) * 100 / 1000);
-        super(x, y, z, random(0.84f, 0.87f) * 100 / 3);
+        // super(x, y, z, random(0.84, 0.87) * 100 / 3);
+        super(x, y, z, 87 / 3);
 
         charge = -1.6f * pow(10, -19);
         mass = 9.10938356f * pow(10, -31);
@@ -959,10 +1041,14 @@ class Menu extends UIElement {
     }
 }
 class Neutron extends Particle {
-    Neutron(float x, float y, float z) {
-        super(x, y, z, random(0.84f, 0.87f) * 100);
+    Neutron(float x, float y, float z, Atom parent) {
+        // super(x, y, z, random(0.84, 0.87) * 100);
+        super(x, y, z, 87);
         charge = 0;
         mass = 1.6726219f * pow(10, -10);
+
+        this.parent = parent;
+        parent.addChild(this);
 
         baseColor = color(255);
         revertToBaseColor();
@@ -1018,10 +1104,17 @@ class Particle {
         );
     }
 
+    public void addChild(Particle child) {
+        children.add(child);
+    }
+
+    public void removeChild(Particle child) {
+        children.remove(child);
+    }
+
     public void delete() {
         shape = null;
         worldManager.unregisterParticle(this);
-        // worldManager.particleList.remove(this);
 
         // TODO: Change this direct access to method based access.
         if (parent != null) {
@@ -1113,22 +1206,22 @@ class Particle {
     }
 
     public void evaluatePhysics() {
-        if ((pos.x + r) > 10000 || (pos.x - r) < -10000) {
-            pos.x -= velocity.copy().x;
+        if ((pos.x + r) >= 10000 || (pos.x - r) <= -10000) {
+            addPosition(new PVector(-(velocity.x), 0, 0));
             velocity.x *= -1;
             velocity.x /= 4;            
             // delete();
         }
 
-        if ((pos.y + r) > 10000 || (pos.y - r) < -10000) {
-            pos.y -= velocity.copy().y;
+        if ((pos.y + r) >= 10000 || (pos.y - r) <= -10000) {
+            addPosition(new PVector(0, -(velocity.y), 0));
             velocity.y *= -1;
             velocity.y /= 4;            
             // delete();
         }
 
-        if ((pos.z + r) > 10000 || (pos.z - r) < -10000) {
-            pos.z -= velocity.copy().z;
+        if ((pos.z + r) >= 10000 || (pos.z - r) <= -10000) {
+            addPosition(new PVector(0, 0, -(velocity.z)));
             velocity.z *= -1;
             velocity.z /= 4;            
             // delete();
@@ -1146,7 +1239,7 @@ class Particle {
                 continue;
             // Atoms are "abstract" but simplified collisions should still allow
             // atom and particle collisions, e.g. if the target particle doesn't belong to an atom.
-            if (particle.parent != null || particle.parent == this || parent == particle)
+            if (particle.parent != null || parent != null)
                 continue;
 
             // if (PVector.dist(pos, particle.pos) <= r * 2) {
@@ -1178,24 +1271,22 @@ class Particle {
         float energy = 1/2 * mass * pow((velocity.mag()), 2) + 1/2 * particle.mass * pow((particle.velocity.mag()), 2);
         // This new velocity magnitude should change depending on who calls collide.
         // After -2 * impulse plus or minus can be used. It's a quadratic equation.
-        float newVelocityMagnitude = -2 * impulse - sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
+        float newVelocityMagnitude = -2 * impulse + sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
         // So we must halve it after we're done.
         newVelocityMagnitude /= 2;
-        newVelocityMagnitude /= 100;
-        // We scale forces down by 
-        println(newVelocityMagnitude);
-        incidentVector.setMag(newVelocityMagnitude);
-        // If resultant velocity direction is negative, flip the direction.
-        // if (newVelocityMagnitude < 0) incidentVector.mult(-1);
-        // particle.velocity = incidentVector;
-        println("---" + newVelocityMagnitude + " - " + this);
-        println(particle.velocity.mag());
-        particle.velocity.add(incidentVector);
-        println(particle.velocity.mag());
-        println();
-        println();
-        println();
 
+        incidentVector.setMag(newVelocityMagnitude);
+        /*
+            New added velocity needs to be opposite the direction of incidence...
+
+            Note that this doesn't logically follow, this is because the directions of the particle velocitys'
+            are not factored in during the above calculations. There may be a requirement to evaluate this later.
+
+            For now, believable collision is observed with this current config.
+        */
+        if (newVelocityMagnitude > 0) incidentVector.mult(-1);
+        // particle.velocity = incidentVector;
+        particle.velocity.add(incidentVector);
         // And now attempt to cancel any attempts to process the collision a second time.
     }
 
@@ -1343,12 +1434,13 @@ class Proton extends Particle {
     
         Radius of a proton: 0.84 * 10^-15 to 0.87 * 10^-15
     */
-    Proton(float x, float y, float z, Atom atom) {
-        super(x, y, z, random(0.84f, 0.87f) * 100);
+    Proton(float x, float y, float z, Atom parent) {
+        super(x, y, z, 87);
         charge = 1.6f * pow(10, -19);
         mass = 1.6726219f * pow(10, -27);
 
-        parent = atom;
+        this.parent = parent;
+        parent.addChild(this);
 
         baseColor = color(255, 0, 0);
         revertToBaseColor();
@@ -2169,8 +2261,8 @@ class WorldManager {
     public void update() {
         drawOriginGrid();
 
-        drawParticles();
         drawBonds();
+        drawParticles();
 
         drawOriginArrows();
     }
@@ -2197,6 +2289,30 @@ class WorldManager {
                 biggestDistance = dist;
             }
         }
+
+        // Collections.sort(atomList, new Comparator<CustomData>() {
+        //     @Override
+        //     public int compare(CustomData lhs, CustomData rhs) {
+        //         // -1 - less than, 1 - greater than, 0 - equal, all inversed for descending
+        //         return PVector.dist(cam.position, lhs.pos) > PVector.dist(cam.position, rhs.pos) ? -1 : (PVector.dist(cam.position, lhs.pos) < PVector.dist(cam.position, rhs.pos)) ? 1 : 0;
+        //     }
+        // });
+
+        // Implement a reverse-order Comparator by lambda function
+        // Comparator<Atom> comp = (Atom a, Atom b) -> {
+        //     return PVector.dist(cam.position, b.pos).compareTo(PVector.dist(cam.position, a.pos));
+        // };
+        // Comparator<CustomData> comp = new Comparator<CustomData>() {
+        //     @Override
+        //     public int compare(CustomData lhs, CustomData rhs) {
+        //     // -1 - less than, 1 - greater than, 0 - equal, all inversed for descending
+        //         // return PVector.dist(cam.position, lhs.pos) > PVector.dist(cam.position, rhs.pos) ? -1 : (PVector.dist(cam.position, lhs.pos) < PVector.dist(cam.position, rhs.pos)) ? 1 : 0;
+        //     // }
+        //         return PVector.dist(cam.position, lhs.pos).compareTo(PVector.dist(cam.position, rhs.pos));
+        //     }
+        // };
+
+        // Collections.sort(atomList, comp);
 
         for (int i = 0; i < atomList.size(); i++) {
             Atom atom = atomList.get(i);

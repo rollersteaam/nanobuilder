@@ -4,12 +4,13 @@ class Proton extends Particle {
     
         Radius of a proton: 0.84 * 10^-15 to 0.87 * 10^-15
     */
-    Proton(float x, float y, float z, Atom atom) {
-        super(x, y, z, random(0.84, 0.87) * 100);
+    Proton(float x, float y, float z, Atom parent) {
+        super(x, y, z, 87);
         charge = 1.6 * pow(10, -19);
         mass = 1.6726219 * pow(10, -27);
 
-        parent = atom;
+        this.parent = parent;
+        parent.addChild(this);
 
         baseColor = color(255, 0, 0);
         revertToBaseColor();

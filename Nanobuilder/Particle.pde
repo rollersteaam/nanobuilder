@@ -41,10 +41,17 @@ class Particle {
         );
     }
 
+    public void addChild(Particle child) {
+        children.add(child);
+    }
+
+    public void removeChild(Particle child) {
+        children.remove(child);
+    }
+
     void delete() {
         shape = null;
         worldManager.unregisterParticle(this);
-        // worldManager.particleList.remove(this);
 
         // TODO: Change this direct access to method based access.
         if (parent != null) {
@@ -136,22 +143,22 @@ class Particle {
     }
 
     void evaluatePhysics() {
-        if ((pos.x + r) > 10000 || (pos.x - r) < -10000) {
-            pos.x -= velocity.copy().x;
+        if ((pos.x + r) >= 10000 || (pos.x - r) <= -10000) {
+            addPosition(new PVector(-(velocity.x), 0, 0));
             velocity.x *= -1;
             velocity.x /= 4;            
             // delete();
         }
 
-        if ((pos.y + r) > 10000 || (pos.y - r) < -10000) {
-            pos.y -= velocity.copy().y;
+        if ((pos.y + r) >= 10000 || (pos.y - r) <= -10000) {
+            addPosition(new PVector(0, -(velocity.y), 0));
             velocity.y *= -1;
             velocity.y /= 4;            
             // delete();
         }
 
-        if ((pos.z + r) > 10000 || (pos.z - r) < -10000) {
-            pos.z -= velocity.copy().z;
+        if ((pos.z + r) >= 10000 || (pos.z - r) <= -10000) {
+            addPosition(new PVector(0, 0, -(velocity.z)));
             velocity.z *= -1;
             velocity.z /= 4;            
             // delete();
@@ -169,7 +176,7 @@ class Particle {
                 continue;
             // Atoms are "abstract" but simplified collisions should still allow
             // atom and particle collisions, e.g. if the target particle doesn't belong to an atom.
-            if (particle.parent != null || particle.parent == this || parent == particle)
+            if (particle.parent != null || parent != null)
                 continue;
 
             // if (PVector.dist(pos, particle.pos) <= r * 2) {
@@ -201,24 +208,22 @@ class Particle {
         float energy = 1/2 * mass * pow((velocity.mag()), 2) + 1/2 * particle.mass * pow((particle.velocity.mag()), 2);
         // This new velocity magnitude should change depending on who calls collide.
         // After -2 * impulse plus or minus can be used. It's a quadratic equation.
-        float newVelocityMagnitude = -2 * impulse - sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
+        float newVelocityMagnitude = -2 * impulse + sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
         // So we must halve it after we're done.
         newVelocityMagnitude /= 2;
-        newVelocityMagnitude /= 100;
-        // We scale forces down by 
-        println(newVelocityMagnitude);
-        incidentVector.setMag(newVelocityMagnitude);
-        // If resultant velocity direction is negative, flip the direction.
-        // if (newVelocityMagnitude < 0) incidentVector.mult(-1);
-        // particle.velocity = incidentVector;
-        println("---" + newVelocityMagnitude + " - " + this);
-        println(particle.velocity.mag());
-        particle.velocity.add(incidentVector);
-        println(particle.velocity.mag());
-        println();
-        println();
-        println();
 
+        incidentVector.setMag(newVelocityMagnitude);
+        /*
+            New added velocity needs to be opposite the direction of incidence...
+
+            Note that this doesn't logically follow, this is because the directions of the particle velocitys'
+            are not factored in during the above calculations. There may be a requirement to evaluate this later.
+
+            For now, believable collision is observed with this current config.
+        */
+        if (newVelocityMagnitude > 0) incidentVector.mult(-1);
+        // particle.velocity = incidentVector;
+        particle.velocity.add(incidentVector);
         // And now attempt to cancel any attempts to process the collision a second time.
     }
 

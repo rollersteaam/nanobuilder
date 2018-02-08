@@ -2,7 +2,8 @@ class Electron extends Particle {
     // Will add 17 to all powers of 10 for now.
     Electron(float x, float y, float z, Proton proton) {
         // super(x, y, z, random(0.84, 0.87) * 100 / 1000);
-        super(x, y, z, random(0.84, 0.87) * 100 / 3);
+        // super(x, y, z, random(0.84, 0.87) * 100 / 3);
+        super(x, y, z, 87 / 3);
 
         charge = -1.6 * pow(10, -19);
         mass = 9.10938356 * pow(10, -31);

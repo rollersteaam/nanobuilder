@@ -7,6 +7,7 @@ import java.util.ArrayDeque;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Collections;
 
 Camera cam;
 Robot robot;
@@ -14,8 +15,6 @@ WorldManager worldManager;
 SelectionManager selectionManager;
 UIManager uiManager;
 UIFactory uiFactory;
-
-// ArrayList<Particle> particleList = new ArrayList<Particle>();
 
 /*
 MAIN FILE
@@ -61,9 +60,14 @@ void setup() {
     //     new Atom();
     // }
 
-    Atom atom1 = new Atom(100, 200, -700, 5);
-    Atom atom2 = new Atom(100, -2000, -700, 5);
-    AtomBond testBond = new AtomBond(atom1, atom2);
+    // Atom atom1 = new Atom(100, 200, -700, 5);
+    // Atom atom2 = new Atom(100, -2000, -700, 5);
+    // AtomBond testBond = new AtomBond(atom1, atom2);
+
+    Atom testAtom = new Atom(10);
+    testAtom.addNeutron();
+    testAtom.addNeutron();
+    testAtom.addNeutron();
 
     // new Atom(1000);
 

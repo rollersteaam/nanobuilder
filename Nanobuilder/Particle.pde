@@ -130,7 +130,7 @@ class Particle {
         */
         PVector vector = PVector.sub(particle.pos, pos);
         vector.normalize();
-        vector.setMag(force * 100 / particle.mass);
+        vector.setMag((force * 100) / particle.mass);
         particle.acceleration.add(vector);
     }
 
@@ -219,7 +219,7 @@ class Particle {
             Note that this doesn't logically follow, this is because the directions of the particle velocitys'
             are not factored in during the above calculations. There may be a requirement to evaluate this later.
 
-            For now, believable collision is observed with this current config.
+            For now, believable collision is observed with this config.
         */
         if (newVelocityMagnitude > 0) incidentVector.mult(-1);
         // particle.velocity = incidentVector;

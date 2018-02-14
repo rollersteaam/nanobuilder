@@ -4,9 +4,10 @@ class Atom extends Particle {
     // ArrayList<Electron> listElectrons = new ArrayList<Electron>();
     ArrayList<Neutron> listNeutrons = new ArrayList<Neutron>();
     ArrayList<Particle> nucleus = new ArrayList<Particle>();
+    float nucleusRadius = 0;
 
     ArrayList<ElectronShell> shells = new ArrayList<ElectronShell>();
-    float orbitDistance = 10;
+    float orbitDistance = 0;
 
     public void addNeutron() {
         nucleus.add(new Neutron(500, 500, 500, this));
@@ -20,64 +21,146 @@ class Atom extends Particle {
 
     /*
     Using the equation for a sphere, I make a pass every 156 units in the Z axis to determine the magnitude limit
-    for the circular project of the nucleus' contents. As the list is run in normal order, the core proton should
+    for the circular projection of the nucleus' contents. As the list is run in normal order, the core proton should
     always be the first one projected.
     */
     private void distributeNucleus() {
-        int nucleusNum = nucleus.size();
-        println("Number in nucleus: " + nucleusNum);
-        /*
-        (2 * nucleon radius)^3 results in a volume for a cube occupying the same space. <-- subject to change
-        sphereRadius = cubed root of [3*number of nucleons*(2 * nucleon radius)^3 / 4 * PI]
-        */
-        float minNucleusRadius = pow( (3*nucleusNum*pow(156, 3)) / (4*PI) , 1f/3f);
-        // for (int z = 0; z * 156 < minNucleusRadius; z++) {
-        float z = -minNucleusRadius;
-        println("Minimum radius of nucleus: " + minNucleusRadius);
-        while (z < minNucleusRadius) {
-            // squared root of [sphere radius squared - the difference in X/Z sphere traversal squared] is equal to dY.
-            // This difference in Y becomes the limit that our projection method uses for all given passes.
-            float planeLimit = sqrt( pow(minNucleusRadius, 2) - pow(pos.z - (pos.z + z), 2) );
-            println("2D plane limit: " + planeLimit);
+        int numberOfNucleons = nucleus.size();
+        // println("____");
+        // println("Number in nucleus: " + numberOfNucleons);
+        // /*
+        // (2 * nucleon radius)^3 results in a volume for a cube occupying the same space. <-- subject to change
+        // sphereRadius = cubed root of [3*number of nucleons*(2 * nucleon radius)^3 / 4 * PI]
+        // */
+        // float minNucleusRadius = pow( (3*numberOfNucleons*pow(156, 3)) / (4*PI) , 1f/3f);
+        // minNucleusRadius += minNucleusRadius * ( floor(minNucleusRadius / 78) - minNucleusRadius / 78 );
+        
+        // // if (guide != null) guide.delete();
+        // // guide = new Particle(pos.x, pos.y, pos.z, minNucleusRadius);
+        // // guide.setColour(color(255, 80));
+            
+        // // float z = -minNucleusRadius;
+        // println("Minimum radius of nucleus: " + minNucleusRadius);
 
-            int projectionLevel = 0;
-            int projectionLevelLimit = 1;
-            int projectionLevelCounter = 0;
-            float projectionLevelMagnitude = 0;
-            float projectionLevelAngSep = 0;
+        // orbitDistance = minNucleusRadius;
 
-            // for (nucleusNum > 0; nucleusNum--) {
-            int i = 0;
-            while (nucleusNum > 0) {
-                Particle nucleon = nucleus.get(i);
-                
-                nucleon.pos = PVector.add(pos, new PVector(
-                        sin(projectionLevelAngSep * projectionLevelCounter) * projectionLevelMagnitude,
-                        cos(projectionLevelAngSep * projectionLevelCounter) * projectionLevelMagnitude,
-                        z
-                    )
-                );
+        // println("I would judge... " + minNucleusRadius * 2 / 156 + " can fit.");
 
-                projectionLevelCounter++;
-                nucleusNum--;
-                i++;
+        // Set first nucleon (the core proton) as the center particle for model's sake.
+        // nucleus.get(0).pos = pos;
+        // Therefore start further in advance.
 
-                if (projectionLevelCounter == projectionLevelLimit) {
-                    projectionLevel++;
-                    projectionLevelMagnitude = projectionLevel * 156;
+        numberOfNucleons -= 1;
+        int zPRadius = 156;
 
-                    if (projectionLevelMagnitude > planeLimit) {
-                        break;
-                    }
+        for (int currentNucleonIndex = 1; numberOfNucleons > 0; zPRadius += 156) {    
+            float pRadius = 0;
+            for (int z = zPRadius; z >= -zPRadius; z -= 156) {
+                // float pRadius = sqrt( pow(zPRadius, 2) - pow(z, 2) );
 
-                    projectionLevelLimit = ceil((2*PI*projectionLevelMagnitude)/156);
-                    projectionLevelAngSep = 2*PI/projectionLevelLimit;
-                    projectionLevelCounter = 0;
+                float pFillable = ceil((2 * PI * pRadius) / 156);
+                // float pAngleSep = 156 / (pFillable * pRadius);
+                // float pAngleSep = (2 * PI) / pFillable;
+                float pAngleSep = (pFillable == 0) ? 0 : (2 * PI) / pFillable;
+                pFillable = (pFillable == 0) ? 1 : pFillable;
+
+                for (int i = 0; (i < pFillable && numberOfNucleons > 0); i++, currentNucleonIndex++, numberOfNucleons--) {
+                    Particle nucleon = nucleus.get(currentNucleonIndex);
+                    float angle = pAngleSep * i;
+
+                    // println("=== ANGLE ===");
+                    // println(degrees(angle));
+                    // println("===");
+
+                    nucleon.pos = PVector.add(pos,
+                        new PVector(
+                            sin(angle) * pRadius,
+                            cos(angle) * pRadius,
+                            z
+                        )
+                    );
                 }
-            }
 
-            z += 156;
+                if (z == 0) nucleusRadius = pRadius;
+                pRadius += (z > 0) ? 156 : -156;
+            }
         }
+
+        //     for (int projectionLevel = 0; projectionLevel * 156 <= projectionLim; projectionLevel++) {
+        //         float radius = projectionLevel * 156;
+        //         float numberFillable = (2 * PI * radius) / 156;
+        //         float angularSeperation = (projectionLevel == 0 || i == 0) ? 0 : 156 / (projectionLevel * i);
+
+        //         for (int i = 0; i < totalElectrons; i++) {
+        //             Electron electron = contents.get(i);
+
+        //             float angle = angularSeperation * i;
+
+        //             if (shellNumber % 2 == 1)
+        //                 electron.pos = PVector.add(pos, new PVector(sin(angle), cos(angle), 0).setMag(containingAtom.orbitDistance + 200 * shellNumber) );
+        //             else
+        //                 electron.pos = PVector.add(pos, new PVector(sin(angle), 0, cos(angle)).setMag(containingAtom.orbitDistance + 200 * shellNumber) );
+                        
+        //             electron.setInitialCircularVelocityFromForce(core, core.calculateCoulombsLawForceOn(electron));
+        //         }
+        //     }
+        // // }
+
+        // int i = 1;
+        // // z += 78 + 39 / 2;
+        // nucleusNum--;
+        // while (z < minNucleusRadius) {
+        //     // squared root of [sphere radius squared - the difference in X/Z sphere traversal squared] is equal to dY.
+        //     // This difference in Y becomes the limit that our projection method uses for all given passes.
+        //     println();
+        //     println("At diff " + (z - minNucleusRadius) + " away from the edge...");
+        //     float planeLimit = sqrt( pow(minNucleusRadius, 2) - pow(z, 2) );
+        //     println("I would judge... " + (minNucleusRadius * 2) / 156 + " would fit for this pass.");
+        //     println("I would judge... " + (planeLimit * 2) / 156 + " would fit for this pass.");
+        //     println();
+        //     println("2D plane limit: " + planeLimit);
+
+        //     int projectionLevel = 0;
+        //     int projectionLevelLimit = 1;
+        //     int projectionLevelCounter = 0;
+        //     float projectionLevelMagnitude = 0;
+        //     float projectionLevelAngSep = 0;
+
+        //     // for (nucleusNum > 0; nucleusNum--) {
+        //     while (nucleusNum > 0) {
+        //         Particle nucleon = nucleus.get(i);
+                
+        //         nucleon.pos = PVector.add(pos, new PVector(
+        //                 sin(projectionLevelAngSep * projectionLevelCounter) * projectionLevelMagnitude,
+        //                 cos(projectionLevelAngSep * projectionLevelCounter) * projectionLevelMagnitude,
+        //                 z
+        //             )
+        //         );
+
+        //         projectionLevelCounter++;
+        //         nucleusNum--;
+        //         i++;
+
+        //         if (projectionLevelCounter == projectionLevelLimit) {
+        //             projectionLevel++;
+        //             projectionLevelMagnitude = projectionLevel * 156;
+
+        //             if (projectionLevelMagnitude > planeLimit) {
+        //                 println(projectionLevelMagnitude);
+        //                 println(planeLimit);
+        //                 break;
+        //             }
+
+        //             projectionLevelLimit = ceil((2*PI*projectionLevelMagnitude)/156);
+        //             projectionLevelAngSep = 2*PI/projectionLevelLimit;
+        //             projectionLevelCounter = 0;
+        //         }
+        //     }
+
+        //     z += 156;
+        // }
+        redistributeElectronShells();
+        recalculateRadius();
     }
 
 
@@ -90,7 +173,7 @@ class Atom extends Particle {
         worldManager.atomList.add(this);
 
         // An atom always has one shell, or it's not an atom and should throw an exception before this anyway.
-        shells.add(new ElectronShell(2, 1, orbitDistance));
+        shells.add(new ElectronShell(this, 2, 1));
 
         for (int remainingElectrons = electrons; remainingElectrons > 0; remainingElectrons--) {
             addElectron();
@@ -123,8 +206,8 @@ class Atom extends Particle {
 
     void recalculateRadius() {
         shape.scale(1 / (r / 200));
-        r = shells.size() * 200;
-        shape.scale(shells.size());
+        r = shells.size() * 200 + nucleusRadius + orbitDistance;
+        shape.scale(r / 200);
     }
     
     @Override
@@ -162,16 +245,15 @@ class Atom extends Particle {
     }
 
     private class ElectronShell {
+        private Atom containingAtom;
         private ArrayList<Electron> contents = new ArrayList<Electron>();
         private int max;
         private int shellNumber;
-        // Orbit distance is passed in from a property in atoms during shell construction
-        private float orbitDistance;
 
-        ElectronShell(int max, int shellNumber, float orbitDistance) {
+        ElectronShell(Atom containingAtom, int max, int shellNumber) {
+            this.containingAtom = containingAtom;
             this.max = max;
-            this.shellNumber = shellNumber;
-            this.orbitDistance = orbitDistance;
+            this.shellNumber = shellNumber;            
         }
 
         int getSize() {
@@ -190,18 +272,7 @@ class Atom extends Particle {
             int totalElectrons = contents.size();
             float angularSeperation = (2 * PI) / totalElectrons;
 
-            for (int i = 0; i < totalElectrons; i++) {
-                Electron electron = contents.get(i);
-
-                float angle = angularSeperation * i;
-
-                if (shellNumber % 2 == 1)
-                    electron.pos = PVector.add(pos, new PVector(sin(angle), cos(angle), 0).setMag(orbitDistance + 200 * shellNumber) );
-                else
-                    electron.pos = PVector.add(pos, new PVector(sin(angle), 0, cos(angle)).setMag(orbitDistance + 200 * shellNumber) );
-                    
-                electron.setInitialCircularVelocityFromForce(core, core.calculateCoulombsLawForceOn(electron));
-            }
+            redistribute();
 
             return true;
         }
@@ -217,6 +288,24 @@ class Atom extends Particle {
             
             return true;
         }
+
+        void redistribute() {
+            int totalElectrons = contents.size();
+            float angularSeperation = (2 * PI) / totalElectrons;
+
+            for (int i = 0; i < totalElectrons; i++) {
+                Electron electron = contents.get(i);
+
+                float angle = angularSeperation * i;
+
+                if (shellNumber % 2 == 1)
+                    electron.pos = PVector.add(pos, new PVector(sin(angle), cos(angle), 0).setMag(containingAtom.orbitDistance + containingAtom.nucleusRadius + 200 * shellNumber) );
+                else
+                    electron.pos = PVector.add(pos, new PVector(sin(angle), 0, cos(angle)).setMag(containingAtom.orbitDistance + containingAtom.nucleusRadius + 200 * shellNumber) );
+                    
+                electron.setInitialCircularVelocityFromForce(core, core.calculateCoulombsLawForceOn(electron));
+            }
+        }
     }
 
     public void addElectron() {
@@ -227,7 +316,7 @@ class Atom extends Particle {
         ElectronShell lastShell = shells.get(numberOfShells - 1);
 
         if (!lastShell.addElectron()) {
-            ElectronShell newShell = new ElectronShell((int) (2 * pow(numberOfShells + 1, 2)), numberOfShells + 1, orbitDistance);
+            ElectronShell newShell = new ElectronShell(this, (int) (2 * pow(numberOfShells + 1, 2)), numberOfShells + 1);
             shells.add(newShell);
             newShell.addElectron();
             recalculateRadius();
@@ -245,6 +334,12 @@ class Atom extends Particle {
         if (lastShell.getSize() == 0) {
             shells.remove(shells.size() - 1);
             recalculateRadius();
+        }
+    }
+
+    public void redistributeElectronShells() {
+        for (ElectronShell shell : shells) {
+            shell.redistribute();
         }
     }
 

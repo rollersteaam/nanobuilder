@@ -336,18 +336,18 @@ class SelectionManager {
                 // (mouseX - pmouseX) * xDistMul
                 // ));
 
-            // Picking guide //
+            // Selection Guide //
             for (int y = 0; y < 5; y ++) {
                 for (int x = 0; x < 5; x ++) {
                     pushMatrix();
                     pushStyle();
                     
-                    translate(particle.pos.x - 250, particle.pos.y, particle.pos.z - 250);
+                    translate(particle.pos.x - particle.r, particle.pos.y, particle.pos.z - particle.r);
                     rotateX(PI/2);
-                    stroke(255, 180);
+                    stroke(0, 255, 255, 180);
                     noFill();
                     
-                    rect(100 * x, 100 * y, 100, 100);
+                    rect((particle.r * 2 * x)/5, (particle.r * 2 * y)/5, (particle.r * 2)/5, (particle.r * 2)/5);
                     popStyle();
                     popMatrix();
                 }
@@ -358,12 +358,12 @@ class SelectionManager {
                     pushMatrix();
                     pushStyle();
                     
-                    translate(particle.pos.x, particle.pos.y - 250, particle.pos.z + 250);
+                    translate(particle.pos.x, particle.pos.y - particle.r, particle.pos.z + particle.r);
                     rotateY(PI/2);
-                    stroke(255, 180);
+                    stroke(0, 255, 255, 180);
                     noFill();
                     
-                    rect(100 * x, 100 * y, 100, 100);
+                    rect((particle.r * 2 * x)/5, (particle.r * 2 * y)/5, (particle.r * 2)/5, (particle.r * 2)/5);
                     popStyle();
                     popMatrix();
                 }

@@ -3,13 +3,34 @@ class UIManager {
     private ArrayList<ButtonUI> buttons = new ArrayList<ButtonUI>();
 
     private ContextMenu contextMenu;
+    private RectangleUI inspector;
+
+    void start() {
+        contextMenu = new ContextMenu(0, 0, 180, 224 + 90 + 50, color(230));
+        // inspector = new RectangleUI(width - 320, 20, 300, height - 40, color(80, 80, 255));
+        inspector = uiFactory.createRect(width - 320, 20, 300, 400, color(80, 80, 255));
+            UIElement thingText = uiFactory.createText(10, 5, 255, 200, color(230), "Inspector");
+            inspector.appendChild(thingText);
+
+            UIElement thing = uiFactory.createRect(20, 100, 260, 200, color(220));
+            inspector.appendChild(thing);
+        inspector.hide();
+    }
 
     void draw() {
-        if (contextMenu == null) contextMenu = new ContextMenu(0, 0, 180, 224 + 90 + 50, color(230));
+        // if (contextMenu == null) contextMenu = new ContextMenu(0, 0, 180, 224 + 90 + 50, color(230));
 
         for (UIElement element : screenElements) {
             if (element.getActive()) element.display();
         }
+    }
+
+    public void openInspector() {
+        inspector.show();
+    }
+
+    public void closeInspector() {
+        inspector.hide();
     }
 
     void leftClick() {

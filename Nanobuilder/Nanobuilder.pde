@@ -81,6 +81,8 @@ void setup() {
 
     // Proton contentOne = new Proton(x, y, z);
     // new Electron(x + contentOne.r + 10, y + contentOne.r + 10, z + contentOne.r + 10, contentOne);
+
+    uiManager.start();
 }
 
 void draw() {

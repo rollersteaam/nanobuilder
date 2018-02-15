@@ -83,6 +83,9 @@ class SelectionManager {
 
         if (particle.select()) {
             selectedParticles.add(new Selection(particle));
+
+            uiManager.openInspector();
+
             return true;
         }
 
@@ -96,6 +99,7 @@ class SelectionManager {
             selection.getParticle().deselect();
         }
 
+        uiManager.closeInspector();
         selectedParticles.clear();
         hoveringDistanceMult = 1;
     }

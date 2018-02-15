@@ -10,6 +10,7 @@ abstract class UIElement {
     protected PVector position;
 
     protected PVector size;
+    protected color baseColour;
     protected color colour;
     protected boolean active = true;
 
@@ -22,6 +23,7 @@ abstract class UIElement {
     UIElement(float x, float y, float w, float h, color colour) {
         position = new PVector(x, y);
         size = new PVector(w, h);
+        this.baseColour = colour;
         this.colour = colour;
     }
 
@@ -36,6 +38,8 @@ abstract class UIElement {
         pushMatrix();
         noLights();
 
+        strokeCap(PROJECT);
+        strokeJoin(BEVEL);
         strokeWeight(strokeWeight);
         stroke(strokeColour);
         fill(colour);

@@ -16,6 +16,8 @@ SelectionManager selectionManager;
 UIManager uiManager;
 UIFactory uiFactory;
 
+PFont uiFont;
+
 /*
 MAIN FILE
 The primary interface between Processing (and its libraries) and the program,
@@ -44,7 +46,9 @@ void setup() {
     float fov = PI/3.0;
     float cameraZ = (height/2.0) / tan(fov/2.0);
     perspective(fov, float(width)/float(height), cameraZ/10.0 / 300, cameraZ*10.0 * 300);
-    
+
+    uiFont = createFont("bahnschrift", 72);
+
     worldManager = new WorldManager();
     selectionManager = new SelectionManager();
     uiManager = new UIManager();

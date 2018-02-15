@@ -11,7 +11,7 @@ class RectangleUI extends UIElement {
     void display() {
         super.display();
 
-        rect(position.x, position.y, size.x, size.y);
+        rect(position.x, position.y, size.x, size.y, 0, 0, 0, 0);
 
         finishDrawing();
     }

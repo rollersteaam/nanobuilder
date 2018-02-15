@@ -1,6 +1,7 @@
 class ButtonUI extends UIElement {
     Runnable function;
-    
+    color hoverColour = color(150, 150, 255);
+
     ButtonUI(float x, float y, float w, float h, color colour, Runnable function) {
         super(x, y, w, h, colour);
         this.function = function;
@@ -25,12 +26,16 @@ class ButtonUI extends UIElement {
         finishDrawing();
     }
 
+    public void setHoverColour(color _colour) {
+        hoverColour = _colour;
+    }
+
     public void hover() {
-        colour = color(200, 200, 255);
+        colour = hoverColour;
     }
 
     public void unhover() {
-        colour = color(200);
+        colour = baseColour;
     }
 
     public void click() {

@@ -16,8 +16,8 @@ class UIFactory {
         return element;
     }
 
-    TextUI createText(float x, float y, float w, float h, color colour, String text) {
-        TextUI element = new TextUI(x, y, w, h, colour, text);
+    TextUI createText(float x, float y, float w, float h, color colour, String text, int alignment) {
+        TextUI element = new TextUI(x, y, w, h, colour, text, alignment);
         uiManager.addElement(element);
         return element;
     }

@@ -284,6 +284,25 @@ class Atom extends Particle {
         this(round(random(1, 50)));
     }
 
+    public @Override
+    void delete() {
+        super.delete();
+
+        for (Particle particle : nucleus) {
+            particle.delete();
+        }
+
+        nucleus.clear();
+
+        for (ElectronShell shell : shells) {
+            shell.delete();
+        }
+
+        shells.clear();
+
+        core = null;
+    }
+
     public void recalculateMass() {
         mass = 0;
 
@@ -1094,6 +1113,15 @@ class ElectronShell {
         this.containingAtom = containingAtom;
         this.max = max;
         this.shellNumber = shellNumber;            
+    }
+
+    public void delete() {
+        for (Electron electron : contents) {
+            electron.delete();
+        }
+
+        contents.clear();
+        containingAtom = null;
     }
 
     public int getSize() {

@@ -10,6 +10,15 @@ class ElectronShell {
         this.shellNumber = shellNumber;            
     }
 
+    void delete() {
+        for (Electron electron : contents) {
+            electron.delete();
+        }
+
+        contents.clear();
+        containingAtom = null;
+    }
+
     int getSize() {
         return contents.size();
     }

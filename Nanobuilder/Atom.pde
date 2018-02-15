@@ -47,6 +47,25 @@ class Atom extends Particle {
         this(round(random(1, 50)));
     }
 
+    @Override
+    void delete() {
+        super.delete();
+
+        for (Particle particle : nucleus) {
+            particle.delete();
+        }
+
+        nucleus.clear();
+
+        for (ElectronShell shell : shells) {
+            shell.delete();
+        }
+
+        shells.clear();
+
+        core = null;
+    }
+
     public void recalculateMass() {
         mass = 0;
 

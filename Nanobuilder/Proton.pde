@@ -1,4 +1,7 @@
 class Proton extends Particle {
+    public static final float MASS = 1.6726219e-27;
+    public static final float CHARGE = 1.60217662e-19;
+
     /*
         Let's say 100 pixels = 1fm.
     
@@ -6,8 +9,8 @@ class Proton extends Particle {
     */
     Proton(float x, float y, float z, Atom parent) {
         super(x, y, z, 87);
-        charge = 1.6 * pow(10, -19);
-        mass = 1.6726219 * pow(10, -27);
+        charge = CHARGE;
+        mass = MASS;
 
         this.parent = parent;
         parent.addChild(this);

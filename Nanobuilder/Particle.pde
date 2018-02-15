@@ -203,14 +203,18 @@ class Particle {
         // Impulse = change in momentum
         // p = m1v1 - m2v2
         float impulse = mass * (velocity.mag()) - particle.mass * (particle.velocity.mag());
+        println(impulse);
         // Initial kinetic energy
         // E = 1/2*m1*v1^2 + 1/2*m2*v2^2
         float energy = 1/2 * mass * pow((velocity.mag()), 2) + 1/2 * particle.mass * pow((particle.velocity.mag()), 2);
+        println(energy);
+        println();
         // This new velocity magnitude should change depending on who calls collide.
         // After -2 * impulse plus or minus can be used. It's a quadratic equation.
         float newVelocityMagnitude = -2 * impulse + sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
         // So we must halve it after we're done.
         newVelocityMagnitude /= 2;
+        newVelocityMagnitude *= 1e25;
 
         incidentVector.setMag(newVelocityMagnitude);
         /*
@@ -230,7 +234,7 @@ class Particle {
     void display() {
         // Added radius so pop-in limits are more forgiving and less obvious.
         float screenX = screenX(pos.x - r, pos.y - r, pos.z);
-        float screenY = screenY(pos.x - r, pos.y - r, pos.z);
+        float screenY = screenY(pos.x - r, pos.y - r, pos.z);   
         float screenX2 = screenX(pos.x + r, pos.y + r, pos.z);
         float screenY2 = screenY(pos.x + r, pos.y + r, pos.z);
   

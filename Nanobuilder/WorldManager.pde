@@ -123,30 +123,6 @@ class WorldManager {
             }
         }
 
-        // Collections.sort(atomList, new Comparator<CustomData>() {
-        //     @Override
-        //     public int compare(CustomData lhs, CustomData rhs) {
-        //         // -1 - less than, 1 - greater than, 0 - equal, all inversed for descending
-        //         return PVector.dist(cam.position, lhs.pos) > PVector.dist(cam.position, rhs.pos) ? -1 : (PVector.dist(cam.position, lhs.pos) < PVector.dist(cam.position, rhs.pos)) ? 1 : 0;
-        //     }
-        // });
-
-        // Implement a reverse-order Comparator by lambda function
-        // Comparator<Atom> comp = (Atom a, Atom b) -> {
-        //     return PVector.dist(cam.position, b.pos).compareTo(PVector.dist(cam.position, a.pos));
-        // };
-        // Comparator<CustomData> comp = new Comparator<CustomData>() {
-        //     @Override
-        //     public int compare(CustomData lhs, CustomData rhs) {
-        //     // -1 - less than, 1 - greater than, 0 - equal, all inversed for descending
-        //         // return PVector.dist(cam.position, lhs.pos) > PVector.dist(cam.position, rhs.pos) ? -1 : (PVector.dist(cam.position, lhs.pos) < PVector.dist(cam.position, rhs.pos)) ? 1 : 0;
-        //     // }
-        //         return PVector.dist(cam.position, lhs.pos).compareTo(PVector.dist(cam.position, rhs.pos));
-        //     }
-        // };
-
-        // Collections.sort(atomList, comp);
-
         for (int i = 0; i < atomList.size(); i++) {
             Atom atom = atomList.get(i);
             atom.evaluatePhysics();

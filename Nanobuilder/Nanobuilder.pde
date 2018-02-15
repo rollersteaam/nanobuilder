@@ -64,7 +64,7 @@ void setup() {
     // Atom atom2 = new Atom(100, -2000, -700, 5);
     // AtomBond testBond = new AtomBond(atom1, atom2);
 
-    Atom testAtom = new Atom(100);
+    Atom testAtom = new Atom(10);
     // testAtom.addNeutron();
 
     for (int i = 0; i < 200; i++) {

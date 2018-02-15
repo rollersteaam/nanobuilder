@@ -1,12 +1,16 @@
 class Electron extends Particle {
+    // static final float MASS = 9.10938356 * pow(10, -31);
+    public static final float MASS = 9.10938356e-31;
+    public static final float CHARGE = -1.60217662e-19;
+
     // Will add 17 to all powers of 10 for now.
     Electron(float x, float y, float z, Proton proton) {
         // super(x, y, z, random(0.84, 0.87) * 100 / 1000);
         // super(x, y, z, random(0.84, 0.87) * 100 / 3);
         super(x, y, z, 87 / 3);
 
-        charge = -1.6 * pow(10, -19);
-        mass = 9.10938356 * pow(10, -31);
+        charge = CHARGE;
+        mass = MASS;
 
         baseColor = color(0, 0, 255);
         revertToBaseColor();
@@ -20,16 +24,6 @@ class Electron extends Particle {
         parent = proton.parent;
 
         setInitialCircularVelocityFromForce(proton, proton.calculateCoulombsLawForceOn(this));
-        // velocity = calculateCircularMotionInitialVelocity(proton, proton.calculateCoulombsLawForceOn(this));
-
-        // velocity = cross.setMag(
-        //     sqrt(
-        //         // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
-        //         abs(
-        //             proton.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(proton.pos, this.pos) / (float) mass
-        //         )
-        //     )
-        // );
     }
 
     Electron() {
@@ -63,6 +57,9 @@ class Electron extends Particle {
         //     }
         //     return;
         // }
+
+        if (shape == null) return;
+
         /*
         Scales trail size based off of distance from it's 'parent' (what it's orbiting)
 
@@ -82,7 +79,8 @@ class Electron extends Particle {
             dist = 1000;
         }
 
-        float trailSize = 60 + (60 * ( (500/dist) - 1 ));
+        // float trailSize = 60 + (60 * ( (500/dist) - 1 ));
+        float trailSize = 60 + (2 * ( (5000/dist) - 1 ));
 
         Point lastPoint = null;
         int counter = 0;

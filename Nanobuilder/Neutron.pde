@@ -14,6 +14,14 @@ class Neutron extends Particle {
 
     @Override
     void display() {
+        if (shape == null) return;
+
+        if (parent != null) {
+            if (!parent.shouldParticlesDraw()) {
+                return;
+            }
+        }
+
         super.display();
 
         // TODO: Implement gravitational force (probably)

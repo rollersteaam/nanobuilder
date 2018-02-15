@@ -90,7 +90,7 @@ public void setup() {
     // Atom atom2 = new Atom(100, -2000, -700, 5);
     // AtomBond testBond = new AtomBond(atom1, atom2);
 
-    Atom testAtom = new Atom(100);
+    Atom testAtom = new Atom(10);
     // testAtom.addNeutron();
 
     for (int i = 0; i < 200; i++) {
@@ -237,23 +237,80 @@ public void keyEvent(KeyEvent event){
 }
 class Atom extends Particle {
     Proton core;
-    // ArrayList<Proton> listProtons = new ArrayList<Proton>();
-    // ArrayList<Electron> listElectrons = new ArrayList<Electron>();
-    ArrayList<Neutron> listNeutrons = new ArrayList<Neutron>();
     ArrayList<Particle> nucleus = new ArrayList<Particle>();
     float nucleusRadius = 0;
 
     ArrayList<ElectronShell> shells = new ArrayList<ElectronShell>();
-    float orbitDistance = 0;
+    float orbitOffset = 0;
+
+    Atom(float x, float y, float z, int electrons) {
+        super(x, y, z, 200);
+        
+        core = new Proton(x, y, z, this);
+        nucleus.add(core);
+
+        worldManager.atomList.add(this);
+
+        // An atom always has one shell, or it's not an atom and should throw an exception before this anyway.
+        shells.add(new ElectronShell(this, 2, 1));
+
+        for (int remainingElectrons = electrons; remainingElectrons > 0; remainingElectrons--) {
+            addElectron();
+        }
+
+        recalculateRadius();
+        recalculateMass();
+    }
+    
+    Atom(float x, float y, float z) {
+        this(
+            x,
+            y,
+            z,
+            (int) random(1, 20)
+        );
+    }
+    
+    Atom(int electrons) {
+        this(
+            random(-2000, 2000),
+            random(-2000, 2000),
+            random(-2000, 2000),
+            electrons
+        );
+    }
+
+    Atom() {
+        this(round(random(1, 50)));
+    }
+
+    public void recalculateMass() {
+        mass = 0;
+
+        for (Particle particle : nucleus) {
+            mass += particle.mass;
+        }
+
+        /*
+        Here I don't just get the size and multiply by const because we want to maximize
+        the user's freedom (so they can do weird things like change the mass of an electron)
+        */
+        for (ElectronShell shell : shells) {
+            mass += shell.getMass();
+        }
+
+        if (mass == 0)
+            throw new IllegalStateException("Illegal termination of Atom constituents/handling of Atom state. Found during mass recalculation.");
+    }
 
     public void addNeutron() {
         nucleus.add(new Neutron(500, 500, 500, this));
-        distributeNucleus();
+        redistributeNucleus();
     }
 
     public void addProton() {
         nucleus.add(new Proton(500, 500, 500, this));
-        distributeNucleus();
+        redistributeNucleus();
     }
 
     /*
@@ -261,7 +318,7 @@ class Atom extends Particle {
     for the circular projection of the nucleus' contents. As the list is run in normal order, the core proton should
     always be the first one projected.
     */
-    private void distributeNucleus() {
+    public void redistributeNucleus() {
         int numberOfNucleons = nucleus.size();
         // println("____");
         // println("Number in nucleus: " + numberOfNucleons);
@@ -279,7 +336,7 @@ class Atom extends Particle {
         // // float z = -minNucleusRadius;
         // println("Minimum radius of nucleus: " + minNucleusRadius);
 
-        // orbitDistance = minNucleusRadius;
+        // orbitOffset = minNucleusRadius;
 
         // println("I would judge... " + minNucleusRadius * 2 / 156 + " can fit.");
 
@@ -334,9 +391,9 @@ class Atom extends Particle {
         //             float angle = angularSeperation * i;
 
         //             if (shellNumber % 2 == 1)
-        //                 electron.pos = PVector.add(pos, new PVector(sin(angle), cos(angle), 0).setMag(containingAtom.orbitDistance + 200 * shellNumber) );
+        //                 electron.pos = PVector.add(pos, new PVector(sin(angle), cos(angle), 0).setMag(containingAtom.orbitOffset + 200 * shellNumber) );
         //             else
-        //                 electron.pos = PVector.add(pos, new PVector(sin(angle), 0, cos(angle)).setMag(containingAtom.orbitDistance + 200 * shellNumber) );
+        //                 electron.pos = PVector.add(pos, new PVector(sin(angle), 0, cos(angle)).setMag(containingAtom.orbitOffset + 200 * shellNumber) );
                         
         //             electron.setInitialCircularVelocityFromForce(core, core.calculateCoulombsLawForceOn(electron));
         //         }
@@ -398,52 +455,12 @@ class Atom extends Particle {
         // }
         redistributeElectronShells();
         recalculateRadius();
-    }
-
-
-    Atom(float x, float y, float z, int electrons) {
-        super(x, y, z, 200);
-        
-        core = new Proton(x, y, z, this);
-        nucleus.add(core);
-
-        worldManager.atomList.add(this);
-
-        // An atom always has one shell, or it's not an atom and should throw an exception before this anyway.
-        shells.add(new ElectronShell(this, 2, 1));
-
-        for (int remainingElectrons = electrons; remainingElectrons > 0; remainingElectrons--) {
-            addElectron();
-        }
-
-        recalculateRadius();
-    }
-    
-    Atom(float x, float y, float z) {
-        this(
-            x,
-            y,
-            z,
-            (int) random(1, 20)
-        );
-    }
-    
-    Atom(int electrons) {
-        this(
-            random(-2000, 2000),
-            random(-2000, 2000),
-            random(-2000, 2000),
-            electrons
-        );
-    }
-
-    Atom() {
-        this(round(random(1, 50)));
+        recalculateMass();
     }
 
     public void recalculateRadius() {
         shape.scale(1 / (r / 200));
-        r = shells.size() * 200 + nucleusRadius + orbitDistance;
+        r = shells.size() * 200 + nucleusRadius + orbitOffset;
         shape.scale(r / 200);
     }
     
@@ -470,7 +487,7 @@ class Atom extends Particle {
             // 255
             // lerp(0, 255, (PVector.dist(cam.position, pos) * 2) / (r + 4000))
             // lerp(0, 255, (PVector.dist(cam.position, pos) / ((r*2) + 100)) )
-            lerp(0, 255, (PVector.dist(cam.position, pos) - r*2) / (r*6) )
+            lerp(0, 255, (PVector.dist(cam.position, pos) - 2000) / 750 )
         );
 
         pushStyle();
@@ -481,70 +498,6 @@ class Atom extends Particle {
         super.display();
     }
 
-    private class ElectronShell {
-        private Atom containingAtom;
-        private ArrayList<Electron> contents = new ArrayList<Electron>();
-        private int max;
-        private int shellNumber;
-
-        ElectronShell(Atom containingAtom, int max, int shellNumber) {
-            this.containingAtom = containingAtom;
-            this.max = max;
-            this.shellNumber = shellNumber;            
-        }
-
-        public int getSize() {
-            return contents.size();
-        }
-
-        public boolean addElectron() {
-            // This will probably only occur when a new shell needs creating, but SRP means it's implemented here.
-            if (contents.size() == max) return false;
-
-            // Initial position is not important, it will be changed immediately.
-            Electron newElectron = new Electron(0, 0, 0, core);
-            children.add(newElectron);
-            contents.add(newElectron);
-
-            int totalElectrons = contents.size();
-            float angularSeperation = (2 * PI) / totalElectrons;
-
-            redistribute();
-
-            return true;
-        }
-
-        public boolean removeElectron() {
-            if (contents.size() == 0) return false;
-            
-            // Remove the last appended electron in the shell.
-            int index = contents.size() - 1;
-            Electron target = contents.get(index);
-            target.delete();
-            contents.remove(index);
-            
-            return true;
-        }
-
-        public void redistribute() {
-            int totalElectrons = contents.size();
-            float angularSeperation = (2 * PI) / totalElectrons;
-
-            for (int i = 0; i < totalElectrons; i++) {
-                Electron electron = contents.get(i);
-
-                float angle = angularSeperation * i;
-
-                if (shellNumber % 2 == 1)
-                    electron.pos = PVector.add(pos, new PVector(sin(angle), cos(angle), 0).setMag(containingAtom.orbitDistance + containingAtom.nucleusRadius + 200 * shellNumber) );
-                else
-                    electron.pos = PVector.add(pos, new PVector(sin(angle), 0, cos(angle)).setMag(containingAtom.orbitDistance + containingAtom.nucleusRadius + 200 * shellNumber) );
-                    
-                electron.setInitialCircularVelocityFromForce(core, core.calculateCoulombsLawForceOn(electron));
-            }
-        }
-    }
-
     public void addElectron() {
         if (shells.size() == 0)
             throw new IllegalStateException("An atom has no electron shells.");
@@ -552,11 +505,16 @@ class Atom extends Particle {
         int numberOfShells = shells.size();
         ElectronShell lastShell = shells.get(numberOfShells - 1);
 
-        if (!lastShell.addElectron()) {
+        Electron newElectron = lastShell.addElectron();
+
+        if (newElectron == null) {
             ElectronShell newShell = new ElectronShell(this, (int) (2 * pow(numberOfShells + 1, 2)), numberOfShells + 1);
             shells.add(newShell);
             newShell.addElectron();
             recalculateRadius();
+            recalculateMass();
+        } else {
+            children.add(newElectron);
         }
     }
 
@@ -571,6 +529,7 @@ class Atom extends Particle {
         if (lastShell.getSize() == 0) {
             shells.remove(shells.size() - 1);
             recalculateRadius();
+            recalculateMass();
         }
     }
 
@@ -589,7 +548,7 @@ class Atom extends Particle {
     to know
     */
     private void calculateShouldParticlesDraw() {
-        if ((PVector.dist(cam.position, pos) - r*2) / (r*6) > 1) {
+        if ((PVector.dist(cam.position, pos) - 2000) / 750 > 1) {
             shouldParticlesDraw = false;
         } else {
             shouldParticlesDraw = true;
@@ -986,14 +945,18 @@ class ContextMenu extends UIElement {
     }
 }
 class Electron extends Particle {
+    // static final float MASS = 9.10938356 * pow(10, -31);
+    public static final float MASS = 9.10938356e-31f;
+    public static final float CHARGE = -1.60217662e-19f;
+
     // Will add 17 to all powers of 10 for now.
     Electron(float x, float y, float z, Proton proton) {
         // super(x, y, z, random(0.84, 0.87) * 100 / 1000);
         // super(x, y, z, random(0.84, 0.87) * 100 / 3);
         super(x, y, z, 87 / 3);
 
-        charge = -1.6f * pow(10, -19);
-        mass = 9.10938356f * pow(10, -31);
+        charge = CHARGE;
+        mass = MASS;
 
         baseColor = color(0, 0, 255);
         revertToBaseColor();
@@ -1007,16 +970,6 @@ class Electron extends Particle {
         parent = proton.parent;
 
         setInitialCircularVelocityFromForce(proton, proton.calculateCoulombsLawForceOn(this));
-        // velocity = calculateCircularMotionInitialVelocity(proton, proton.calculateCoulombsLawForceOn(this));
-
-        // velocity = cross.setMag(
-        //     sqrt(
-        //         // It's fine to get the absolute value here, we need the magnitude and not the 'direction' the formula returns.
-        //         abs(
-        //             proton.calculateCoulombsLawForceOn(this) * 100 * PVector.dist(proton.pos, this.pos) / (float) mass
-        //         )
-        //     )
-        // );
     }
 
     Electron() {
@@ -1050,6 +1003,9 @@ class Electron extends Particle {
         //     }
         //     return;
         // }
+
+        if (shape == null) return;
+
         /*
         Scales trail size based off of distance from it's 'parent' (what it's orbiting)
 
@@ -1069,7 +1025,8 @@ class Electron extends Particle {
             dist = 1000;
         }
 
-        float trailSize = 60 + (60 * ( (500/dist) - 1 ));
+        // float trailSize = 60 + (60 * ( (500/dist) - 1 ));
+        float trailSize = 60 + (2 * ( (5000/dist) - 1 ));
 
         Point lastPoint = null;
         int counter = 0;
@@ -1127,6 +1084,75 @@ class Electron extends Particle {
         trail.push(point);
     }
 }
+class ElectronShell {
+    private Atom containingAtom;
+    private ArrayList<Electron> contents = new ArrayList<Electron>();
+    private int max;
+    private int shellNumber;
+
+    ElectronShell(Atom containingAtom, int max, int shellNumber) {
+        this.containingAtom = containingAtom;
+        this.max = max;
+        this.shellNumber = shellNumber;            
+    }
+
+    public int getSize() {
+        return contents.size();
+    }
+
+    public float getMass() {
+        float mass = 0;
+
+        for (Electron electron : contents) {
+            mass += electron.mass;
+        }
+
+        return mass;
+    }
+
+    public Electron addElectron() {
+        // This will probably only occur when a new shell needs creating, but SRP means it's implemented here.
+        if (contents.size() == max) return null;
+
+        // Initial position is not important, it will be changed immediately.
+        Electron newElectron = new Electron(0, 0, 0, containingAtom.core);
+        contents.add(newElectron);
+        redistribute();
+
+        return newElectron;
+    }
+
+    public boolean removeElectron() {
+        if (contents.size() == 0) return false;
+        
+        // Remove the last appended electron in the shell.
+        int index = contents.size() - 1;
+        Electron target = contents.get(index);
+        target.delete();
+        contents.remove(index);
+        
+        return true;
+    }
+
+    public void redistribute() {
+        int totalElectrons = contents.size();
+        float angularSeperation = (2 * PI) / totalElectrons;
+
+        for (int i = 0; i < totalElectrons; i++) {
+            Electron electron = contents.get(i);
+
+            float angle = angularSeperation * i;
+
+            if (shellNumber % 2 == 1)
+                electron.pos = PVector.add(containingAtom.pos, new PVector(sin(angle), cos(angle), 0).setMag(containingAtom.orbitOffset + containingAtom.nucleusRadius + 200 * shellNumber) );
+            else
+                electron.pos = PVector.add(containingAtom.pos, new PVector(sin(angle), 0, cos(angle)).setMag(containingAtom.orbitOffset + containingAtom.nucleusRadius + 200 * shellNumber) );
+                
+            electron.setInitialCircularVelocityFromForce(containingAtom.core, containingAtom.core.calculateCoulombsLawForceOn(electron));
+        }
+    }
+}
+
 class Menu extends UIElement {
     Menu(float x, float y, float w, float h, int colour) {
         super(x, y, w, h, colour);
@@ -1153,6 +1179,14 @@ class Neutron extends Particle {
 
     public @Override
     void display() {
+        if (shape == null) return;
+
+        if (parent != null) {
+            if (!parent.shouldParticlesDraw()) {
+                return;
+            }
+        }
+
         super.display();
 
         // TODO: Implement gravitational force (probably)
@@ -1363,14 +1397,18 @@ class Particle {
         // Impulse = change in momentum
         // p = m1v1 - m2v2
         float impulse = mass * (velocity.mag()) - particle.mass * (particle.velocity.mag());
+        println(impulse);
         // Initial kinetic energy
         // E = 1/2*m1*v1^2 + 1/2*m2*v2^2
         float energy = 1/2 * mass * pow((velocity.mag()), 2) + 1/2 * particle.mass * pow((particle.velocity.mag()), 2);
+        println(energy);
+        println();
         // This new velocity magnitude should change depending on who calls collide.
         // After -2 * impulse plus or minus can be used. It's a quadratic equation.
         float newVelocityMagnitude = -2 * impulse + sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
         // So we must halve it after we're done.
         newVelocityMagnitude /= 2;
+        newVelocityMagnitude *= 1e25f;
 
         incidentVector.setMag(newVelocityMagnitude);
         /*
@@ -1390,7 +1428,7 @@ class Particle {
     public void display() {
         // Added radius so pop-in limits are more forgiving and less obvious.
         float screenX = screenX(pos.x - r, pos.y - r, pos.z);
-        float screenY = screenY(pos.x - r, pos.y - r, pos.z);
+        float screenY = screenY(pos.x - r, pos.y - r, pos.z);   
         float screenX2 = screenX(pos.x + r, pos.y + r, pos.z);
         float screenY2 = screenY(pos.x + r, pos.y + r, pos.z);
   
@@ -1526,6 +1564,9 @@ class Particle {
     }
 }
 class Proton extends Particle {
+    public static final float MASS = 1.6726219e-27f;
+    public static final float CHARGE = 1.60217662e-19f;
+
     /*
         Let's say 100 pixels = 1fm.
     
@@ -1533,8 +1574,8 @@ class Proton extends Particle {
     */
     Proton(float x, float y, float z, Atom parent) {
         super(x, y, z, 87);
-        charge = 1.6f * pow(10, -19);
-        mass = 1.6726219f * pow(10, -27);
+        charge = CHARGE;
+        mass = MASS;
 
         this.parent = parent;
         parent.addChild(this);
@@ -2386,30 +2427,6 @@ class WorldManager {
                 biggestDistance = dist;
             }
         }
-
-        // Collections.sort(atomList, new Comparator<CustomData>() {
-        //     @Override
-        //     public int compare(CustomData lhs, CustomData rhs) {
-        //         // -1 - less than, 1 - greater than, 0 - equal, all inversed for descending
-        //         return PVector.dist(cam.position, lhs.pos) > PVector.dist(cam.position, rhs.pos) ? -1 : (PVector.dist(cam.position, lhs.pos) < PVector.dist(cam.position, rhs.pos)) ? 1 : 0;
-        //     }
-        // });
-
-        // Implement a reverse-order Comparator by lambda function
-        // Comparator<Atom> comp = (Atom a, Atom b) -> {
-        //     return PVector.dist(cam.position, b.pos).compareTo(PVector.dist(cam.position, a.pos));
-        // };
-        // Comparator<CustomData> comp = new Comparator<CustomData>() {
-        //     @Override
-        //     public int compare(CustomData lhs, CustomData rhs) {
-        //     // -1 - less than, 1 - greater than, 0 - equal, all inversed for descending
-        //         // return PVector.dist(cam.position, lhs.pos) > PVector.dist(cam.position, rhs.pos) ? -1 : (PVector.dist(cam.position, lhs.pos) < PVector.dist(cam.position, rhs.pos)) ? 1 : 0;
-        //     // }
-        //         return PVector.dist(cam.position, lhs.pos).compareTo(PVector.dist(cam.position, rhs.pos));
-        //     }
-        // };
-
-        // Collections.sort(atomList, comp);
 
         for (int i = 0; i < atomList.size(); i++) {
             Atom atom = atomList.get(i);

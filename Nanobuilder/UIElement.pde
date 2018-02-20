@@ -20,6 +20,11 @@ abstract class UIElement {
     color strokeColour = color(0, 0);
     float strokeWeight = 0;
 
+    UIElement() {
+        position = new PVector();
+        size = new PVector();
+    }
+
     UIElement(float x, float y, float w, float h, color colour) {
         position = new PVector(x, y);
         size = new PVector(w, h);

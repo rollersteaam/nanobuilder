@@ -6,6 +6,8 @@ class UIManager {
     private InspectorView inspector;
     private RectangleUI toolbar;
 
+    private TextUI mass, volume, charge, velocity, acceleration, bearing;
+
     void start() {
         inspector = new InspectorView();
 

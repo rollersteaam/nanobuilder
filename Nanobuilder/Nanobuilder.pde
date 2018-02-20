@@ -47,7 +47,7 @@ void setup() {
     float cameraZ = (height/2.0) / tan(fov/2.0);
     perspective(fov, float(width)/float(height), cameraZ/10.0 / 300, cameraZ*10.0 * 300);
 
-    uiFont = createFont("bahnschrift", 72);
+    uiFont = loadFont("Bahnschrift-72.vlw");
 
     worldManager = new WorldManager();
     selectionManager = new SelectionManager();

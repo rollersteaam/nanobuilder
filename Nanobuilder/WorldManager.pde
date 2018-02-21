@@ -20,12 +20,12 @@ class WorldManager {
     }
 
     public Atom createAtom(PVector position) {
-        return new Atom(position.x, position.y, position.z, 1);
+        return new Atom(position.x, position.y, position.z, 1, 1, 0);
     }
 
     public Atom createAtom() {
         PVector fwd = cam.getForward();
-        return new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 1);
+        return new Atom(cam.position.x + 900 * fwd.x, cam.position.y + 900 * fwd.y, cam.position.z + 900 * fwd.z, 1, 1, 0);
     }
 
     public Electron createElectron(PVector position) {

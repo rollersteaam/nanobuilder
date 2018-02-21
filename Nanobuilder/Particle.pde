@@ -60,7 +60,7 @@ class Particle {
 
         children.clear();
 
-        if (parent != null) return;
+        if (parent == null) return;
 
         parent.children.remove(this);
         parent = null;

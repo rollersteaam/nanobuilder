@@ -76,10 +76,15 @@ class InspectorView extends UIElement {
         identifier.setText(target.getName());
 
         mass.setText(target.mass + "kg");
-        volume.setText(target.r + "m³");
+        volume.setText(target.r + "m^3");
         charge.setText(target.charge + "C");
-        velocity.setText(target.velocity.mag() + "ms⁻¹");
-        acceleration.setText(target.acceleration.mag() + "ms⁻²");
-        bearing.setText(target.velocity.copy().normalize() + " direction");
+        velocity.setText(target.velocity.mag() + "ms^-1");
+        acceleration.setText(target.acceleration.mag() + "ms^-2");
+
+        PVector directionFormat = target.velocity.copy().normalize();
+        directionFormat.x = roundToDP(directionFormat.x, 3);
+        directionFormat.y = roundToDP(directionFormat.y, 3);
+        directionFormat.z = roundToDP(directionFormat.z, 3);
+        bearing.setText("" + directionFormat);
     }
 }

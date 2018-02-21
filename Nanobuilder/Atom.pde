@@ -6,7 +6,7 @@ class Atom extends Particle {
     ArrayList<ElectronShell> shells = new ArrayList<ElectronShell>();
     float orbitOffset = 0;
 
-    Atom(float x, float y, float z, int electrons) {
+    Atom(float x, float y, float z, int electrons, int protons, int neutrons) {
         super(x, y, z, 200);
         
         core = new Proton(x, y, z, this);
@@ -22,8 +22,32 @@ class Atom extends Particle {
             addElectron();
         }
 
-        recalculateRadius();
-        recalculateMass();
+        int remainingProtons = protons - 1;
+        int remainingNeutrons = neutrons;
+        for (int remainingSum = remainingProtons + remainingNeutrons; remainingSum > 0; remainingSum--) {
+            if (random.nextInt(1) == 0) {
+                if (remainingProtons > 0) {
+                    nucleus.add(new Proton(500, 500, 500, this));
+                    remainingProtons--;
+                } else {
+                    nucleus.add(new Neutron(500, 500, 500, this));
+                }
+            } else {
+                if (remainingNeutrons > 0) {
+                    nucleus.add(new Neutron(500, 500, 500, this));
+                    remainingNeutrons--;
+                } else {
+                    nucleus.add(new Proton(500, 500, 500, this));                    
+                }
+            }
+        }
+        // for (int count = 0; count < protons; count++) {
+        // }
+
+        // for (int count = 0; count < neutrons; count++) {
+        // }
+
+        redistributeNucleus();
     }
     
     Atom(float x, float y, float z) {
@@ -31,21 +55,29 @@ class Atom extends Particle {
             x,
             y,
             z,
-            (int) random(1, 20)
+            round(random(1, 50)),
+            round(random(1, 20)),
+            round(random(1, 20))
         );
     }
     
-    Atom(int electrons) {
+    Atom(int electrons, int protons, int neutrons) {
         this(
-            random(-2000, 2000),
-            random(-2000, 2000),
-            random(-2000, 2000),
-            electrons
+            random(-6000, 6000),
+            random(-6000, 6000),
+            random(-6000, 6000),
+            electrons,
+            protons,
+            neutrons
         );
     }
 
     Atom() {
-        this(round(random(1, 50)));
+        this(
+            round(random(1, 50)),
+            round(random(1, 20)),
+            round(random(1, 20))
+        );
     }
 
     @Override
@@ -290,12 +322,13 @@ class Atom extends Particle {
 
         Electron newElectron = lastShell.addElectron();
 
+        recalculateMass();
+
         if (newElectron == null) {
             ElectronShell newShell = new ElectronShell(this, (int) (2 * pow(numberOfShells + 1, 2)), numberOfShells + 1);
             shells.add(newShell);
             newShell.addElectron();
             recalculateRadius();
-            recalculateMass();
         } else {
             children.add(newElectron);
         }
@@ -309,10 +342,11 @@ class Atom extends Particle {
         ElectronShell lastShell = shells.get(shells.size() - 1);
         lastShell.removeElectron();
 
+        recalculateMass();
+
         if (lastShell.getSize() == 0) {
             shells.remove(shells.size() - 1);
             recalculateRadius();
-            recalculateMass();
         }
     }
 

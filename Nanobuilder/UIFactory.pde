@@ -33,4 +33,16 @@ class UIFactory {
         uiManager.addElement(element);
         return element;
     }
+
+    ImageButtonUI createImageButton(float x, float y, float w, float h, color colour, Runnable function, String filename) {
+        ImageButtonUI element = new ImageButtonUI(x, y, w, h, colour, function, filename);
+        uiManager.addElement(element);
+        return element;
+    }
+
+    ImageButtonUI createImageButtonOutlined(float x, float y, float w, float h, color colour, Runnable function, String filename, color strokeColour, color strokeWeight) {
+        ImageButtonUI element = new ImageButtonUI(x, y, w, h, colour, function, filename, strokeColour, strokeWeight);
+        uiManager.addElement(element);
+        return element;
+    }
 }

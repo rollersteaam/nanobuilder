@@ -41,11 +41,6 @@ class Atom extends Particle {
                 }
             }
         }
-        // for (int count = 0; count < protons; count++) {
-        // }
-
-        // for (int count = 0; count < neutrons; count++) {
-        // }
 
         redistributeNucleus();
     }
@@ -78,6 +73,57 @@ class Atom extends Particle {
             round(random(1, 20)),
             round(random(1, 20))
         );
+    }
+
+    public void remove(Particle particle) {
+        println("DROWN");
+
+        if (particle instanceof Neutron)
+            remove((Neutron) particle);
+        else if (particle instanceof Proton)
+            remove((Proton) particle);
+        else if (particle instanceof Electron)
+            remove((Electron) particle);
+        else throw new IllegalArgumentException("Particle seems to be unaccounted for.");
+    }
+
+    public void remove(Neutron neutron) {
+        println("Releasing ownership...");
+
+        nucleus.remove(neutron);
+        neutron.isolate();
+        redistributeNucleus();
+    }
+
+    public void remove(Proton proton) {
+        println("Releasing ownership...");
+
+        nucleus.remove(proton);
+        proton.isolate();
+        redistributeNucleus();
+    }
+
+    public void remove(Electron electron) {
+        println("Releasing ownership...");
+
+        for (ElectronShell shell : shells) {
+            if (shell.removeElectron(electron)) {
+                recalculateMass();
+                electron.isolate();
+                return;
+            }
+        }
+    }
+
+    public void remove(ElectronShell electronShell) {
+        for (ElectronShell shell : shells) {
+            if (shell == electronShell) {
+                shell.delete();
+                shells.remove(shell);
+                recalculateRadius();
+                return;
+            }
+        }
     }
 
     @Override

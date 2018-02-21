@@ -60,16 +60,17 @@ class Particle {
 
         children.clear();
 
-        if (parent == null) return;
+        // if (parent == null) return;
 
-        parent.children.remove(this);
+        // parent.children.remove(this);
         parent = null;
     }
 
     void delete() {
         shape = null;
         worldManager.unregisterParticle(this);
-        isolate();
+        if (parent != null)
+            parent.remove(this);
     }
 
     boolean select() {
@@ -189,7 +190,7 @@ class Particle {
             PVector diff = PVector.sub(pos, parent.pos);
             
             if (diff.mag() > parent.r + 100)
-                isolate();
+                parent.remove(this);
         }
 
         velocity.add(acceleration);

@@ -1,6 +1,11 @@
 class ButtonUI extends UIElement {
-    Runnable function;
-    color hoverColour = color(150, 150, 255);
+    protected Runnable function;
+    protected color hoverColour = color(150, 150, 255);
+    protected boolean hovered = false;
+    protected boolean pressed = false;
+
+    protected boolean toggleable = false;
+    protected boolean toggled = false;
 
     ButtonUI(float x, float y, float w, float h, color colour, Runnable function) {
         super(x, y, w, h, colour);
@@ -30,17 +35,47 @@ class ButtonUI extends UIElement {
         hoverColour = _colour;
     }
 
+    public void setToggleable(boolean isToggleable) {
+        toggleable = isToggleable;
+    }
+
+    public void press() {
+        if (pressed) return;
+        pressed = true;
+
+        colour = color(
+            red(baseColour) - 80,
+            green(baseColour) - 80,
+            blue(baseColour) - 80
+        );
+    }
+
+    public void unpress() {
+        if (!pressed || (toggled && toggleable)) return;
+        pressed = false;
+
+        colour = baseColour;
+    }
+
     public void hover() {
+        if (hovered || pressed || (toggled && toggleable)) return;
+
+        hovered = true;
         colour = hoverColour;
     }
 
     public void unhover() {
+        if (!hovered || pressed || (toggled && toggleable)) return;
+
+        hovered = false;
         colour = baseColour;
     }
 
     public void click() {
         if (!active) return;
         
+        toggled = !toggled;
+        println(toggled);
         function.run();
     }
 }

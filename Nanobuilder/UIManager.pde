@@ -55,6 +55,23 @@ class UIManager {
         }
     }
 
+    public void checkPressForButtons() {
+        PVector mouse = new PVector(mouseX, mouseY);
+
+        for (ButtonUI button : buttons) {
+            if (button.checkIntersectionWithPoint(mouse))
+                button.press();
+            else
+                button.unpress();
+        }
+    }
+
+    public void depressButtons() {
+        for (ButtonUI button : buttons) {
+            button.unpress();
+        }
+    }
+
     public void checkHoverForButtons() {
         PVector mouse = new PVector(mouseX, mouseY);
 
@@ -72,10 +89,13 @@ class UIManager {
         for (ButtonUI button : buttons) {
             if (button.checkIntersectionWithPoint(mouse)) {
                 button.click();
+
+                depressButtons();
                 return true;
             }
         }
-        
+
+        depressButtons();
         // Pass an interruption.
         return false;
     }

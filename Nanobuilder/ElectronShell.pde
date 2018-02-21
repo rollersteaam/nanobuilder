@@ -45,6 +45,21 @@ class ElectronShell {
         return newElectron;
     }
 
+    boolean removeElectron(Electron electron) {
+        for (Electron _electron : contents) {
+            if (_electron == electron) {
+                contents.remove(_electron);
+
+                if (contents.size() == 0)
+                    containingAtom.remove(this);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     boolean removeElectron() {
         if (contents.size() == 0) return false;
         

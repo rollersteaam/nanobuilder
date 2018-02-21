@@ -186,6 +186,8 @@ void draw() {
 }
 
 void mousePressed(MouseEvent event) {
+    uiManager.checkPressForButtons();
+
     // If selection agent's events have been triggered, then we are finished for this mouse event.
     if (mouseButton == LEFT) {
         if (cam.fireAtom()) return;

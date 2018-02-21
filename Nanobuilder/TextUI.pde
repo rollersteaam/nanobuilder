@@ -24,4 +24,8 @@ class TextUI extends UIElement {
 
         finishDrawing();
     }
+
+    public void setText(String newText) {
+        text = newText;
+    }
 }

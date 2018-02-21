@@ -6,8 +6,6 @@ class UIManager {
     private InspectorView inspector;
     private RectangleUI toolbar;
 
-    private TextUI mass, volume, charge, velocity, acceleration, bearing;
-
     void start() {
         inspector = new InspectorView();
 
@@ -39,6 +37,11 @@ class UIManager {
         for (UIElement element : screenElements) {
             if (element.getActive()) element.display();
         }
+    }
+
+    void update() {
+        inspector.updateDisplay();
+        checkHoverForButtons();
     }
 
     public void openInspector() {

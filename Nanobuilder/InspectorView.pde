@@ -1,63 +1,85 @@
 class InspectorView extends UIElement {
     RectangleUI inspector;
 
+    private TextUI identifier, mass, volume, charge, velocity, acceleration, bearing;
+
     InspectorView() {
         super();
 
         inspector = uiFactory.createRectOutlined(width - 400, 42, 358, 568, color(38, 38, 172), color(76, 89, 255), 6);
-            TextUI title = uiFactory.createText(0, 22, 358, 200, color(255), "Neutron", CENTER);
-            // TextUI title = uiFactory.createText(0, 0, 358, 200, color(255), "Electron", CENTER);
-            title.setTextSize(72);
-            inspector.appendChild(title);
+        
+            identifier = uiFactory.createText(0, 32, 358, 200, color(255), "Neutron", CENTER);
+            // TextUI identifier = uiFactory.createText(0, 0, 358, 200, color(255), "Electron", CENTER);
+            identifier.setTextSize(72);
+            inspector.appendChild(identifier);
 
-            TextUI fundamentalTitle = uiFactory.createText(38, 116, 358, 200, color(255), "Fundamental Properties", LEFT);
+            TextUI fundamentalTitle = uiFactory.createText(38, 140, 358, 200, color(255), "Fundamental Properties", LEFT);
             fundamentalTitle.setTextSize(24);
             inspector.appendChild(fundamentalTitle);
 
-            RectangleUI fundamentalGroup = uiFactory.createRectOutlined(28, 156, 302, 150, color(70), color(76, 89, 255), 3);
+            RectangleUI fundamentalGroup = uiFactory.createRectOutlined(28, 171, 302, 150, color(70), color(76, 89, 255), 3);
 
-                TextUI massParent = uiFactory.createText(10, 8, 200, 100, color(10), "Mass", LEFT);
-                    TextUI massChild = uiFactory.createText(0, 18, 200, 100, color(255), "9.11e-31 kg", LEFT);
-                    massParent.appendChild(massChild);
+                TextUI massParent = uiFactory.createText(10, 13, 200, 100, color(10), "Mass", LEFT);
+                    mass = uiFactory.createText(0, 18, 200, 100, color(255), "9.11e-31 kg", LEFT);
+                    massParent.appendChild(mass);
                 fundamentalGroup.appendChild(massParent);
                 
-                TextUI volumeParent = uiFactory.createText(10, 52, 200, 100, color(10), "Volume", LEFT);
-                    TextUI volumeChild = uiFactory.createText(0, 18, 200, 100, color(255), "2.7e-27 m^3", LEFT);
-                    volumeParent.appendChild(volumeChild);
+                TextUI volumeParent = uiFactory.createText(10, 57, 200, 100, color(10), "Volume", LEFT);
+                    volume = uiFactory.createText(0, 18, 200, 100, color(255), "2.7e-27 m^3", LEFT);
+                    volumeParent.appendChild(volume);
                 fundamentalGroup.appendChild(volumeParent);
 
-                TextUI chargeParent = uiFactory.createText(10, 96, 200, 100, color(10), "Charge", LEFT);
-                    TextUI chargeChild = uiFactory.createText(0, 18, 200, 100, color(255), "1.6e-19 C", LEFT);
-                    chargeParent.appendChild(chargeChild);
+                TextUI chargeParent = uiFactory.createText(10, 101, 200, 100, color(10), "Charge", LEFT);
+                    charge = uiFactory.createText(0, 18, 200, 100, color(255), "1.6e-19 C", LEFT);
+                    chargeParent.appendChild(charge);
                 fundamentalGroup.appendChild(chargeParent);
 
             inspector.appendChild(fundamentalGroup);
 
-            TextUI instanceTitle = uiFactory.createText(38, 312, 358, 200, color(255), "Instance Properties", LEFT);
+            TextUI instanceTitle = uiFactory.createText(38, 332, 358, 200, color(255), "Instance Properties", LEFT);
             instanceTitle.setTextSize(24);
             inspector.appendChild(instanceTitle);
 
-            RectangleUI instanceGroup = uiFactory.createRectOutlined(28, 352, 302, 150, color(70), color(76, 89, 255), 3);
+            RectangleUI instanceGroup = uiFactory.createRectOutlined(28, 362, 302, 150, color(70), color(76, 89, 255), 3);
 
-                TextUI velocityParent = uiFactory.createText(10, 8, 200, 100, color(10), "Velocity", LEFT);
-                    TextUI velocityChild = uiFactory.createText(0, 18, 200, 100, color(255), "9.11e-31 kg", LEFT);
-                    velocityParent.appendChild(velocityChild);
+                TextUI velocityParent = uiFactory.createText(10, 13, 200, 100, color(10), "Velocity", LEFT);
+                    velocity = uiFactory.createText(0, 18, 200, 100, color(255), "9.11e-31 kg", LEFT);
+                    velocityParent.appendChild(velocity);
                 instanceGroup.appendChild(velocityParent);
                 
-                TextUI accelerationParent = uiFactory.createText(10, 52, 200, 100, color(10), "Acceleration", LEFT);
-                    TextUI accelerationChild = uiFactory.createText(0, 18, 200, 100, color(255), "2.7e-27 m^3", LEFT);
-                    accelerationParent.appendChild(accelerationChild);
+                TextUI accelerationParent = uiFactory.createText(10, 57, 200, 100, color(10), "Acceleration", LEFT);
+                    acceleration = uiFactory.createText(0, 18, 200, 100, color(255), "2.7e-27 m^3", LEFT);
+                    accelerationParent.appendChild(acceleration);
                 instanceGroup.appendChild(accelerationParent);
 
-                TextUI bearingParent = uiFactory.createText(10, 96, 200, 100, color(10), "Bearing", LEFT);
-                    TextUI bearingChild = uiFactory.createText(0, 18, 200, 100, color(255), "1.6e-19 C", LEFT);
-                    bearingParent.appendChild(bearingChild);
+                TextUI bearingParent = uiFactory.createText(10, 101, 200, 100, color(10), "Bearing", LEFT);
+                    bearing = uiFactory.createText(0, 18, 200, 100, color(255), "1.6e-19 C", LEFT);
+                    bearingParent.appendChild(bearing);
                 instanceGroup.appendChild(bearingParent);
 
             inspector.appendChild(instanceGroup);
 
-        inspector.hide();
-
         appendChild(inspector);
+
+        hide();
+    }
+
+    void updateDisplay() {
+        if (!active) return;
+        
+        Particle target = selectionManager.getObjectFromSelection();
+        if (target == null) {
+            hide();
+            return;
+        }
+
+        identifier.setText(target.getName());
+
+        mass.setText(target.mass + "kg");
+        volume.setText(target.r + "m³");
+        charge.setText(target.charge + "C");
+        velocity.setText(target.velocity.mag() + "ms⁻¹");
+        acceleration.setText(target.acceleration.mag() + "ms⁻²");
+        bearing.setText(target.velocity.copy().normalize() + " direction");
     }
 }

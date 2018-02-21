@@ -40,6 +40,10 @@ class Particle {
             round(random(25, 100))
         );
     }
+    
+    public String getName() {
+        return this.getClass().getSimpleName();
+    }
 
     public void addChild(Particle child) {
         children.add(child);
@@ -49,21 +53,23 @@ class Particle {
         children.remove(child);
     }
 
-    void delete() {
-        shape = null;
-        worldManager.unregisterParticle(this);
-
-        // TODO: Change this direct access to method based access.
-        if (parent != null) {
-            parent.children.remove(this);
-            parent = null;
-        }
-
+    void isolate() {
         for (Particle child : children) {
             child.parent = null;
         }
 
         children.clear();
+
+        if (parent != null) return;
+
+        parent.children.remove(this);
+        parent = null;
+    }
+
+    void delete() {
+        shape = null;
+        worldManager.unregisterParticle(this);
+        isolate();
     }
 
     boolean select() {
@@ -134,14 +140,6 @@ class Particle {
         particle.acceleration.add(vector);
     }
 
-    void evaluateElectricalField() {
-        for (Particle particle : worldManager.particleList) {
-            if (particle == this) continue;
-            if (particle.parent != parent) continue;
-            applyForce(particle, calculateCoulombsLawForceOn(particle));
-        }
-    }
-
     void evaluatePhysics() {
         if ((pos.x + r) >= 10000 || (pos.x - r) <= -10000) {
             addPosition(new PVector(-(velocity.x), 0, 0));
@@ -185,6 +183,13 @@ class Particle {
             if (PVector.dist(pos, particle.pos) <= (r + particle.r)) {
                 collide(particle);
             }
+        }
+
+        if (parent != null) {
+            PVector diff = PVector.sub(pos, parent.pos);
+            
+            if (diff.mag() > parent.r + 100)
+                isolate();
         }
 
         velocity.add(acceleration);

@@ -10,6 +10,7 @@ class Atom extends Particle {
         super(x, y, z, 200);
         
         core = new Proton(x, y, z, this);
+        core.setCoreOf(this);
         nucleus.add(core);
 
         worldManager.atomList.add(this);

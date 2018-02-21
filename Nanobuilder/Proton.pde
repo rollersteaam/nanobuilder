@@ -1,6 +1,7 @@
 class Proton extends Particle {
     public static final float MASS = 1.6726219e-27;
     public static final float CHARGE = 1.60217662e-19;
+    private Atom coreOf = null;
 
     /*
         Let's say 100 pixels = 1fm.
@@ -26,6 +27,33 @@ class Proton extends Particle {
             random(-1000, 1000),
             null
         );
+    }
+
+    void setCoreOf(Atom newAtom) {
+        if (coreOf != null) return;
+
+        coreOf = newAtom;
+    }
+
+    Atom getCoreOf() {
+        return coreOf;
+    }
+
+    // void evaluateElectricalField() {
+
+    // }
+    void evaluateElectricalField() {
+        if (coreOf == null) return;
+
+        for (Particle particle : worldManager.particleList) {
+            if (particle == this) continue;
+            // if (particle.parent != parent) continue;
+            // if (particle instanceof Electron && this instanceof Electron) continue;
+            if (particle instanceof Proton) continue;
+            if (particle.parent != parent) continue;
+
+            applyForce(particle, calculateCoulombsLawForceOn(particle));
+        }
     }
 
     @Override

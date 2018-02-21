@@ -72,7 +72,10 @@ void setup() {
     // testAtom.addNeutron();
 
     for (int i = 0; i < 200; i++) {
-        testAtom.addNeutron();
+        if (i % 2 == 0)
+            testAtom.addProton();
+        else
+            testAtom.addNeutron();
     }
 
     // new Atom(1000);
@@ -150,8 +153,8 @@ void draw() {
     selectionManager.updateSelectionMovement();
     selectionManager.updateGroupSelectionDrawing();
 
-    uiManager.checkHoverForButtons();
     uiManager.draw();
+    uiManager.update();
 
     // SPACE
     if (keys.containsKey(32) && keys.get(32)) cam.velocity.sub(PVector.mult(cam.getUp(), cam.speed));

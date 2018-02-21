@@ -320,6 +320,7 @@ class Atom extends Particle {
     }
 
     void recalculateRadius() {
+        if (shape == null) return;
         shape.scale(1 / (r / 200));
         r = shells.size() * 200 + nucleusRadius + orbitOffset;
         shape.scale(r / 200);

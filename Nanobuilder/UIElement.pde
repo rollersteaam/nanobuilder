@@ -25,9 +25,13 @@ abstract class UIElement {
         size = new PVector();
     }
 
-    UIElement(float x, float y, float w, float h, color colour) {
+    UIElement(float x, float y, float w, float h) {
         position = new PVector(x, y);
         size = new PVector(w, h);
+    }
+
+    UIElement(float x, float y, float w, float h, color colour) {
+        this(x, y, w, h);
         this.baseColour = colour;
         this.colour = colour;
     }

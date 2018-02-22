@@ -80,7 +80,7 @@ class InspectorView extends UIElement {
         volume.setText(target.r + "m^3");
         charge.setText(target.charge + "C");
         velocity.setText(target.velocity.mag() + "ms^-1");
-        acceleration.setText(target.acceleration.mag() + "ms^-2");
+        acceleration.setText(target.displayedAcceleration.mag() + "ms^-2");
 
         PVector directionFormat = target.velocity.copy().normalize();
         directionFormat.x = roundToDP(directionFormat.x, 3);

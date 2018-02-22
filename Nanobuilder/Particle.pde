@@ -2,7 +2,8 @@ class Particle {
     PVector pos = new PVector();
     PVector velocity = new PVector();
     PVector acceleration = new PVector();
-    
+    PVector displayedAcceleration = new PVector();
+
     float r;
 
     float charge;
@@ -200,6 +201,7 @@ class Particle {
         Acceleration once 'dealt' is never kept, since it converts into velocity.
         This line resets acceleration so we're ready to regather all forces next frame.
         */
+        displayedAcceleration = acceleration;
         acceleration = new PVector();
     }
 

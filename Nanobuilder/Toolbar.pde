@@ -6,7 +6,8 @@ class Toolbar extends UIElement {
     };
 
     Toolbar() {
-        RectangleUI toolbar = uiFactory.createRectOutlined(42, 42, 64, height - 84, color(38, 38, 172), color(76, 89, 255), 6);
+        // RectangleUI toolbar = uiFactory.createRectOutlined(42, 42, 64, height - 84, color(38, 38, 172), color(76, 89, 255), 6);
+        RectangleUI toolbar = uiFactory.createRectOutlined(-6, 42, 64, height - 84, color(38, 38, 172), color(76, 89, 255), 6);
 
             ButtonUI selectionToolButton = uiFactory.createButtonOutlined(16, 16, 32, 32, color(220), fooAction, color(200, 115, 25), 2);
             selectionToolButton.setHoverColour(color(224, 99, 23));
@@ -36,5 +37,8 @@ class Toolbar extends UIElement {
             toolbar.appendChild(toolbarFooButton4);
 
         appendChild(toolbar);
+
+        selectionToolButton.press();
+        selectionToolButton.click();
     }
 }

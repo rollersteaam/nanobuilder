@@ -76,8 +76,6 @@ class Atom extends Particle {
     }
 
     public void remove(Particle particle) {
-        println("DROWN");
-
         if (particle instanceof Neutron)
             remove((Neutron) particle);
         else if (particle instanceof Proton)
@@ -161,7 +159,8 @@ class Atom extends Particle {
         }
 
         if (mass == 0)
-            throw new IllegalStateException("Illegal termination of Atom constituents/handling of Atom state. Found during mass recalculation.");
+            delete();
+            // throw new IllegalStateException("Illegal termination of Atom constituents/handling of Atom state. Found during mass recalculation.");
     }
 
     public void addNeutron() {

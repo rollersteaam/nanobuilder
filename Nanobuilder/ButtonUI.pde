@@ -75,7 +75,7 @@ class ButtonUI extends UIElement {
         if (!active) return;
         
         toggled = !toggled;
-        println(toggled);
+        // println(toggled);
         function.run();
     }
 }

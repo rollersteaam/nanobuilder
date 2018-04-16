@@ -6,7 +6,8 @@ class InspectorView extends UIElement {
     InspectorView() {
         super();
 
-        inspector = uiFactory.createRectOutlined(width - 400, 42, 358, 568, color(38, 38, 172), color(76, 89, 255), 6);
+        // inspector = uiFactory.createRectOutlined(width - 400, 42, 358, 568, color(38, 38, 172), color(76, 89, 255), 6);
+        inspector = uiFactory.createRectOutlined(width - 353, 42, 358, 568, color(38, 38, 172), color(76, 89, 255), 6);
         // inspector = uiFactory.createRectOutlined(width - 349, 42, 358, 568, color(38, 38, 172), color(76, 89, 255), 6);
         
             identifier = uiFactory.createText(0, 32, 358, 200, color(255), "Neutron", CENTER);
@@ -76,11 +77,11 @@ class InspectorView extends UIElement {
 
         identifier.setText(target.getName());
 
-        mass.setText(target.mass + "kg");
-        volume.setText(target.r + "m^3");
-        charge.setText(target.charge + "C");
-        velocity.setText(target.velocity.mag() + "ms^-1");
-        acceleration.setText(target.acceleration.mag() + "ms^-2");
+        mass.setText(target.mass + " kg");
+        volume.setText(target.r + " m^3");
+        charge.setText(target.charge + " C");
+        velocity.setText(target.velocity.mag() + " ms^-1");
+        acceleration.setText(target.acceleration.mag() + " ms^-2");
 
         PVector directionFormat = target.velocity.copy().normalize();
         directionFormat.x = roundToDP(directionFormat.x, 3);

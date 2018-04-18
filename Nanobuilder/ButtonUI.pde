@@ -52,6 +52,7 @@ class ButtonUI extends UIElement {
 
     public void unpress() {
         if (!pressed || (toggled && toggleable)) return;
+
         pressed = false;
 
         colour = baseColour;
@@ -77,5 +78,13 @@ class ButtonUI extends UIElement {
         toggled = !toggled;
         // println(toggled);
         function.run();
+    }
+
+    public void toggle() {
+        toggled = !toggled;
+    }
+
+    public void setToggleOff() {
+        toggled = false;
     }
 }

@@ -128,14 +128,18 @@ class Atom extends Particle {
     void delete() {
         super.delete();
 
-        for (Particle particle : nucleus) {
+        for (int i = 0; i < nucleus.size(); i++) {
+            Particle particle = nucleus.get(i);
+
             particle.delete();
-        }
+        }        
 
         nucleus.clear();
 
-        for (ElectronShell shell : shells) {
-            shell.delete();
+        for (int i = 0; i < shells.size(); i++) {
+            ElectronShell electronShell = shells.get(i);
+
+            electronShell.delete();
         }
 
         shells.clear();

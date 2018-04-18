@@ -11,7 +11,8 @@ class ElectronShell {
     }
 
     void delete() {
-        for (Electron electron : contents) {
+        for (int i = 0; i < contents.size(); i++) {
+            Electron electron = contents.get(i);
             electron.delete();
         }
 

@@ -77,6 +77,10 @@ void setup() {
     uiManager = new UIManager();
     uiFactory = new UIFactory();
     
+    uiManager.start();
+
+    toolbar = uiManager.getToolbar();
+
     // for (int i = 0; i < 5; i++) {
     //     int randNo = (int) random(1, 20);
     //     new Atom(randNo);
@@ -111,8 +115,6 @@ void setup() {
 
     // Proton contentOne = new Proton(x, y, z);
     // new Electron(x + contentOne.r + 10, y + contentOne.r + 10, z + contentOne.r + 10, contentOne);
-
-    uiManager.start();
 }
 
 void draw() {
@@ -185,6 +187,8 @@ void draw() {
     if (keys.containsKey(16) && keys.get(16)) cam.velocity.add(PVector.mult(cam.getUp(), cam.speed));
 }
 
+Toolbar toolbar;
+
 void mousePressed(MouseEvent event) {
     uiManager.checkPressForButtons();
 
@@ -192,7 +196,7 @@ void mousePressed(MouseEvent event) {
     if (mouseButton == LEFT) {
         if (cam.fireAtom()) return;
         if (uiManager.checkForFocus()) return;
-        if (selectionManager.mousePressed()) return;
+        if (toolbar.getActiveTool().press()) return;
     }
 }
 
@@ -201,7 +205,7 @@ void mouseReleased() {
 
     if (mouseButton == LEFT) {
         uiManager.leftClick();
-        if (selectionManager.mouseReleased()) return;
+        if (toolbar.getActiveTool().click()) return;
     } else if (mouseButton == RIGHT) {
         uiManager.rightClick();
     }

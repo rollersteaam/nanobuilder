@@ -1,29 +1,33 @@
 class Toolbar extends UIElement {
+
+    SelectionTool selectionTool;
     Runnable selectionToolButtonFunction = new Runnable() {
         public void run() {
-            handleToolTransition(selectionToolButton);
+            handleToolTransition(selectionToolButton, selectionTool);
         }
     };
 
+    NewAtomTool newAtomTool;
     Runnable newAtomToolButtonFunction = new Runnable() {
         public void run() {
-            handleToolTransition(newAtomToolButton);
+            handleToolTransition(newAtomToolButton, newAtomTool);
         }
     };
 
+    DeleteTool deleteTool;
     Runnable deleteToolButtonFunction = new Runnable() {
         public void run() {
-            handleToolTransition(deleteToolButton);
+            handleToolTransition(deleteToolButton, deleteTool);
         }
     };
 
-    Runnable toolbarFooButton4Function = new Runnable() {
-        public void run() {
-            handleToolTransition(toolbarFooButton4);
-        }
-    };
+    // Runnable toolbarFooButton4Function = new Runnable() {
+    //     public void run() {
+    //         // handleToolTransition(toolbarFooButton4);
+    //     }
+    // };
 
-    void handleToolTransition(ButtonUI triggeringButton) {
+    void handleToolTransition(ButtonUI triggeringButton, Tool tool) {
         if (activeButton != null) {
             if (activeButton == triggeringButton) {
                 activeButton.unpress();
@@ -35,10 +39,16 @@ class Toolbar extends UIElement {
 
         activeButton = triggeringButton;
         activeButton.press();
+        activeTool = tool;
     }
 
     ButtonUI selectionToolButton, newAtomToolButton, deleteToolButton, toolbarFooButton4;
     ButtonUI activeButton;
+    Tool activeTool;
+
+    public Tool getActiveTool() {
+        return activeTool;
+    }
 
     Toolbar() {
         // RectangleUI toolbar = uiFactory.createRectOutlined(42, 42, 64, height - 84, color(38, 38, 172), color(76, 89, 255), 6);
@@ -65,13 +75,17 @@ class Toolbar extends UIElement {
                 deleteToolButton.appendChild(deleteToolButtonImage);
             toolbar.appendChild(deleteToolButton);
             
-            toolbarFooButton4 = uiFactory.createButtonOutlined(16, 160, 32, 32, color(220), toolbarFooButton4Function, color(200, 115, 25), 2);
-            toolbarFooButton4.setHoverColour(color(224, 99, 23));
-            toolbarFooButton4.setToggleable(true);
+            // toolbarFooButton4 = uiFactory.createButtonOutlined(16, 160, 32, 32, color(220), toolbarFooButton4Function, color(200, 115, 25), 2);
+            // toolbarFooButton4.setHoverColour(color(224, 99, 23));
+            // toolbarFooButton4.setToggleable(true);
             
-            toolbar.appendChild(toolbarFooButton4);
+            // toolbar.appendChild(toolbarFooButton4);
 
         appendChild(toolbar);
+
+        selectionTool = new SelectionTool();
+        newAtomTool = new NewAtomTool();
+        deleteTool = new DeleteTool();
 
         selectionToolButton.click();
     }

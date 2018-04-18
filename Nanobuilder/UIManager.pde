@@ -18,6 +18,10 @@ class UIManager {
         }
     }
 
+    public Toolbar getToolbar() {
+        return toolbar;
+    }
+
     void update() {
         inspector.updateDisplay();
         checkHoverForButtons();

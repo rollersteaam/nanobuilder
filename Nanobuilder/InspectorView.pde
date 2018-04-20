@@ -70,6 +70,7 @@ class InspectorView extends UIElement {
         if (!active) return;
         
         Particle target = selectionManager.getObjectFromSelection();
+        
         if (target == null) {
             hide();
             return;
@@ -79,10 +80,10 @@ class InspectorView extends UIElement {
 
 
         mass.setText(target.mass + " kg");
-        volume.setText(target.r + " m^3");
+        volume.setText(target.r + "e-15 m^3");
         charge.setText(target.charge + " C");
-        velocity.setText(target.velocity.mag() + " ms^-1");
-        acceleration.setText(target.acceleration.mag() + " ms^-2");
+        velocity.setText(target.velocity.mag() + "e-15 ms^-1");
+        acceleration.setText(target.acceleration.mag() + "e-15 ms^-2");
 
 
         PVector directionFormat = target.velocity.copy().normalize();

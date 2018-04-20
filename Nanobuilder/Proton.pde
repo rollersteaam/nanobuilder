@@ -39,9 +39,6 @@ class Proton extends Particle {
         return coreOf;
     }
 
-    // void evaluateElectricalField() {
-
-    // }
     void evaluateElectricalField() {
         if (coreOf == null) return;
 

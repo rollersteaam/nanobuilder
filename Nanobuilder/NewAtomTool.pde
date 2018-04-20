@@ -1,6 +1,6 @@
 class NewAtomTool extends Tool {
     boolean press() {
-        return false;
+        return true;
     }
 
     boolean click() {

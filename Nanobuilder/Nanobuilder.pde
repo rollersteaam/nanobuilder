@@ -108,9 +108,14 @@ void setup() {
     // new Atom(1000);
 
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
-    // for (int i = 0; i < 50; i++) {
-        // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));
-    // }
+    for (int i = 0; i < 2; i++) {
+        for (int y = 0; y < 2; y++) {
+            for (int z = 0; z < 2; z++) {
+                // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));
+                new Atom(200 * i, 200 * y, 200 * z, 1, 1, 0);
+            }
+        }
+    }
     // Atom matt = new Atom(0, 400, 0, 250);
 
     // Proton contentOne = new Proton(x, y, z);
@@ -194,9 +199,9 @@ void mousePressed(MouseEvent event) {
 
     // If selection agent's events have been triggered, then we are finished for this mouse event.
     if (mouseButton == LEFT) {
-        if (cam.fireAtom()) return;
         if (uiManager.checkForFocus()) return;
         if (toolbar.getActiveTool().press()) return;
+        if (cam.fireAtom()) return;
     }
 }
 

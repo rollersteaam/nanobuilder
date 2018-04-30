@@ -55,7 +55,11 @@ class SelectionManager {
         int selSize = selectedParticles.size();
         if (selSize == 0 || selSize > 1) return null;
 
-        return selectedParticles.get(0).getParticle();
+        Selection selection = selectedParticles.get(0);
+        
+        if (selection.getParticle().deleted) return null;
+
+        return selection.getParticle();
     }
 
     public ArrayList<Particle> getObjectsFromSelection() {
@@ -64,6 +68,9 @@ class SelectionManager {
         ArrayList<Particle> list = new ArrayList<Particle>();
 
         for (Selection selection : selectedParticles) {
+            if (selection.getParticle().deleted) {
+                continue;
+            }
             list.add(selection.getParticle());
         }
 

@@ -6,6 +6,8 @@ class Atom extends Particle {
     ArrayList<ElectronShell> shells = new ArrayList<ElectronShell>();
     float orbitOffset = 0;
 
+    ArrayList<AtomBond> atomBonds = new ArrayList<AtomBond>();
+
     Atom(float x, float y, float z, int electrons, int protons, int neutrons) {
         super(x, y, z, 200);
         
@@ -73,6 +75,21 @@ class Atom extends Particle {
             round(random(1, 20)),
             round(random(1, 20))
         );
+    }
+
+    public void addBond(AtomBond bond) {
+        atomBonds.add(bond);
+    }
+
+    public void removeBond(AtomBond bond) {
+        atomBonds.remove(bond);
+    }
+
+    public void clearBonds() {
+        for (int i = 0; i < atomBonds.size(); i++) {
+            AtomBond bond = atomBonds.get(i);
+            bond.delete();
+        }
     }
 
     public void remove(Particle particle) {
@@ -143,6 +160,7 @@ class Atom extends Particle {
         }
 
         shells.clear();
+        clearBonds();
 
         core = null;
     }
@@ -162,7 +180,7 @@ class Atom extends Particle {
             mass += shell.getMass();
         }
 
-        if (mass == 0)
+        if (mass == 0 || shells.size() == 0)
             delete();
             // throw new IllegalStateException("Illegal termination of Atom constituents/handling of Atom state. Found during mass recalculation.");
     }
@@ -386,8 +404,8 @@ class Atom extends Particle {
 
     public void removeElectron() {
         if (shells.size() == 0)
-            println("Warning: Tried to remove an electron when there are no electron shells.");
-            // throw new IllegalStateException("An atom has no electron shells.");
+            // println("Warning: Tried to remove an electron when there are no electron shells.");
+            throw new IllegalStateException("An atom has no electron shells.");
             
         ElectronShell lastShell = shells.get(shells.size() - 1);
         lastShell.removeElectron();
@@ -397,6 +415,10 @@ class Atom extends Particle {
         if (lastShell.getSize() == 0) {
             shells.remove(shells.size() - 1);
             recalculateRadius();
+
+            if (shells.size() == 0) {
+                delete();
+            }
         }
     }
 

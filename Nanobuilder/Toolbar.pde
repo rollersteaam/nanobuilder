@@ -21,12 +21,6 @@ class Toolbar extends UIElement {
         }
     };
 
-    // Runnable toolbarFooButton4Function = new Runnable() {
-    //     public void run() {
-    //         // handleToolTransition(toolbarFooButton4);
-    //     }
-    // };
-
     void handleToolTransition(ButtonUI triggeringButton, Tool tool) {
         if (activeButton != null) {
             if (activeButton == triggeringButton) {

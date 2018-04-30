@@ -68,7 +68,7 @@ class Camera extends QueasyCam {
         piloting = false;
     }
 
-    private boolean piloting = true;
+    boolean piloting = true;
 
     public void togglePilot() {
         if (piloting)

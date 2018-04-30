@@ -111,6 +111,31 @@ class WorldManager {
         float biggestDistance = 0;
 
         for (int i = 0; i < particleList.size(); i++) {
+            Particle particle1 = particleList.get(i);
+
+            for (int j = i + 1; j < particleList.size(); j++) {
+                // Spherical intersection
+                // Determine the highest radius
+                // float comparedRadius = (r > particle.r) ? r : particle.r;
+                // if (particle == this)
+                //     continue;
+                // Atoms are "abstract" but simplified collisions should still allow
+                // atom and particle collisions, e.g. if the target particle doesn't belong to an atom.
+                Particle particle2 = particleList.get(j);
+                
+                if (particle1.parent != null || particle2.parent != null)
+                    continue;
+
+                // if (PVector.dist(pos, particle.pos) <= r * 2) {
+                //     collide(particle);
+                // }
+                if (PVector.dist(particle1.pos, particle2.pos) <= (particle1.r + particle2.r)) {
+                    particle1.collide(particle2);
+                }
+            }
+        }
+
+        for (int i = 0; i < particleList.size(); i++) {
             Particle particle = particleList.get(i);
             if (particle instanceof Atom) continue;
             particle.evaluatePhysics();

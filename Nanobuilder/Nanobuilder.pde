@@ -136,6 +136,40 @@ void setup() {
     surface.setIcon(icon);
 }
 
+void checkMouseWindowConditions() {
+    if (!cam.piloting) return;
+
+    int deadzone = 128;
+
+    if ( mouseX > deadzone ) {
+        cam.controllable = true;
+    } else {
+        cam.controllable = false;
+        return;
+    }
+
+    if ( mouseX < 1280 - deadzone ) {
+        cam.controllable = true;
+    } else {
+        cam.controllable = false;
+        return;
+    }
+
+    if ( mouseY > deadzone ) {
+        cam.controllable = true;
+    } else {
+        cam.controllable = false;
+        return;
+    }
+
+    if ( mouseY < 720 - deadzone ) {
+        cam.controllable = true;
+    } else {
+        cam.controllable = false;
+        return;
+    }
+}
+
 void draw() {
     // Undoes the use of DISABLE_DEPTH_TEST so 3D objects act naturally after it was called.
     hint(ENABLE_DEPTH_TEST);
@@ -147,6 +181,8 @@ void draw() {
 
 
     worldManager.update();
+
+    checkMouseWindowConditions();
 
     // float biggestDistance = 0;
 

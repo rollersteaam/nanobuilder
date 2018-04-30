@@ -67,8 +67,8 @@ class ElectronShell {
         // Remove the last appended electron in the shell.
         int index = contents.size() - 1;
         Electron target = contents.get(index);
-        target.delete();
         contents.remove(index);
+        target.delete();
         
         return true;
     }

@@ -17,6 +17,8 @@ class Particle {
     Atom parent;
     ArrayList<Particle> children = new ArrayList<Particle>();
 
+    boolean deleted = false;
+
     Particle(float x, float y, float z, float r) {
         pos = new PVector(x, y, z);
         this.r = r;
@@ -70,6 +72,7 @@ class Particle {
     void delete() {
         shape = null;
         worldManager.unregisterParticle(this);
+        deleted = true;
         if (parent != null)
             parent.remove(this);
     }
@@ -143,56 +146,56 @@ class Particle {
     }
 
     void evaluatePhysics() {
-        if ((pos.x + r) >= 10000 || (pos.x - r) <= -10000) {
-            addPosition(new PVector(-(velocity.x), 0, 0));
-            velocity.x *= -1;
-            velocity.x /= 4;            
-            // delete();
-        }
+        // if ((pos.x + r) >= 10000 || (pos.x - r) <= -10000) {
+        //     addPosition(new PVector(-(velocity.x), 0, 0));
+        //     velocity.x *= -1;
+        //     velocity.x /= 4;            
+        //     // delete();
+        // }
 
-        if ((pos.y + r) >= 10000 || (pos.y - r) <= -10000) {
-            addPosition(new PVector(0, -(velocity.y), 0));
-            velocity.y *= -1;
-            velocity.y /= 4;            
-            // delete();
-        }
+        // if ((pos.y + r) >= 10000 || (pos.y - r) <= -10000) {
+        //     addPosition(new PVector(0, -(velocity.y), 0));
+        //     velocity.y *= -1;
+        //     velocity.y /= 4;            
+        //     // delete();
+        // }
 
-        if ((pos.z + r) >= 10000 || (pos.z - r) <= -10000) {
-            addPosition(new PVector(0, 0, -(velocity.z)));
-            velocity.z *= -1;
-            velocity.z /= 4;            
-            // delete();
-        }
+        // if ((pos.z + r) >= 10000 || (pos.z - r) <= -10000) {
+        //     addPosition(new PVector(0, 0, -(velocity.z)));
+        //     velocity.z *= -1;
+        //     velocity.z /= 4;            
+        //     // delete();
+        // }
 
         /*
         Rough collision stuff goes here
         */
         // If distance from another atom is less than radius then intersection
-        for (Particle particle : worldManager.particleList) {
-            // Spherical intersection
-            // Determine the highest radius
-            // float comparedRadius = (r > particle.r) ? r : particle.r;
-            if (particle == this)
-                continue;
-            // Atoms are "abstract" but simplified collisions should still allow
-            // atom and particle collisions, e.g. if the target particle doesn't belong to an atom.
-            if (particle.parent != null || parent != null)
-                continue;
+        // for (Particle particle : worldManager.particleList) {
+        //     // Spherical intersection
+        //     // Determine the highest radius
+        //     // float comparedRadius = (r > particle.r) ? r : particle.r;
+        //     if (particle == this)
+        //         continue;
+        //     // Atoms are "abstract" but simplified collisions should still allow
+        //     // atom and particle collisions, e.g. if the target particle doesn't belong to an atom.
+        //     if (particle.parent != null || parent != null)
+        //         continue;
 
-            // if (PVector.dist(pos, particle.pos) <= r * 2) {
-            //     collide(particle);
-            // }
-            if (PVector.dist(pos, particle.pos) <= (r + particle.r)) {
-                collide(particle);
-            }
-        }
+        //     // if (PVector.dist(pos, particle.pos) <= r * 2) {
+        //     //     collide(particle);
+        //     // }
+        //     if (PVector.dist(pos, particle.pos) <= (r + particle.r)) {
+        //         collide(particle);
+        //     }
+        // }
 
-        if (parent != null) {
-            PVector diff = PVector.sub(pos, parent.pos);
+        // if (parent != null) {
+        //     PVector diff = PVector.sub(pos, parent.pos);
             
-            if (diff.mag() > parent.r + 100)
-                parent.remove(this);
-        }
+        //     if (diff.mag() > parent.r + 100)
+        //         parent.remove(this);
+        // }
 
         velocity.add(acceleration);
         // pos.add(velocity);
@@ -206,36 +209,66 @@ class Particle {
     }
 
     public void collide(Particle particle) {
-        // To make a more accurate incident vector, we could also set mag the magnitude to the radius of either atom (probably this one).
-        PVector incidentVector = PVector.sub(pos, particle.pos);
-        // Impulse = change in momentum
-        // p = m1v1 - m2v2
-        float impulse = mass * (velocity.mag()) - particle.mass * (particle.velocity.mag());
-        println(impulse);
-        // Initial kinetic energy
-        // E = 1/2*m1*v1^2 + 1/2*m2*v2^2
-        float energy = 1/2 * mass * pow((velocity.mag()), 2) + 1/2 * particle.mass * pow((particle.velocity.mag()), 2);
-        println(energy);
-        println();
-        // This new velocity magnitude should change depending on who calls collide.
-        // After -2 * impulse plus or minus can be used. It's a quadratic equation.
-        float newVelocityMagnitude = -2 * impulse + sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
-        // So we must halve it after we're done.
-        newVelocityMagnitude /= 2;
-        newVelocityMagnitude *= 1e25;
+        // // To make a more accurate incident vector, we could also set mag the magnitude to the radius of either atom (probably this one).
+        // PVector incidentVector = PVector.sub(pos, particle.pos);
+        // // Impulse = change in momentum
+        // // p = m1v1 - m2v2
+        // float impulse = mass * (velocity.mag()) - particle.mass * (particle.velocity.mag());
+        // println(impulse);
+        // // Initial kinetic energy
+        // // E = 1/2*m1*v1^2 + 1/2*m2*v2^2
+        // float energy = 1/2 * mass * pow((velocity.mag()), 2) + 1/2 * particle.mass * pow((particle.velocity.mag()), 2);
+        // println(energy);
+        // println();
+        // // This new velocity magnitude should change depending on who calls collide.
+        // // After -2 * impulse plus or minus can be used. It's a quadratic equation.
+        // float newVelocityMagnitude = -2 * impulse - sqrt( pow(2 * impulse, 2) - 4 * ( pow(impulse, 2) - 2 * energy * mass ) );
+        // // So we must halve it after we're done.
+        // newVelocityMagnitude /= 2;
+        // newVelocityMagnitude *= 1e25;
 
-        incidentVector.setMag(newVelocityMagnitude);
-        /*
-            New added velocity needs to be opposite the direction of incidence...
+        // incidentVector.setMag(newVelocityMagnitude);
+        // /*
+        //     New added velocity needs to be opposite the direction of incidence...
 
-            Note that this doesn't logically follow, this is because the directions of the particle velocitys'
-            are not factored in during the above calculations. There may be a requirement to evaluate this later.
+        //     Note that this doesn't logically follow, this is because the directions of the particle velocitys'
+        //     are not factored in during the above calculations. There may be a requirement to evaluate this later.
 
-            For now, believable collision is observed with this config.
-        */
-        if (newVelocityMagnitude > 0) incidentVector.mult(-1);
+        //     For now, believable collision is observed with this config.
+        // */
+        // if (newVelocityMagnitude > 0) incidentVector.mult(-1);
         // particle.velocity = incidentVector;
-        particle.velocity.add(incidentVector);
+        // particle.velocity.set(incidentVector.x, incidentVector.y, incidentVector.z);
+        
+        // velocity.set(
+        //     incidentVector.x,
+        //     incidentVector.y,
+        //     incidentVector.z
+        // );
+        float selfPreviousX = velocity.x;
+        float selfPreviousY = velocity.y;
+        float selfPreviousZ = velocity.z;
+
+        velocity.set(
+            (velocity.x * (mass - particle.mass) + 2 * particle.mass * particle.velocity.x) / (mass + particle.mass),
+            (velocity.y * (mass - particle.mass) + 2 * particle.mass * particle.velocity.y) / (mass + particle.mass),
+            (velocity.z * (mass - particle.mass) + 2 * particle.mass * particle.velocity.z) / (mass + particle.mass)
+        );
+        
+        // particle.velocity.set(
+        //     (particle.velocity.x * (mass - particle.mass) + 2 * particle.mass * particle.velocity.x) / (mass + particle.mass),
+        //     (particle.velocity.y * (mass - particle.mass) + 2 * particle.mass * particle.velocity.y) / (mass + particle.mass),
+        //     (velocity.z * (mass - particle.mass) + 2 * particle.mass * particle.velocity.z) / (mass + particle.mass)
+        // );
+        particle.velocity.set(
+            (particle.velocity.x * (particle.mass - mass) + 2 * mass * selfPreviousX) / (mass + particle.mass),
+            (particle.velocity.y * (particle.mass - mass) + 2 * mass * selfPreviousY) / (mass + particle.mass),
+            (particle.velocity.z * (particle.mass - mass) + 2 * mass * selfPreviousZ) / (mass + particle.mass)
+        );
+
+
+        // particle.collide(this);
+        // particle.velocity.add(incidentVector);
         // And now attempt to cancel any attempts to process the collision a second time.
     }
 
@@ -305,7 +338,7 @@ class Particle {
         float bottomExpression = 4 * PI * 8.85 * pow(10, -12) * pow(vector.mag(), 2);
         /*
         If the force is infinite (which should be impossible)
-        then disregard current tick. We aren't trying to emulate annihilation.
+        then disregard current tick. We aren't trying to emulate infinity.
         */
         if (bottomExpression == 0) return 0;
         return topExpression / bottomExpression;

@@ -15,6 +15,8 @@ class AtomBond {
     AtomBond(Atom first, Atom second) {
         this.first = first;
         this.second = second;
+        first.addBond(this);
+        second.addBond(this);
 
         pushStyle();
 
@@ -112,6 +114,12 @@ class AtomBond {
     }
 
     void delete() {
-
+        first.removeBond(this);
+        second.removeBond(this);
+        worldManager.unregisterBond(this);
+        shape = null;
+        top = null;
+        bottom = null;
+        body = null;
     }
 }

@@ -48,6 +48,16 @@ public static float roundToDP(float value, int scale) {
     // return ( (float) ( (int) ((tmp - (int) tmp) >= 0.5f ? tmp + 1 : tmp) ) ) / pow;
 }
 
+void changeAppIcon(PImage img) {
+    final PGraphics pg = createGraphics(16, 16, P3D);
+
+    pg.beginDraw();
+    pg.image(img, 0, 0, 16, 16);
+    pg.endDraw();
+
+    frame.setIconImage(pg.image);
+}
+
 void setup() {
     size(1280, 720, P3D);
 
@@ -108,11 +118,11 @@ void setup() {
     // new Atom(1000);
 
     // new Electron(150, 150, 150, new Proton(0, 0, 0));
-    for (int i = 0; i < 2; i++) {
-        for (int y = 0; y < 2; y++) {
-            for (int z = 0; z < 2; z++) {
+    for (int i = 0; i < 3; i++) {
+        for (int y = 0; y < 3; y++) {
+            for (int z = 0; z < 3; z++) {
                 // new Electron(600 * i + 20, 600 * i + 20, 600 * i + 20, new Proton(600 * i, 600 * i, 600 * i));
-                new Atom(200 * i, 200 * y, 200 * z, 1, 1, 0);
+                new Atom(400 * i, 400 * y, 400 * z, 1, 1, 0);
             }
         }
     }
@@ -120,6 +130,10 @@ void setup() {
 
     // Proton contentOne = new Proton(x, y, z);
     // new Electron(x + contentOne.r + 10, y + contentOne.r + 10, z + contentOne.r + 10, contentOne);
+    // changeAppIcon(loadImage("Icon.png"));
+
+    PImage icon = loadImage("icon-96.png");
+    surface.setIcon(icon);
 }
 
 void draw() {
@@ -130,6 +144,7 @@ void draw() {
     background(135, 135, 255);
     lights();
     noStroke();
+
 
     worldManager.update();
 

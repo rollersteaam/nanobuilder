@@ -13,4 +13,4 @@ Press Z to pilot the camera and move around. You use your mouse to change where 
 
 You can interact with the atoms and particles in the world by clicking on them, and you can create new ones or delete ones through the use of the toolbar on the left.
 
-There's potentially some other controls I've completely forgotten about. I vaguely rememeber you should be able to push atoms into other atoms. You might also be able to make bonds between atoms... Not sure if I ever got around to that. Enjoy!
+There's potentially some other controls I've completely forgotten about. I vaguely remember you should be able to push atoms into other atoms. You might also be able to make bonds between atoms... Not sure if I ever got around to that. Enjoy!
